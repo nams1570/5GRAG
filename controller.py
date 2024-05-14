@@ -14,6 +14,7 @@ import pytesseract
 import os
 
 
+
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
 DOC_DIR = config["DOC_DIR"]
