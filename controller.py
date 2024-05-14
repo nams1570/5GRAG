@@ -13,7 +13,7 @@ from langchain_community.document_loaders import UnstructuredFileLoader
 import pytesseract
 import os
 
-
+pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
@@ -32,16 +32,13 @@ Question: {input}""")
 
     def updateDocs(self):
         #We need a separate loader for each document. 
-        loaders = [UnstructuredFileLoader(os.path.join(DOC_DIR,fn),mode='elements') for fn in os.listdir(DOC_DIR)]
-        print(loaders)
         self.docs = []
-
-        for loader in loaders:
+        text_splitter = RecursiveCharacterTextSplitter() #creates a text splitter, which breaks apart the document into text
+        for file in os.listdir(DOC_DIR):
+            loader = PyPDFLoader(os.path.join(DOC_DIR,file))
             print(f"Document is {loader.file_path}")
-            print(os.path.exists(loader.file_path))
             raw_doc = loader.load()
             print(raw_doc[:5])
-            text_splitter = RecursiveCharacterTextSplitter() #creates a text splitter, which breaks apart the document into text
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
             self.docs += [doc]
 
