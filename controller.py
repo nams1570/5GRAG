@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
 from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
@@ -37,17 +37,17 @@ Question: {input}""")
         for file in os.listdir(DOC_DIR):
             loader = PyPDFLoader(os.path.join(DOC_DIR,file))
             print(f"Document is {loader.file_path}")
-            raw_doc = loader.load()
+            raw_doc = loader.load_and_split()
             print(raw_doc[:5])
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
-            self.docs += [doc]
+            self.docs.extend(doc)
 
     def createVectorStore(self):
         """ create the vector database which will store the vector embeddings of the\
               documents that will be retrieved."""
         embeddings = OpenAIEmbeddings(model='text-embedding-3-small',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.updateDocs()
-        vector = Chroma.from_documents(self.docs, embeddings) 
+        vector = FAISS.from_documents(self.docs, embeddings) 
         self.retriever = vector.as_retriever()
         
     def runController(self):
