@@ -49,6 +49,14 @@ Question: {input}""")
     def toggleDatabase(self):
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         print(f"flag is {self.isDatabaseTriggered}")
+        if self.isDatabaseTriggered:
+            self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+<context>
+{context}
+</context>
+Question: {input}""")
+        else:
+            self.prompt = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
 
     def createVectorStore(self):
         """ create the vector database which will store the vector embeddings of the\
@@ -68,25 +76,30 @@ Question: {input}""")
         for turn in history:
             message_objects.append(HumanMessage(content=turn[0]))
             message_objects.append(AIMessage(content=turn[1]))
+        print(f"message objects are {message_objects}")
         return message_objects
     
 
     def runController(self, prompt, history):
+        print(f"history is {history}")
         if not self.isCreated:
             self.createVectorStore()
         if prompt:
             print(f"Ctrl + C to exit...")
             #doc_chain is a chain that lets you pass a document to the llm and it uses that to answer
-            doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
             # retrieval chain passed the load of deciding what document to use to answer to the retriever.
             history = self.convert_history(history)
             if self.isDatabaseTriggered:
+                doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
                 retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
     
                 resp = retrieval_chain.invoke({"input":prompt,"history": history})
+                response = resp['answer']
             else:
-                resp = doc_chain.invoke({"input":prompt,"history": history})
-            response = resp['answer']
+                chain = self.prompt | self.llm
+                resp = chain.invoke({"input":prompt,"history": history})
+                response = resp.content
+            print(f"resp is {resp}")
             return response
     
 if __name__ == "__main__":
