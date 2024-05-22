@@ -11,11 +11,12 @@ langchain_controller.createVectorStore()
 
 def respond(prompt,history):
     resp = langchain_controller.runController(prompt,history)
-    history.append()
+    history.append((prompt,resp))
+    return history
 
 
-# More improved UI
-demo = gr.ChatInterface(
+# More improved UI Deprecated chatInterface ise
+"""demo = gr.ChatInterface(
     langchain_controller.runController,
     chatbot=gr.Chatbot(height=500),
     textbox=gr.Textbox(placeholder="Ask me any question", container=False, scale=7),
@@ -28,14 +29,16 @@ demo = gr.ChatInterface(
     undo_btn="Delete Previous",
     clear_btn="Clear",
 )
-demo.launch(share=True)
+demo.launch(share=True)"""
+
+# idea: design function for the submit. This function will have as inputs, prompt and history
+# get history from chatbot. As output, have "", history so both q and answer will go into chatbot
 
 with gr.Blocks() as demo:
     toggleDB = gr.Button("toggle flag")
     toggleDB.click(fn=langchain_controller.toggleDatabase)
     chatbot=gr.Chatbot(height=500)
     textbox=gr.Textbox(placeholder="Ask me any question", container=False, scale=7)
-    output_box = gr.Textbox()
-    textbox.submit(langchain_controller.runController,inputs=[textbox,gr.State([])],outputs=output_box)
+    textbox.submit(respond,inputs=[textbox,chatbot],outputs=chatbot)
 
 demo.launch(share=True)
