@@ -3,7 +3,8 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS, Chroma
+from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -11,6 +12,8 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain.chains.query_constructor.base import AttributeInfo
 
 import pytesseract
 import os
@@ -34,6 +37,7 @@ Question: {input}""")
         self.docs = None
         self.isCreated = False
         self.isDatabaseTriggered = True
+        self.vector = None
 
     def updateDocs(self):
         #We need a separate loader for each document. 
@@ -48,6 +52,9 @@ Question: {input}""")
             with open(os.path.join(DOC_DIR,file), 'rb') as handle:
                 raw_doc = pickle.load(handle)    
             # End Pickle mode
+
+            print("metadata: ")
+            print(raw_doc[0].metadata)
 
             #print(raw_doc[:5])
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
@@ -71,11 +78,7 @@ Question: {input}""")
               documents that will be retrieved."""
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.updateDocs()
-        vector = FAISS.from_documents(self.docs, embeddings) 
-        #self.retriever = vector.as_retriever()
-        self.retriever = MultiQueryRetriever.from_llm(
-    retriever=vector.as_retriever(), llm=self.llm
-) #express query in multiple ways to improve hit rate
+        self.vector = Chroma.from_documents(self.docs, embeddings) 
         
         self.isCreated = True
 
@@ -88,10 +91,25 @@ Question: {input}""")
         return message_objects
     
 
-    def runController(self, prompt, history):
+    def runController(self, prompt, history, selected_docs):
         print(f"history is {history}")
         if not self.isCreated:
             self.createVectorStore()
+
+        print('Selected Docs: ', selected_docs)
+        if selected_docs is None or len(selected_docs) == 0:
+            self.retriever = MultiQueryRetriever.from_llm(
+                            retriever=self.vector.as_retriever(), llm=self.llm
+                        ) 
+        else:
+            # If we have selected one or more docs, then apply filtering
+            name_list = ['./files/' + doc for doc in selected_docs]
+            print("name_list: ", name_list)
+            name_filter = {"source": {"$in": name_list}}
+            self.retriever = MultiQueryRetriever.from_llm(
+                            retriever=self.vector.as_retriever(search_kwargs={'filter': name_filter}), llm=self.llm
+                        )            
+
         if prompt:
             print(f"Ctrl + C to exit...")
             #doc_chain is a chain that lets you pass a document to the llm and it uses that to answer
