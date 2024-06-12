@@ -3,16 +3,30 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
 from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS, Chroma
+from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import UnstructuredFileLoader
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain.chains.query_constructor.base import AttributeInfo
+from langchain_core.output_parsers import BaseOutputParser
+from langchain_core.prompts import PromptTemplate
+from typing import List
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_community.retrievers import TFIDFRetriever
+from langchain.chains import LLMChain
+from langchain.output_parsers import PydanticOutputParser
 import pytesseract
 import os
+import pickle
+from operator import itemgetter
 
+pytesseract.pytesseract.tesseract_cmd = "C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
@@ -22,48 +36,151 @@ class Controller:
     def __init__(self):
         self.output_parser = StrOutputParser()
         self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
-        self.prompt = ChatPromptTemplate.from_template("""Answer the following question based only on the provided context:
+        self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
 <context>
 {context}
 </context>
 Question: {input}""")
+        self.retrieval_chain = None
+        self.mqretriever = None
         self.docs = None
+        self.isCreated = False
+        self.isDatabaseTriggered = True
+        self.isPromptRetrival = False
+        self.vector = None
 
     def updateDocs(self):
         #We need a separate loader for each document. 
-        loaders = [UnstructuredFileLoader(os.path.join(DOC_DIR,fn),mode='elements') for fn in os.listdir(DOC_DIR)]
-        print(loaders)
         self.docs = []
-
-        for loader in loaders:
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True) #creates a text splitter, which breaks apart the document into text
+        for file in os.listdir(DOC_DIR):
+            loader = PyPDFLoader(os.path.join(DOC_DIR,file))
             print(f"Document is {loader.file_path}")
-            print(os.path.exists(loader.file_path))
-            raw_doc = loader.load()
-            print(raw_doc[:5])
-            text_splitter = RecursiveCharacterTextSplitter() #creates a text splitter, which breaks apart the document into text
-            doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
-            self.docs += [doc]
+            # raw_doc = loader.load_and_split() 
 
+            # Adam Chen Pickle Mode
+            with open(os.path.join(DOC_DIR,file), 'rb') as handle:
+                print(handle)
+                raw_doc = pickle.load(handle)    
+            # End Pickle mode
+
+            print("metadata: ")
+            print(raw_doc[0].metadata)
+
+            #print(raw_doc[:5])
+            doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
+            self.docs.extend(doc)
+            
+    def get_unique_union(documents: list[list]):
+        """ Unique union of retrieved docs """
+        # Flatten list of lists, and convert each Document to string
+        flattened_docs = [dumps(doc) for sublist in documents for doc in sublist]
+        # Get unique documents
+        unique_docs = list(set(flattened_docs))
+        # Return
+        return [loads(doc) for doc in unique_docs]
+    
+    def toggleDatabase(self):
+        self.isDatabaseTriggered = not self.isDatabaseTriggered
+        print(f"flag is {self.isDatabaseTriggered}")
+        if self.isDatabaseTriggered:
+            self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+<context>
+{context}
+</context>
+Question: {input}""")
+        else:
+            self.prompt = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
+        return self.isDatabaseTriggered
+    
+    def toggleRetriever(self):
+        self.isPromptRetrival = not self.isPromptRetrival
+        return self.isPromptRetrival
+        
     def createVectorStore(self):
         """ create the vector database which will store the vector embeddings of the\
               documents that will be retrieved."""
-        embeddings = OpenAIEmbeddings(model='text-embedding-3-small',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
+        embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.updateDocs()
-        vector = Chroma.from_documents(self.docs, embeddings) 
-        self.retriever = vector.as_retriever()
+        self.vector = Chroma.from_documents(self.docs, embeddings) 
         
-    def runController(self):
-        self.createVectorStore()
-        while True:
-            print(f"Ctrl + C to exit...")
-            res = input("Please enter your query here:")
-            #doc_chain is a chain that lets you pass a document to the llm and it uses that to answer
-            doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
-            # retrieval chain passed the load of deciding what document to use to answer to the retriever.
-            retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
+        self.isCreated = True
 
-            resp = retrieval_chain.invoke({"input":res})
-            print(f"response is {resp['answer']}")
+    def convert_history(self, history):
+        message_objects = []
+        for turn in history:
+            message_objects.append(HumanMessage(content=turn[0]))
+            message_objects.append(AIMessage(content=turn[1]))
+        print(f"message objects are {message_objects}")
+        return message_objects
+    
+
+    def runController(self, prompt, history, selected_docs):
+        print(f"history is {history}")
+        if not self.isCreated:
+            self.createVectorStore()
+
+        print('Selected Docs: ', selected_docs)
+        if selected_docs is None or len(selected_docs) == 0:
+            self.retriever = MultiQueryRetriever.from_llm(
+                            retriever=self.vector.as_retriever(), llm=self.llm
+                        ) 
+        else:
+            # If we have selected one or more docs, then apply filtering
+            name_list = ['./files/' + doc for doc in selected_docs]
+            print("name_list: ", name_list)
+            name_filter = {"source": {"$in": name_list}}
+            self.retriever = MultiQueryRetriever.from_llm(
+                            retriever=self.vector.as_retriever(search_kwargs={'filter': name_filter}), llm=self.llm
+                        )
+            if self.isPromptRetrival:
+                template = ("Breakdown the Original question given to generate few subqueries need to answer the given questions.\n"
+                "For example given a quer to compare a feature on Version 1 vs version 2. Can include subqueries on that feature on Version 1 and Version 2 separately.\n"
+                "Original question: {input}")
+                prompt_perspectives = ChatPromptTemplate.from_template(template)
+
+                generate_queries = (
+                    prompt_perspectives
+                    | ChatOpenAI(temperature=0.0)
+                    | StrOutputParser()
+                    | (lambda x: x.split("\n"))
+                )
+                retriever2=self.vector.as_retriever(search_kwargs={'filter': name_filter})
+                #retriever2 = TFIDFRetriever.from_documents(self.docs,k=5)
+                self.retrieval_chain = generate_queries | retriever2.map()
+                self.mqretriever = (
+                    {"context": self.retrieval_chain,
+                     "history": itemgetter("history"),
+                     "input": itemgetter("input")}
+                    | self.prompt
+                    | self.llm
+                )
+        if prompt:
+            print(f"Ctrl + C to exit...")
+            #doc_chain is a chain that lets you pass a document to the llm and it uses that to answer
+            # retrieval chain passed the load of deciding what document to use to answer to the retriever.
+            history = self.convert_history(history)
+            if self.isDatabaseTriggered:
+#                r1 = self.retriever.invoke({"input":prompt,"history": history})
+#                print(r1)
+                if self.isPromptRetrival:
+                    print(self.retrieval_chain.invoke({"input":prompt,"history": history}))
+                    resp = self.mqretriever.invoke({"input":prompt,"history": history})
+                    response = resp.content
+                    
+                else:
+                    doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
+                    retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
+                    
+                    resp = retrieval_chain.invoke({"input":prompt,"history": history})
+                    response = resp['answer']
+            
+            else:
+                chain = self.prompt | self.llm
+                resp = chain.invoke({"input":prompt,"history": history})
+                response = resp.content
+            print(f"resp is {resp}")
+            return response
     
 if __name__ == "__main__":
     c = Controller()
