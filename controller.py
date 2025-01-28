@@ -33,15 +33,16 @@ Question: {input}""")
         self.vector = None
 
     def updateDocs(self):
+        """This method attempts to set up the class attribute `self.docs` with a list of documents.
+        It uses a loader to turn each pdf file in DOC_DIR into a 'Document object', which has a 'metadata' attribute and a `page_content` attribute.
+        It then uses load_and_split to break apart each document into chunks, also stored in Document objects."""
         #We need a separate loader for each document. 
         self.docs = []
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True) #creates a text splitter, which breaks apart the document into text
         for file in os.listdir(DOC_DIR):
-            print(f"file is {file}")
             loader = PyPDFLoader(os.path.join(DOC_DIR,file))
-            print(f"Document is {loader.file_path}")
-            raw_doc = loader.load_and_split() 
 
+            raw_doc = loader.load_and_split() 
             # Adam Chen Pickle Mode
             """with open(os.path.join(DOC_DIR,file), 'rb') as handle:
                 raw_doc = pickle.load(handle)    """
@@ -50,13 +51,12 @@ Question: {input}""")
             print("metadata: ")
             print(raw_doc[0].metadata)
 
-            #print(raw_doc[:5])
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
             self.docs.extend(doc)
 
     def toggleDatabase(self):
+        """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
-        print(f"flag is {self.isDatabaseTriggered}")
         if self.isDatabaseTriggered:
             self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
 <context>
@@ -72,9 +72,6 @@ Question: {input}""")
               documents that will be retrieved."""
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.updateDocs()
-        print("********************************")
-        print(f"embeddings are {embeddings}")
-        print("********************************")
 
         #Adam Chen Hotfix Use Local DB
         #self.vector = Chroma(persist_directory="./Chroma", embedding_function=embeddings)
@@ -83,22 +80,17 @@ Question: {input}""")
         self.isCreated = True
 
     def convert_history(self, history):
+        """This turns the 'history' of the frontend into a particular format, separating the human and ai messages."""
         message_objects = []
         for turn in history:
             message_objects.append(HumanMessage(content=turn[0]))
             message_objects.append(AIMessage(content=turn[1]))
-        print(f"message objects are {message_objects}")
         return message_objects
     
 
-    def runController(self, prompt, history, selected_docs):
-        print(f"history is {history}")
-        if not self.isCreated:
-            self.createVectorStore()
-
-        print('Selected Docs: ', selected_docs)
+    def constructRetriever(self,selected_docs):
         if selected_docs is None or len(selected_docs) == 0:
-            self.retriever = MultiQueryRetriever.from_llm(
+            return MultiQueryRetriever.from_llm(
                             retriever=self.vector.as_retriever(), llm=self.llm
                         ) 
         else:
@@ -106,9 +98,17 @@ Question: {input}""")
             name_list = ['data\\' + doc for doc in selected_docs]
             print("name_list: ", name_list)
             name_filter = {"source": {"$in": name_list}}
-            self.retriever = MultiQueryRetriever.from_llm(
+            return MultiQueryRetriever.from_llm(
                             retriever=self.vector.as_retriever(search_kwargs={'filter': name_filter}), llm=self.llm
                         )            
+
+
+    def runController(self, prompt, history, selected_docs):
+        if not self.isCreated:
+            self.createVectorStore()
+
+        print('Selected Docs: ', selected_docs)
+        self.retriever = self.constructRetriever(selected_docs)
 
         if prompt:
             print(f"Ctrl + C to exit...")
