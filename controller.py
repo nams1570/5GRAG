@@ -17,6 +17,7 @@ import pickle
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
 DOC_DIR = config["DOC_DIR"]
+IS_PICKLE = config["IS_PICKLE"]
 
 class Controller:
     def __init__(self):
@@ -42,10 +43,12 @@ Question: {input}""")
         for file in os.listdir(DOC_DIR):
             loader = PyPDFLoader(os.path.join(DOC_DIR,file))
 
-            raw_doc = loader.load_and_split() 
+            if not IS_PICKLE:
+                raw_doc = loader.load_and_split() 
             # Adam Chen Pickle Mode
-            """with open(os.path.join(DOC_DIR,file), 'rb') as handle:
-                raw_doc = pickle.load(handle)    """
+            else:
+                with open(os.path.join(DOC_DIR,file), 'rb') as handle:
+                    raw_doc = pickle.load(handle)    
             # End Pickle mode
 
             print("metadata: ")
@@ -74,8 +77,10 @@ Question: {input}""")
         self.updateDocs()
 
         #Adam Chen Hotfix Use Local DB
-        #self.vector = Chroma(persist_directory="./Chroma", embedding_function=embeddings)
-        self.vector = Chroma.from_documents(self.docs, embeddings) 
+        if IS_PICKLE:
+            self.vector = Chroma(persist_directory="./Chroma", embedding_function=embeddings)
+        else:
+            self.vector = Chroma.from_documents(self.docs, embeddings) 
         
         self.isCreated = True
 
