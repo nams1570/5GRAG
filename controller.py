@@ -100,7 +100,7 @@ Question: {input}""")
                         ) 
         else:
             # If we have selected one or more docs, then apply filtering
-            name_list = ['data\\' + doc for doc in selected_docs]
+            name_list = [os.path.join(DOC_DIR,doc) for doc in selected_docs]
             print("name_list: ", name_list)
             name_filter = {"source": {"$in": name_list}}
             return MultiQueryRetriever.from_llm(
