@@ -1,9 +1,6 @@
 import gradio as gr
 
 from controller import Controller
-from langchain.chains import ConversationChain
-from typing import Optional, Tuple
-from threading import Lock
 from settings import config
 import os
 
