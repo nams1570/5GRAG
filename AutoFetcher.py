@@ -1,6 +1,7 @@
 from settings import config
 import requests
 from bs4 import BeautifulSoup
+import os
 # idea:
 # These pages are maintained quite consistently. 
 # two questions:
@@ -29,10 +30,23 @@ class AutoFetcher:
         if not self.links.get(endpoint,[]):
             raise Exception("Error: Run extractLinksFromEndpoint first")
         return self.links[endpoint][-1]
+    
+    def getFileFromLink(self,link):
+        filename = link.split("/")[-1]
+        filepath = os.path.join(config['DOC_DIR'],filename)
+
+        response = requests.get(link)
+        if response.status_code != 200:
+            raise Exception("Error: Could not retrieve page content")
+        
+        with open(filepath,'wb') as file:
+            file.write(response.content)
 
 if __name__ == "__main__":
     params = {"sortby":"date"}
     endpoint = "https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series"
     af = AutoFetcher([endpoint])
     af.extractLinksFromEndpoint(endpoint,params)
-    print(f"link is {af.getMostRecentLink(endpoint)}")
+    link =af.getMostRecentLink(endpoint)
+    print(f"link is {link}")
+    af.getFileFromLink(link)
