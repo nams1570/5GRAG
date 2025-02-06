@@ -57,6 +57,10 @@ Question: {input}""")
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
             self.docs.extend(doc)
 
+    def resyncDB(self):
+        """Scan dir for new docs and add them"""
+        pass
+
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
