@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader
 from langchain.retrievers.multi_query import MultiQueryRetriever
 
 import os
@@ -41,7 +41,7 @@ Question: {input}""")
         self.docs = []
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True) #creates a text splitter, which breaks apart the document into text
         for file in os.listdir(DOC_DIR):
-            loader = PyPDFLoader(os.path.join(DOC_DIR,file))
+            loader = Docx2txtLoader(os.path.join(DOC_DIR,file))
 
             if not IS_PICKLE:
                 raw_doc = loader.load_and_split() 
