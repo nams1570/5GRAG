@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import random
+from utils import unzipFile
 # idea:
 # These pages are maintained quite consistently. 
 # two questions:
@@ -10,9 +11,10 @@ import random
 # 2) When do we pull and when do we not?
 
 class AutoFetcher:
-    def __init__(self,fetch_endpoints):
+    def __init__(self,fetch_endpoints,post_processing_func):
         self.links = {}
         self.fetch_endpoints = fetch_endpoints
+        self.post_processing_func = post_processing_func
 
     def extractLinksFromEndpoint(self,endpoint,params):
         """For a specific endpoint we retrieve the page and collect all the links on that page. 
@@ -48,6 +50,8 @@ class AutoFetcher:
 
         with open(filepath,'wb') as file:
             file.write(response.content)
+        
+        self.post_processing_func(filepath,config['DOC_DIR'])
 
     def run(self,params):
         for endpoint in self.fetch_endpoints:
@@ -58,5 +62,5 @@ class AutoFetcher:
 if __name__ == "__main__":
     params = {"sortby":"date"}
     endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
-    af = AutoFetcher(endpoints)
+    af = AutoFetcher(endpoints,unzipFile)
     af.run(params)
