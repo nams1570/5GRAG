@@ -4,12 +4,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
-from langchain_community.document_loaders import Docx2txtLoader
 from langchain.retrievers.multi_query import MultiQueryRetriever
 
 import os
@@ -32,7 +29,6 @@ Question: {input}""")
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.db = DBClient(embedding_model=embeddings)
 
-        self.isCreated = False
         self.isDatabaseTriggered = True
 
     def resyncDB(self):
