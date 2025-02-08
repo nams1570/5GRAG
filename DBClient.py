@@ -33,7 +33,7 @@ class DBClient:
         return Chroma.from_documents(docs,embedding_model)
     
     def __init__(self,embedding_model):
-        #construct chroma base db
+        #construct chroma base db            
         self.vector_db = self.constructBaseDB(embedding_model)
 
     def updateDB(self,new_file_list):
@@ -42,4 +42,9 @@ class DBClient:
         to the vector store."""
         new_docs = self.addDocsFromFilePath(new_file_list)
         self.vector_db.add_documents(new_docs)
+
+    def getRetriever(self,search_kwargs=None):
+        if search_kwargs == None:
+            return self.vector_db.as_retriever()
+        return self.vector_db.as_retriever(search_kwargs=search_kwargs)
     

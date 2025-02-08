@@ -5,8 +5,6 @@ from settings import config
 import os
 
 langchain_controller = Controller()
-langchain_controller.createVectorStore()
-
 
 def respond(prompt,history,selected_docs):
     """@prompt: question to the model
