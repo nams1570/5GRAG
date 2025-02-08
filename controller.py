@@ -1,5 +1,7 @@
 from settings import config
 from DBClient import DBClient
+from AutoFetcher import AutoFetcher
+from utils import unzipFile
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
@@ -10,7 +12,6 @@ from langchain.chains import create_retrieval_chain
 from langchain.retrievers.multi_query import MultiQueryRetriever
 
 import os
-import pickle
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
@@ -27,20 +28,26 @@ class Controller:
 </context>
 Question: {input}""")
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
+        
         self.db = DBClient(embedding_model=embeddings)
+        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
+        self.params = params = {"sortby":"date"}
+        self.af = AutoFetcher(endpoints,unzipFile)
 
         self.isDatabaseTriggered = True
 
     def resyncDB(self):
         """Scan dir for new docs and add them"""
         #Fetch new docs
-        self.af.run(self.params)
-
+        print(f"resyncing on controller end")
+        file_list = self.af.run(self.params)
+        file_list = [file[:-4] + ".docx" for file in file_list]
         #split & break down new docs
 
         #update chroma
-        #self.vector.add_documents(documents= ,uuids= )
-        pass
+        self.db.updateDB(file_list)
+
+        #reconstruct retriever
 
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""

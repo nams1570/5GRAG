@@ -35,10 +35,11 @@ class AutoFetcher:
             raise Exception("Error: Run extractLinksFromEndpoint first")
         return self.links[endpoint][-1]
     
-    def downloadFileFromLink(self,link):
+    def downloadFileFromLink(self,link)->str:
         """Makes the assumption that the last part of the address given is the name of the file to the downloaded
         Note: currently set up to work with duplicates. If the filename already exists, it will append a random hash to the end of the filename and then try to download.
-        @link: http[s] endpoint where a file can be downloaded with a get request"""
+        @link: http[s] endpoint where a file can be downloaded with a get request
+        returns: filename (not abs path)"""
         filename = link.split("/")[-1]
         filepath = os.path.join(config['DOC_DIR'],filename)
         while os.path.exists(filepath):
@@ -52,12 +53,16 @@ class AutoFetcher:
             file.write(response.content)
         
         self.post_processing_func(filepath,config['DOC_DIR'])
+        return filename
 
     def run(self,params):
+        file_list = []
         for endpoint in self.fetch_endpoints:
             self.extractLinksFromEndpoint(endpoint,params)
             link = self.getMostRecentLink(endpoint)
-            self.downloadFileFromLink(link)
+            filename=self.downloadFileFromLink(link)
+            file_list.append(filename)
+        return file_list
 
 if __name__ == "__main__":
     params = {"sortby":"date"}
