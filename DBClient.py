@@ -1,6 +1,7 @@
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import Docx2txtLoader
+import chromadb
 from settings import config
 import pickle
 import os 
@@ -28,9 +29,12 @@ class DBClient:
         return docs
 
     def constructBaseDB(self,embedding_model):
-        """We must populate the db with the initial files in the `DOC_DIR` directory"""
-        docs = self.addDocsFromFilePath(os.listdir(config['DOC_DIR']))
-        return Chroma.from_documents(docs,embedding_model)
+        """Connect to the underlying chromadb"""
+        #docs = self.addDocsFromFilePath(os.listdir(config['DOC_DIR']))
+        pers_client = chromadb.PersistentClient(path=config["CHROMA_DIR"])
+        vector_db = Chroma(client=pers_client,embedding_function=embedding_model)
+
+        return vector_db
     
     def __init__(self,embedding_model):
         #construct chroma base db            
