@@ -47,6 +47,14 @@ class DBClient:
         new_docs = self.addDocsFromFilePath(new_file_list)
         self.vector_db.add_documents(new_docs)
 
+    def delFromDB(self):
+        """This is a placeholder function. 
+        Whilst doing this definitely prevents the retriever from fetching things with these docs as source,
+        It still seems able to answer questions based on it."""
+        self.vector_db.delete(where={'source':{'$eq':'data/38214-hc0.docx'}})
+        self.vector_db.delete(where={'source':{'$eq':'data/38176-2-gc0.docx'}})
+        self.vector_db.delete(where={'source':{'$eq':'data/38741-i31.docx'}})
+
     def getRetriever(self,search_kwargs=None):
         if search_kwargs == None:
             return self.vector_db.as_retriever()
