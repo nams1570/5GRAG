@@ -85,6 +85,12 @@ Question: {input}""")
                             retriever=self.db.getRetriever(search_kwargs={'filter': name_filter}), llm=self.llm
                         )            
 
+    def getResponseWithRetrieval(self,prompt,history):
+        doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
+        retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
+    
+        resp = retrieval_chain.invoke({"input":prompt,"history": history})
+        return resp
 
     def runController(self, prompt, history, selected_docs):
 
@@ -97,10 +103,8 @@ Question: {input}""")
             # retrieval chain passed the load of deciding what document to use to answer to the retriever.
             history = self.convert_history(history)
             if self.isDatabaseTriggered:
-                doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
-                retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
-    
-                resp = retrieval_chain.invoke({"input":prompt,"history": history})
+                resp = self.getResponseWithRetrieval(prompt,history)
+                print(f"resp is {resp}")
                 response = resp['answer']
             else:
                 chain = self.prompt | self.llm
