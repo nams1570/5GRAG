@@ -1,5 +1,6 @@
 import re
 from utils import RefObj
+from langchain_core.documents import Document
 
 class ReferenceExtractor:
     def __init__(self):
@@ -38,6 +39,20 @@ class ReferenceExtractor:
             refWithoutSrc = matchedStr.replace(f" of {src}","")
             references.append(RefObj(reference=refWithoutSrc,src=src))
         return references
+
+    def runREWithDocList(self,docs:list[Document])->list[RefObj]:
+        """@docs: list of Documents, where Document is from langchain.
+        Document: {metadata:{},page_content:,start_index:}
+        Returns: a list of RefObj where each RefObj represents a reference found in the list of docs.
+        RefObj: {reference:,src:}
+        Note that as of right now, there may be duplicate RefObjs"""
+        allRefs = []
+        for doc in docs:
+            matchedStrings = self.findAllMatches(doc.page_content)
+            references = self.extractDocumentFromStrings(matchedStrings)
+            allRefs.extend(references)
+        return allRefs
+
 
 if __name__ == "__main__":
     examples = ["The determination of the used resource allocation table is defined in clause 6.1.2.1.1 of [4, TS 38.211] though you can also check Clause 6.2 or clause 6.3.",
