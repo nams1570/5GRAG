@@ -1,13 +1,25 @@
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import Docx2txtLoader
+from langchain_core.documents import Document
 import chromadb
 from settings import config
 import pickle
 import os 
-
 class DBClient:
-    def addDocsFromFilePath(self,file_list):
+    @staticmethod #remove this decorator after preliminary testing
+    def addMetadataToDoc(doc:list[Document])->list[Document]:
+        #we need to add metadata that represents the clause something is from
+        new_doc = []
+        for d in doc:
+            d.metadata = {**d.metadata,'section':'Clause ABCD'}
+            new_doc.append(d)
+        new_doc = doc
+        print(new_doc)
+        return new_doc
+
+    @staticmethod #remove this decorator after preliminary testing
+    def addDocsFromFilePath(file_list):
         """@file_list: list(str) of file names. Not absolute paths"""
         docs = []
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True) #creates a text splitter, which breaks apart the document into text
@@ -25,6 +37,8 @@ class DBClient:
             print(raw_doc[0].metadata)
 
             doc = text_splitter.split_documents(raw_doc) #applies the text splitter to the documents
+            #for each doc, add new metadata on section.
+            doc = DBClient.addMetadataToDoc(doc)
             docs.extend(doc)
         return docs
 
@@ -60,3 +74,6 @@ class DBClient:
             return self.vector_db.as_retriever()
         return self.vector_db.as_retriever(search_kwargs=search_kwargs)
     
+if __name__ == "__main__":
+    file_list = ["38214-hc0.docx"]
+    DBClient.addDocsFromFilePath(file_list)
