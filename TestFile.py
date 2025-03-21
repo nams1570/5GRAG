@@ -2,33 +2,35 @@ from docx import Document as DocParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-FILENAME = "./data/38214-hc0.docx"
 
-f = open(FILENAME,'rb')
-doc = DocParser(f)
-
-def getSectionedChunks(doc):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
-
-    current_section = None
-    sections = []
+def getSectionedChunks(file_list):
     chunks_with_metadata= []
+    for file in file_list:
 
-    for paragraph in doc.paragraphs:
-        text = paragraph.text.strip()
-        if paragraph.style.name.startswith('Heading'):
-            current_section = paragraph.text
-        elif text:
-            sections.append((text,current_section))
-        
-    for text,section in sections:
-        split_chunks = text_splitter.split_text(text)
-        for chunk in split_chunks:
-            chunks_with_metadata.append({
-                "page_content":chunk,
-                "metadata":{'section':section}
-            })
+        f = open(file,'rb')
+        doc = DocParser(f)
+
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+
+        current_section = None
+        sections = []
+
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if paragraph.style.name.startswith('Heading'):
+                current_section = paragraph.text
+            elif text:
+                sections.append((text,current_section))
+            
+        for text,section in sections:
+            split_chunks = text_splitter.split_text(text)
+            for chunk in split_chunks:
+                chunks_with_metadata.append(Document(
+                    page_content=chunk,
+                    metadata={'source':file,'section':section}
+                ))
     return chunks_with_metadata
 
 if __name__ =="__main__":
-    print(getSectionedChunks(doc))
+    file_list = ["./data/38214-hc0.docx"]
+    print(getSectionedChunks(file_list)[-100])
