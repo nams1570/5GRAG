@@ -4,6 +4,9 @@ from langchain_core.documents import Document
 
 
 def getSectionedChunks(file_list):
+    """@input: file_list. List of files in relative path that will be chunked.
+    Returns: master list chunks_with_metadata that has chunks of all the files stored as langchain Documents.
+    These Documents have section metadata"""
     chunks_with_metadata= []
     for file in file_list:
 
