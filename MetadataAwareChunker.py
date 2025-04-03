@@ -13,11 +13,14 @@ def getSectionedChunks(file_list):
         f = open(file,'rb')
         doc = DocParser(f)
 
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200,add_start_index=True)
 
         current_section = "N/A"
         sections = []
-
+        #TODO: Switch to collecting a "current section" list of text chunks
+        # currently there's no overlap between paragraphs in the same section which is bad for retrieval
+        # We want to collect (section_text,current_section) where section_text is a combination of paragraphs
+        # Then, we use the text_splitter to split it into split chunks
         for paragraph in doc.paragraphs:
             text = paragraph.text.strip()
             if paragraph.style.name.startswith('Heading'):

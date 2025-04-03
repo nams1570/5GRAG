@@ -8,8 +8,7 @@ from settings import config
 import pickle
 import os 
 class DBClient:
-    @staticmethod #remove this decorator after preliminary testing
-    def addDocsFromFilePath(file_list):
+    def addDocsFromFilePath(self,file_list):
         """@file_list: list(str) of file names. Not absolute/relative paths"""
         docs = []
         file_list = [os.path.join(config['DOC_DIR'],file) for file in file_list]
