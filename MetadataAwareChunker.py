@@ -15,7 +15,7 @@ def getSectionedChunks(file_list):
 
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
 
-        current_section = None
+        current_section = "N/A"
         sections = []
 
         for paragraph in doc.paragraphs:
