@@ -94,12 +94,12 @@ Question: {input}""")
     
         resp = retrieval_chain.invoke({"input":prompt,"history": history})
 
-        all_docs = resp['context'][:]
+        """all_docs = resp['context'][:]
         ext_src: list[RefObj] = RExt.runREWithDocList(docs=all_docs)
         #print(f"ext_src is {ext_src[0].reference}")
         for refObj in ext_src:
             res = self.retriever.invoke(f"You are an expert retriever with access to a vector database. Parse through the database, and only return data from this section: {refObj.reference}")
-            print(f"for ref {refObj.reference}, res is {res}")
+            print(f"for ref {refObj.reference}, res is {res}")"""
 
         return resp
 
