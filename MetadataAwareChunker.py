@@ -21,7 +21,7 @@ def getSectionedChunks(file_list):
         # currently there's no overlap between paragraphs in the same section which is bad for retrieval
         # We want to collect (section_text,current_section) where section_text is a combination of paragraphs
         # Then, we use the text_splitter to split it into split chunks
-        """for paragraph in doc.paragraphs:
+        for paragraph in doc.paragraphs:
             text = paragraph.text.strip()
             if paragraph.style.name.startswith('Heading'):
                 current_section = paragraph.text
@@ -34,17 +34,27 @@ def getSectionedChunks(file_list):
                 chunks_with_metadata.append(Document(
                     page_content=chunk,
                     metadata={'source':file,'section':section}
-                ))"""
+                ))
+    return chunks_with_metadata
+
+def getFullFileChunks(file_list):
+    chunks = []
+    for file in file_list:
+
+        f = open(file,'rb')
+        doc = DocParser(f)
+
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200,add_start_index=True)
         text = ""
         for paragraph in doc.paragraphs:
             text += paragraph.text
         split_chunks = text_splitter.split_text(text)
         for chunk in split_chunks:
-            chunks_with_metadata.append(Document(
+            chunks.append(Document(
                 page_content=chunk,
                 metadata={'source':file}
             ))
-    return chunks_with_metadata
+    return chunks
 
 if __name__ =="__main__":
     file_list = ["./data/38214-hc0.docx"]
