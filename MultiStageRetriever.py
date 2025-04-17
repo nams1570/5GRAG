@@ -1,6 +1,5 @@
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
 
 class MultiStageRetriever:
     def __init__(self,llm,prompt_template):
@@ -30,8 +29,9 @@ class MultiStageRetriever:
     def invoke(self,query,history):
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
-        retrieval_chain = create_retrieval_chain(self.base_retriever, self.doc_chain)
-        resp = retrieval_chain.invoke({"input":query,"history":history})
+        retrieved_docs = self.base_retriever.invoke(query)
+        resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":query,"history":history})
+        resp = {"input":query,"history":history,"context":retrieved_docs,"answer":resp_answer}
         return resp
     
     
