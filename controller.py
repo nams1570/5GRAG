@@ -33,7 +33,8 @@ Question: {input}""")
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         
         self.db = DBClient(embedding_model=embeddings)
-        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
+        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
+        #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
         self.params = params = {"sortby":"date"}
         self.af = AutoFetcher(endpoints,unzipFile)
 
@@ -92,8 +93,13 @@ Question: {input}""")
         doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
         retrieval_chain = create_retrieval_chain(self.retriever, doc_chain)
     
-        resp = retrieval_chain.invoke({"input":prompt,"history": history})
+        #retriever.invoke gives us docs
+        retrieved_docs = self.retriever.invoke(prompt)
 
+        print(f"\n retrieved docs are {retrieved_docs}\n")
+
+        #resp = retrieval_chain.invoke({"input":prompt,"history": history})
+        resp_answer = doc_chain.invoke({"context":retrieved_docs,"input":prompt})
         """all_docs = resp['context'][:]
         ext_src: list[RefObj] = RExt.runREWithDocList(docs=all_docs)
         #print(f"ext_src is {ext_src[0].reference}")
@@ -101,6 +107,7 @@ Question: {input}""")
             res = self.retriever.invoke(f"You are an expert retriever with access to a vector database. Parse through the database, and only return data from this section: {refObj.reference}")
             print(f"for ref {refObj.reference}, res is {res}")"""
 
+        resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
         return resp
 
     def runController(self, prompt, history, selected_docs):
@@ -115,13 +122,13 @@ Question: {input}""")
             history = self.convert_history(history)
             if self.isDatabaseTriggered:
                 resp = self.getResponseWithRetrieval(prompt,history)
-                #print(f"resp is {resp}")
+                print(f"resp is {resp}")
                 response = resp['answer']
             else:
                 chain = self.prompt | self.llm
                 resp = chain.invoke({"input":prompt,"history": history})
                 response = resp.content
-            print(f"resp is {resp}")
+            #print(f"resp is {resp}")
             return response
     
 if __name__ == "__main__":
