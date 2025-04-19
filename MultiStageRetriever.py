@@ -2,13 +2,17 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from utils import RefObj
 from ReferenceExtractor import ReferenceExtractor
+import os 
+from settings import config
 
 RExt = ReferenceExtractor()
+DOC_DIR = config["DOC_DIR"]
 
 class MultiStageRetriever:
     def __init__(self,llm,prompt_template):
         self.llm = llm
         self.doc_chain = create_stuff_documents_chain(self.llm, prompt_template)
+        self.selected_docs = None
 
     def reconstructDocChain(self,new_prompt_template):
         self.doc_chain = create_stuff_documents_chain(self.llm,new_prompt_template)
@@ -22,11 +26,13 @@ class MultiStageRetriever:
             self.base_retriever = MultiQueryRetriever.from_llm(
                             retriever=db.getRetriever(), llm=self.llm
                         ) 
+            self.selected_docs = None
         else:
             # If we have selected one or more docs, then apply filtering
             name_list = [os.path.join(DOC_DIR,doc) for doc in selected_docs]
             print("name_list: ", name_list)
             name_filter = {"source": {"$in": name_list}}
+            self.selected_docs = name_list
             self.base_retriever = MultiQueryRetriever.from_llm(
                             retriever=db.getRetriever(search_kwargs={'filter': name_filter}), llm=self.llm
                         )
@@ -42,8 +48,15 @@ class MultiStageRetriever:
         print(f"section_names are {section_names}")
         if section_names == []:
             return []
-        metadata_filter = {"section":{"$in":section_names}}
 
+        if self.selected_docs:
+            metadata_filter = {'$and':[
+                {'source':{'$in':self.selected_docs}},
+                {'section':{"$in":section_names}}
+            ]}
+        else:    
+            metadata_filter = {"section":{"$in":section_names}}
+        
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
         for doc in org_docs:
