@@ -7,6 +7,7 @@ from settings import config
 
 RExt = ReferenceExtractor()
 DOC_DIR = config["DOC_DIR"]
+NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
 
 class MultiStageRetriever:
     def __init__(self,llm,prompt_template):
@@ -59,8 +60,7 @@ class MultiStageRetriever:
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
-        for doc in org_docs:
-            additional_docs.extend(db.vector_db.similarity_search("",10,filter=metadata_filter))
+        additional_docs.extend(db.vector_db.similarity_search("",NUM_EXTRA_DOCS,filter=metadata_filter))
 
         return additional_docs
 
