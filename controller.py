@@ -1,8 +1,7 @@
 from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
-from ReferenceExtractor import ReferenceExtractor
-from utils import unzipFile, RefObj
+from utils import unzipFile
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
@@ -15,8 +14,6 @@ API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
 DOC_DIR = config["DOC_DIR"]
 IS_PICKLE = config["IS_PICKLE"]
-
-RExt = ReferenceExtractor()
 
 class Controller:
     def __init__(self):
@@ -77,7 +74,7 @@ Question: {input}""")
 
     def getResponseWithRetrieval(self,prompt,history):
         
-        resp = self.retriever.invoke(query=prompt,history=history)
+        resp = self.retriever.invoke(query=prompt,history=history,db=self.db)
         """all_docs = resp['context'][:]
         ext_src: list[RefObj] = RExt.runREWithDocList(docs=all_docs)
         #print(f"ext_src is {ext_src[0].reference}")
