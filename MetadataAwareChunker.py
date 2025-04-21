@@ -1,7 +1,7 @@
 from docx import Document as DocParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-
+import re
 
 def parse_table(table):
     """@input: docx table. Consists of rows and cells and the cells may have other tables.
@@ -21,6 +21,22 @@ def process_section_name(section_name:str)->str:
     We do this to keep it consistent with how external references will be searched for.
     """
     return section_name.split("\t")[0]
+
+def addExtraDocumentWideMetadata(text_chunk:str):
+    extractVersionAndDocIDRegx = re.compile(r"(3GPP TS (\d+.\d+|\-\d)+ V\d+.\d+.\d)",re.IGNORECASE)
+    extractVersion = re.compile(r"(V\d+.\d+.\d)")
+    extractDocument = re.compile(r"(TS (\d+.\d+|\-\d)+)")
+
+    searchRes = extractVersionAndDocIDRegx.search(text_chunk)
+    if searchRes:
+        res = searchRes.group()
+        version = extractVersion.search(res).group()[1:]
+        docID = extractDocument.search(res).group()[3:]
+    else:
+        res = None
+    
+    metadata = {'version':version,'docID':docID}
+    return metadata
 
 def getSectionedChunks(file_list):
     """@input: file_list. List of files in relative path that will be chunked.
@@ -87,4 +103,5 @@ def getFullFileChunks(file_list):
 
 if __name__ =="__main__":
     file_list = ["./data/38101-5-hb0.docx"]
-    print(getSectionedChunks(file_list)[0:40])
+    #print(getSectionedChunks(file_list)[0:40])
+    print(addExtraDocumentWideMetadata("3GPP TS 38.101-5 V17.11.0 (2025-03)3GPP TS 38.101-5 V17.11.0 (2025-03)Technical Specification\nTechnical Specification\n3rd Generation Partnership Project;\nTechnical Specification Group Radio Access Network;"))
