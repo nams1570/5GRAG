@@ -3,6 +3,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 import re
 
+BASE_SECTION_NAME = "N/A"
+
 def parse_table(table):
     """@input: docx table. Consists of rows and cells and the cells may have other tables.
     This is a helper function to help parse tables from docx. 
@@ -33,7 +35,7 @@ def addExtraDocumentWideMetadata(text_chunk:str):
         version = extractVersion.search(res).group()[1:]
         docID = extractDocument.search(res).group()[3:]
     else:
-        res = None
+        return {}
     
     metadata = {'version':version,'docID':docID}
     return metadata
@@ -50,7 +52,7 @@ def getSectionedChunks(file_list):
 
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200,add_start_index=True)
 
-        current_section_title = "N/A"
+        current_section_title = BASE_SECTION_NAME
         current_section_text = ""
         sections = []
         #TODO: Switch to collecting a "current section" list of text chunks
@@ -73,12 +75,19 @@ def getSectionedChunks(file_list):
         #Add last section to sections
         sections.append((current_section_text,current_section_title))
 
+        addMetadata = {}
+
         for text,section_name in sections:
             split_chunks = text_splitter.split_text(text)
+            
+            if section_name == BASE_SECTION_NAME and not addMetadata:
+                addMetadata = addExtraDocumentWideMetadata(text)
+                print(f"metadata is {addMetadata}")
+
             for chunk in split_chunks:
                 chunks_with_metadata.append(Document(
                     page_content=chunk,
-                    metadata={'source':file,'section':process_section_name(section_name)}
+                    metadata={'source':file,'section':process_section_name(section_name),**addMetadata}
                 ))
     return chunks_with_metadata
 
@@ -102,6 +111,6 @@ def getFullFileChunks(file_list):
     return chunks
 
 if __name__ =="__main__":
-    file_list = ["./data/38101-5-hb0.docx"]
-    #print(getSectionedChunks(file_list)[0:40])
-    print(addExtraDocumentWideMetadata("3GPP TS 38.101-5 V17.11.0 (2025-03)3GPP TS 38.101-5 V17.11.0 (2025-03)Technical Specification\nTechnical Specification\n3rd Generation Partnership Project;\nTechnical Specification Group Radio Access Network;"))
+    file_list = ["./data/38141-2-gk0.docx"]
+    print(getSectionedChunks(file_list)[80:90])
+    #print(addExtraDocumentWideMetadata("3GPP TS 38.101-5 V17.11.0 (2025-03)3GPP TS 38.101-5 V17.11.0 (2025-03)Technical Specification\nTechnical Specification\n3rd Generation Partnership Project;\nTechnical Specification Group Radio Access Network;"))
