@@ -15,11 +15,11 @@ class DBClient:
         docs = getSectionedChunks(file_list)
         return docs
 
-    def constructBaseDB(self,embedding_model):
+    def constructBaseDB(self,embedding_model,collection_name="context"):
         """Connect to the underlying chromadb"""
         #docs = self.addDocsFromFilePath(os.listdir(config['DOC_DIR']))
         pers_client = chromadb.PersistentClient(path=config["CHROMA_DIR"])
-        vector_db = Chroma(client=pers_client,embedding_function=embedding_model)
+        vector_db = Chroma(client=pers_client,collection_name=collection_name,embedding_function=embedding_model)
 
         return vector_db
     
