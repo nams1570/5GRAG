@@ -26,7 +26,8 @@ class Controller:
 Question: {input}""")
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         
-        self.db = DBClient(embedding_model=embeddings)
+        self.contextDB = DBClient(embedding_model=embeddings)
+
         endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
         self.params = params = {"sortby":"date"}
@@ -36,7 +37,7 @@ Question: {input}""")
 
         self.isDatabaseTriggered = True
 
-    def resyncDB(self):
+    def updateContextDB(self):
         """Scan dir for new docs and add them"""
         #Fetch new docs
         print(f"resyncing on controller end")
@@ -45,9 +46,14 @@ Question: {input}""")
         #split & break down new docs
 
         #update chroma
-        self.db.updateDB(file_list)
+        self.contextDB.updateDB(file_list)
         print(f"done resyncing")
-        #reconstruct retriever
+        #reconstruct retriever'
+    
+    def updateReasonDB(self):
+        """Fetches latest tdocs and reads into the reason collection"""
+        print(f"Hit the update reason!")
+        pass
 
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""
@@ -73,13 +79,13 @@ Question: {input}""")
     
 
     def getResponseWithRetrieval(self,prompt,history):
-        resp = self.retriever.invoke(query=prompt,history=history,db=self.db)
+        resp = self.retriever.invoke(query=prompt,history=history,db=self.contextDB)
         return resp
 
     def runController(self, prompt, history, selected_docs):
 
         print('Selected Docs: ', selected_docs)
-        self.retriever.constructRetriever(db=self.db,selected_docs=selected_docs)
+        self.retriever.constructRetriever(db=self.contextDB,selected_docs=selected_docs)
 
         if prompt:
             print(f"Ctrl + C to exit...")
