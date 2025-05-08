@@ -15,7 +15,7 @@ class DBClient:
         docs = getSectionedChunks(file_list)
         return docs
 
-    def constructBaseDB(self,embedding_model,collection_name="context"):
+    def constructBaseDB(self,embedding_model,collection_name):
         """Connect to the underlying chromadb"""
         #docs = self.addDocsFromFilePath(os.listdir(config['DOC_DIR']))
         pers_client = chromadb.PersistentClient(path=config["CHROMA_DIR"])
@@ -23,9 +23,9 @@ class DBClient:
 
         return vector_db
     
-    def __init__(self,embedding_model):
+    def __init__(self,embedding_model,collection_name="context"):
         #construct chroma base db            
-        self.vector_db = self.constructBaseDB(embedding_model)
+        self.vector_db = self.constructBaseDB(embedding_model,collection_name=collection_name)
 
     def updateDB(self,new_file_list):
         """@new_file_list: list(str) list of file names (not abs paths)

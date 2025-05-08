@@ -152,7 +152,7 @@ def getFullFileChunks(file_list):
     return chunks
 
 if __name__ =="__main__":
-    file_list = ["./data/38214-hc0.docx","./data/v16diffver.docx"]
+    """file_list = ["./data/38214-hc0.docx","./data/v16diffver.docx"]
     #print(getSectionedChunks(file_list)[80:90])
     sectioned_things = {}
     for doc in getFullSectionChunks([file_list[0]]):
@@ -161,8 +161,8 @@ if __name__ =="__main__":
     for doc in getFullSectionChunks([file_list[1]]):
         sectioned_things[doc.metadata["section"]] = sectioned_things.get(doc.metadata["section"],[]) + [doc.page_content]
     
-    print(sectioned_things['2'])
-    #file_list = ["./data/38214-hc0.docx"]
-    #print(getSectionedChunks(file_list)[50:70])
+    print(sectioned_things['2'])"""
+    file_list = ["./data/R299-041.docx"]
+    print(getSectionedChunks(file_list))
     
     

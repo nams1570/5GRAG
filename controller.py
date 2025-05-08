@@ -1,7 +1,7 @@
 from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
-from utils import unzipFile
+from utils import unzipFile,convertAllDocToDocx
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
@@ -27,11 +27,15 @@ Question: {input}""")
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         
         self.contextDB = DBClient(embedding_model=embeddings)
+        self.reasonDB = DBClient(embedding_model=embeddings,collection_name="reason")
 
         endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
         self.params = params = {"sortby":"date"}
         self.af = AutoFetcher(endpoints,unzipFile)
+
+        otherEndpoints = ["https://www.3gpp.org/ftp/TSG_RAN/WG2_RL2/TSGR2_01/Docs/zips"]
+        self.afReason = AutoFetcher(otherEndpoints,unzipFile)
 
         self.retriever = MultiStageRetriever(llm=self.llm,prompt_template = self.prompt)
 
@@ -53,7 +57,12 @@ Question: {input}""")
     def updateReasonDB(self):
         """Fetches latest tdocs and reads into the reason collection"""
         print(f"Hit the update reason!")
-        pass
+        file_list = self.afReason.run()
+        convertAllDocToDocx(DOC_DIR)
+        file_list = [file[:-4] + ".docx" for file in file_list]
+        
+        self.reasonDB.updateDB(file_list)
+        print("updated collection!")
 
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""
