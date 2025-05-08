@@ -1,4 +1,5 @@
 from docx import Document as DocParser
+import docx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 import re
@@ -60,12 +61,13 @@ def getSectionedChunks(file_list):
         # We want to collect (section_text,current_section) where section_text is a combination of paragraphs
         # Then, we use the text_splitter to split it into split chunks
         for part in doc.iter_inner_content():
-            if part.style.name.startswith('Heading'):
+            print(f"part is {part}")
+            if isinstance(part,docx.text.paragraph.Paragraph) and part.style.name.startswith('Heading'):
                 # update current section
                 sections.append((current_section_text,current_section_title))
                 current_section_text = ""
                 current_section_title = part.text
-            elif "table" in part.style.name.lower():
+            elif isinstance(part,docx.table.Table):
                 for table_datum in parse_table(part):
                     current_section_text += table_datum
             else:
@@ -102,12 +104,12 @@ def getFullSectionChunks(file_list):
         sections = []
 
         for part in doc.iter_inner_content():
-            if part.style.name.startswith('Heading'):
+            if isinstance(part,docx.text.paragraph.Paragraph) and part.style.name.startswith('Heading'):
                 # update current section
                 sections.append((current_section_text,current_section_title))
                 current_section_text = ""
                 current_section_title = part.text
-            elif "table" in part.style.name.lower():
+            elif isinstance(part,docx.table.Table):
                 for table_datum in parse_table(part):
                     current_section_text += table_datum
             else:
@@ -150,7 +152,7 @@ def getFullFileChunks(file_list):
     return chunks
 
 if __name__ =="__main__":
-    file_list = ["./data/38141-2-gk0.docx","./data/v16diffver.docx"]
+    file_list = ["./data/38214-hc0.docx","./data/v16diffver.docx"]
     #print(getSectionedChunks(file_list)[80:90])
     sectioned_things = {}
     for doc in getFullSectionChunks([file_list[0]]):
@@ -160,5 +162,7 @@ if __name__ =="__main__":
         sectioned_things[doc.metadata["section"]] = sectioned_things.get(doc.metadata["section"],[]) + [doc.page_content]
     
     print(sectioned_things['2'])
+    #file_list = ["./data/38214-hc0.docx"]
+    #print(getSectionedChunks(file_list)[50:70])
     
     
