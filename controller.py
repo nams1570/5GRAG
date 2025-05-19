@@ -86,9 +86,9 @@ Question: {input}""")
 {context}
 </context>
 Question: {input}""")
+            self.retriever.reconstructDocChain(self.prompt)
         else:
             self.prompt = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
-        self.retriever.reconstructDocChain(self.prompt)
         return self.isDatabaseTriggered
 
     def convert_history(self, history):
