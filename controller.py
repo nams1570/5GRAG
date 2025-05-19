@@ -13,7 +13,6 @@ import os
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
 DOC_DIR = config["DOC_DIR"]
-IS_PICKLE = config["IS_PICKLE"]
 
 class Controller:
     def __init__(self):

@@ -38,8 +38,6 @@ DOC_DIR = config["DOC_DIR"]
 def getFileList():
     file_lst = []
     for file in os.listdir(DOC_DIR):
-        if file[-7:] == ".pickle":
-            file = file[:-7]
         file_lst.append(file)
     return gr.Dropdown(choices=file_lst,multiselect=True)
 
