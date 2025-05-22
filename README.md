@@ -23,6 +23,7 @@ langchain_community
 chromadb
 bs4
 docx2txt
+MarkItDown
 
 # Things of note:
 Initializing the db only happens when the resync button is hit. 
