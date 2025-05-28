@@ -5,6 +5,11 @@ from markitdown import MarkItDown
 from openai import OpenAI
 from pydantic import BaseModel
 from settings import config
+import tiktoken
+
+###########################
+## File Processing Tools ##
+###########################
 
 def unzipFile(filepath,dest_dir):
     """filepath must be an absolute path. 
@@ -27,6 +32,10 @@ def convertAllDocToDocx(input_dir:str,output_dir:str=None):
             filepath = os.path.join(input_dir,filename)
             subprocess.run(['soffice','--headless','--convert-to','docx','--outdir',output_dir,filepath])
             os.remove(filepath)
+
+##############################
+### Chunking Tools Section ###
+##############################
 
 def getFirstPageOfDocxInMarkdown(filepath:str):
     """filepath must be an absolute path"""
@@ -56,6 +65,28 @@ def getMetadataFromLLM(text_chunk:str)->dict:
     )
     return dict(response.output_parsed)
 
+######################
+## Tokenizing Tools ##
+######################
+
+def getTokenCount(text:str,model_name:str):
+    """Use this to get a picture of how many tokens the @text contains."""
+    if "gpt" in model_name:
+        try:
+            encoding = tiktoken.encoding_for_model(model_name)
+        except Exception as e:
+            print(f"ran into exception {e} when tokenizing, defaulting to 4o mini's tokenizer")
+            encoding = tiktoken.encoding_for_model("gpt-4o-mini")
+        finally:
+            num_tokens = len(encoding.encode(text))
+    else:
+        raise Exception("Unsupported model type!")
+    return num_tokens
+
+####################
+## Object Classes ##
+####################
+
 class RefObj:
     def __init__(self,reference:str,src:str):
         self.reference = reference
@@ -72,4 +103,5 @@ class DocumentWideMetadata(BaseModel):
     release:str
 
 if __name__ == "__main__":
-    print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))
+    #print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))
+    print(getTokenCount("Hi, how are you?",config["MODEL_NAME"]))

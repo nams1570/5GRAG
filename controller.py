@@ -1,7 +1,7 @@
 from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
-from utils import unzipFile,convertAllDocToDocx
+from utils import unzipFile,convertAllDocToDocx, getTokenCount
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
@@ -9,7 +9,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from MultiStageRetriever import MultiStageRetriever
-import os
+from sys import getsizeof
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
@@ -115,6 +115,7 @@ Question: {input}""")
 
         resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
+        print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
         return resp,org_docs,additional_docs
 
     def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
