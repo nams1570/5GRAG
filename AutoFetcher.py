@@ -11,12 +11,13 @@ from utils import unzipFile
 # 2) When do we pull and when do we not?
 
 class AutoFetcher:
-    def __init__(self,fetch_endpoints:list[str],post_processing_func):
+    def __init__(self,fetch_endpoints:list[str],post_processing_func,doc_dir_path=config["DOC_DIR"]):
         """@fetch_endpoints: list of the endpoints that the AF will query with a get request when `AF.run()` is invoked.\n
         @post_processing_func: the function that is run on the fetched files."""
         self.links = {}
         self.fetch_endpoints = fetch_endpoints
         self.post_processing_func = post_processing_func
+        self.doc_dir_path=doc_dir_path
 
     def extractLinksFromEndpoint(self,endpoint,params):
         """For a specific endpoint we retrieve the page and collect all the links on that page. 
@@ -44,9 +45,9 @@ class AutoFetcher:
         @link: http[s] endpoint where a file can be downloaded with a get request
         returns: filename (not abs path)"""
         filename = link.split("/")[-1]
-        filepath = os.path.join(config['DOC_DIR'],filename)
+        filepath = os.path.join(self.doc_dir_path,filename)
         while os.path.exists(filepath):
-            filepath = os.path.join(config['DOC_DIR'],filename+f"{random.randint(0,65535)}")
+            filepath = os.path.join(self.doc_dir_path,filename+f"{random.randint(0,65535)}")
 
         response = requests.get(link)
         if response.status_code != 200:
@@ -55,7 +56,7 @@ class AutoFetcher:
         with open(filepath,'wb') as file:
             file.write(response.content)
         
-        self.post_processing_func(filepath,config['DOC_DIR'])
+        self.post_processing_func(filepath,self.doc_dir_path)
         return filename
 
     def run(self,params=None):
