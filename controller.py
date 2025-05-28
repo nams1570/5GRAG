@@ -7,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser #converts output into 
 from langchain_core.prompts import ChatPromptTemplate 
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from MultiStageRetriever import MultiStageRetriever
 import os
 
@@ -20,13 +21,19 @@ class Controller:
     def __init__(self):
         self.output_parser = StrOutputParser()
         self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
-        self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+
+        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
 <context>
 {context}
 </context>
 Question: {input}""")
+        self.document_prompt = ChatPromptTemplate.from_template("""
+        Page content: {page_content} \n
+        From clause: {section}
+        """)
+        self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template, document_prompt=self.document_prompt)
+
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
-        
         self.contextDB = DBClient(embedding_model=embeddings)
         self.reasonDB = DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME)
 
@@ -51,7 +58,7 @@ Question: {input}""")
         otherEndpoints = ["https://www.3gpp.org/ftp/TSG_RAN/WG2_RL2/TSGR2_01/Docs/zips"]
         self.afReason = AutoFetcher(otherEndpoints,unzipFile)
 
-        self.retriever = MultiStageRetriever(llm=self.llm,prompt_template = self.prompt)
+        self.retriever = MultiStageRetriever(llm=self.llm)
 
         self.isDatabaseTriggered = True
 
@@ -66,7 +73,6 @@ Question: {input}""")
         #update chroma
         self.contextDB.updateDB(file_list)
         print(f"done resyncing")
-        #reconstruct retriever'
     
     def updateReasonDB(self):
         """Fetches latest tdocs and reads into the reason collection"""
@@ -82,14 +88,14 @@ Question: {input}""")
         """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         if self.isDatabaseTriggered:
-            self.prompt = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
 <context>
 {context}
 </context>
 Question: {input}""")
-            self.retriever.reconstructDocChain(self.prompt)
+            self.doc_chain = create_stuff_documents_chain(self.llm,self.prompt_template,document_prompt=self.document_prompt)
         else:
-            self.prompt = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
+            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
         return self.isDatabaseTriggered
 
     def convert_history(self, history):
@@ -102,8 +108,13 @@ Question: {input}""")
     
 
     def getResponseWithRetrieval(self,prompt,history):
-        resp,orig_docs,additional_docs = self.retriever.invoke(query=prompt,history=history,db=self.contextDB)
-        return resp,orig_docs,additional_docs
+        org_docs,additional_docs = self.retriever.invoke(query=prompt,db=self.contextDB)
+        
+        retrieved_docs = org_docs + additional_docs
+
+        resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
+        resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
+        return resp,org_docs,additional_docs
 
     def runController(self, prompt, history, selected_docs):
 
@@ -120,7 +131,7 @@ Question: {input}""")
                 print(f"resp is {resp}")
                 response = resp['answer']
             else:
-                chain = self.prompt | self.llm
+                chain = self.prompt_template | self.llm
                 resp = chain.invoke({"input":prompt,"history": history})
                 response = resp.content
                 orig_docs,additional_docs = [],[]

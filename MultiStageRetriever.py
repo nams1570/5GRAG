@@ -1,27 +1,17 @@
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from utils import RefObj
 from ReferenceExtractor import ReferenceExtractor
 import os 
 from settings import config
-from langchain_core.prompts import ChatPromptTemplate 
 
 RExt = ReferenceExtractor()
 DOC_DIR = config["DOC_DIR"]
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
 
 class MultiStageRetriever:
-    def __init__(self,llm,prompt_template):
+    def __init__(self,llm):
         self.llm = llm
-        self.document_prompt = ChatPromptTemplate.from_template("""
-        Page content: {page_content} \n
-        From clause: {section}
-        """)
-        self.doc_chain = create_stuff_documents_chain(self.llm, prompt_template, document_prompt=self.document_prompt)
         self.selected_docs = None
-
-    def reconstructDocChain(self,new_prompt_template):
-        self.doc_chain = create_stuff_documents_chain(self.llm,new_prompt_template,document_prompt=self.document_prompt)
 
     def constructRetriever(self,db,selected_docs=None):
         """@selected_docs: list of documents to filter.
@@ -69,7 +59,7 @@ class MultiStageRetriever:
 
         return additional_docs
 
-    def invoke(self,query,history,db):
+    def invoke(self,query,db):
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
         org_docs = self.base_retriever.invoke(query)
@@ -77,11 +67,6 @@ class MultiStageRetriever:
         additional_docs = self.getAdditionalContext(org_docs,db)
         print(f"\n\n additional docs are {additional_docs} \n\n")
 
-
-        retrieved_docs = org_docs + additional_docs
-
-        resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":query,"history":history})
-        resp = {"input":query,"history":history,"context":retrieved_docs,"answer":resp_answer}
-        return resp,org_docs,additional_docs
+        return org_docs,additional_docs
     
     
