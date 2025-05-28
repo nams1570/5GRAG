@@ -20,6 +20,11 @@ def parse_table(table):
             else:
                 yield col.text
 
+def clean_file_name(name:str):
+    """@name: the full name of the file with the path.
+    This function returns just the filename without the path"""
+    return name.split("/")[-1]
+
 def process_section_name(section_name:str)->str:
     """@input: (str)  section name.
     This is a helper function to process the section name into a numerical format.
@@ -108,7 +113,7 @@ def getSectionedChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str]
             for chunk in split_chunks:
                 chunks_with_metadata.append(Document(
                     page_content=chunk,
-                    metadata={'source':file,'section':process_section_name(section_name),**addMetadata,**file_metadata}
+                    metadata={'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
                 ))
     return chunks_with_metadata
 
@@ -148,7 +153,7 @@ def getFullSectionChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,st
             
             chunks_with_metadata.append(Document(
                 page_content=text,
-                metadata = {'source':file,'section':process_section_name(section_name),**addMetadata,**file_metadata}
+                metadata = {'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
             ))
 
         return chunks_with_metadata
@@ -168,7 +173,7 @@ def getFullFileChunks(file_list):
         for chunk in split_chunks:
             chunks.append(Document(
                 page_content=chunk,
-                metadata={'source':file}
+                metadata={'source':clean_file_name(file)}
             ))
     return chunks
 
