@@ -18,13 +18,27 @@ keys: @question: the question ,@ground_truth: the gold answer,
 """
 
 ACCEPTABLE_RELEASES = ["17","18"]
-ACCEPTABLE_SERIES = [f"{series}" for series in range(31,39,1)]
+ACCEPTABLE_SERIES = [f"{series}" for series in range(38,39,1)]
+ACCEPTABLE_FILENAMES = ["38331-i00"]
+
+def filter_ds_by_metadata(ds:pd.DataFrame,byRelease:bool,bySeries:bool,byFilename:bool):
+    if byRelease:
+        ds = ds[ds["release"].isin(ACCEPTABLE_RELEASES)]
+    if bySeries:
+        ds = ds[ds["series"].isin(ACCEPTABLE_SERIES)]
+    if byFilename:
+        ds = ds[ds["file_name"].isin(ACCEPTABLE_FILENAMES)]
+    return ds
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--output_path', '-o', type=str,default="./ds.json")
 argparser.add_argument('--size',type=int,default=100)
-args = argparser.parse_args()
+argparser.add_argument('--by_release',type=lambda x: x in ["1","True","true","yes"],default=True)
+argparser.add_argument('--by_series',type=lambda x: x in ["1","True","true","yes"],default=True)
+argparser.add_argument('--by_filename',type=lambda x: x in ["1","True","true","yes"],default=False)
 
+args = argparser.parse_args()
+print(f"args are {args} \n")
 tele_data = pd.DataFrame(load_dataset("AliMaatouk/Tele-Data",name="standard")["train"])
 tele_eval = pd.DataFrame(load_dataset("AliMaatouk/Tele-Eval")["data"])
 tele_eval = tele_eval[tele_eval["id"].str.contains("standard",na=False)]
@@ -37,13 +51,18 @@ merged_ds["metadata"] = merged_ds["metadata"].map(lambda d: ast.literal_eval(d))
 merged_ds = pd.concat([merged_ds.drop(["metadata"],axis=1),merged_ds["metadata"].apply(pd.Series)],axis=1)
 
 #filter by releases and versions
-final_ds = merged_ds[(merged_ds["release"].isin(ACCEPTABLE_RELEASES)) & (merged_ds["series"]).isin(ACCEPTABLE_SERIES)]
+final_ds = filter_ds_by_metadata(merged_ds,args.by_release,args.by_series,args.by_filename)
+
+if len(final_ds) == 0:
+    raise Exception("Empty dataset! Check if a filter is too stringent")
 
 results = []
 for i in range(args.size):
     ds_obj = final_ds.iloc[i]
     results.append({'question': ds_obj['Statement'],'ground_truth': ds_obj['Answer'], 'release': ds_obj['release'] ,\
               'series': ds_obj['series'],'file_name': ds_obj['file_name']})
+
+print(f"There are {len(results)} entries in the final dataset")
 
 with open(args.output_path, 'w') as f:
     json.dump(results, f, indent=4)
