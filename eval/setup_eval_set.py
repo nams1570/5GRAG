@@ -17,9 +17,9 @@ keys: @question: the question ,@ground_truth: the gold answer,
     @file_name: the file where the content chunk was pulled from
 """
 
-ACCEPTABLE_RELEASES = ["17","18"]
+ACCEPTABLE_RELEASES = ["17"]
 ACCEPTABLE_SERIES = [f"{series}" for series in range(38,39,1)]
-ACCEPTABLE_FILENAMES = ["38331-i00"]
+ACCEPTABLE_FILENAMES = ["38175-h50"]
 
 def filter_ds_by_metadata(ds:pd.DataFrame,byRelease:bool,bySeries:bool,byFilename:bool):
     if byRelease:
@@ -57,7 +57,7 @@ if len(final_ds) == 0:
     raise Exception("Empty dataset! Check if a filter is too stringent")
 
 results = []
-for i in range(args.size):
+for i in range(min(args.size,len(final_ds))):
     ds_obj = final_ds.iloc[i]
     results.append({'question': ds_obj['Statement'],'ground_truth': ds_obj['Answer'], 'release': ds_obj['release'] ,\
               'series': ds_obj['series'],'file_name': ds_obj['file_name']})
