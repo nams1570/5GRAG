@@ -38,8 +38,9 @@ Question: {input}""")
         self.contextDB = DBClient(embedding_model=embeddings,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
         self.reasonDB = DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
 
-        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
+        #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
+        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38211-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38212-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38213-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38214-i60.zip"]
         #ORAN Docs
         """print("38 series")
         endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.300","https://www.3gpp.org/ftp/Specs/archive/38_series/38.401","https://www.3gpp.org/ftp/Specs/archive/38_series/38.321","https://www.3gpp.org/ftp/Specs/archive/38_series/38.322","https://www.3gpp.org/ftp/Specs/archive/38_series/38.323","https://www.3gpp.org/ftp/Specs/archive/38_series/38.331",]
@@ -67,7 +68,7 @@ Question: {input}""")
         """Scan dir for new docs and add them"""
         #Fetch new docs
         print(f"resyncing on controller end")
-        file_list = self.af.run(self.params)
+        file_list = self.af.run(self.params,areEndpointsGettable=config["ARE_ENDPOINTS_GETTABLE"])
         file_list = [file[:-4] + ".docx" for file in file_list]
         #split & break down new docs
 

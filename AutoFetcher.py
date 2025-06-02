@@ -59,12 +59,17 @@ class AutoFetcher:
         self.post_processing_func(filepath,self.doc_dir_path)
         return filename
 
-    def run(self,params=None):
+    def run(self,params=None,areEndpointsGettable=False):
+        """@areEndpointsGettable: true if a file can be fetched from each endpoint with a get request.
+        False if there is at least one endpoint that must be parsed for a gettable link"""
         file_list = []
         for endpoint in self.fetch_endpoints:
             self.extractLinksFromEndpoint(endpoint,params)
-            link = self.getMostRecentLink(endpoint)
-            filename=self.downloadFileFromLink(link)
+            if not areEndpointsGettable:
+                link = self.getMostRecentLink(endpoint)
+                filename=self.downloadFileFromLink(link)
+            else:
+                filename = self.downloadFileFromLink(endpoint)
             file_list.append(filename)
         return file_list
 

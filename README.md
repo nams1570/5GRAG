@@ -13,6 +13,7 @@ It should have these vars:
 6. `SPEC_COLL_NAME`: "context" -> These should be set to these values. They represent what the collections in the chromadb database will be named. There are two collections, one to store spec content and the other to store tdoc content.
 7. `TDOC_COLL_NAME`: "reason"
 8. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on.
+9. `ARE_ENDPOINTS_GETTABLE`: (boolean) indicates whether the endpoints you provide to the autofetcher can be immediately queried with a get request to download a file or not.
 
 
 # Running the system
