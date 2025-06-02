@@ -1,9 +1,11 @@
+import sys
+sys.path.append("../")
 import time
 import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from SystemModels import BaseSystemModel,GPTSystemModel
+from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel
 
 def process_item(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)->dict:
     """This function represents the system model processing a single item"""
@@ -33,9 +35,13 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--input_path','-i',type=str)
     argparser.add_argument('--output_path','-o',type=str)
+    argparser.add_argument('--use-system',action='store_true',help="pass this argument to use 5grag")
     args = argparser.parse_args()
 
-    system = GPTSystemModel()
+    if args.use_system:
+        system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+    else:
+        system = GPTSystemModel()
 
     with open(args.input_path,"r") as f:
         input_data = json.load(f)
