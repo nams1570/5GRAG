@@ -63,8 +63,11 @@ class MultiStageRetriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
         org_docs = self.base_retriever.invoke(query)
         print(f"org docs are {org_docs}")
-        additional_docs = self.getAdditionalContext(org_docs,db)
-        print(f"\n\n additional docs are {additional_docs} \n\n")
+        if config["IS_SMART_RETRIEVAL"]:
+            additional_docs = self.getAdditionalContext(org_docs,db)
+            print(f"\n\n additional docs are {additional_docs} \n\n")
+        else:
+            additional_docs = []
 
         return org_docs,additional_docs
     
