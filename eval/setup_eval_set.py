@@ -19,7 +19,7 @@ keys: @question: the question ,@ground_truth: the gold answer,
 
 ACCEPTABLE_RELEASES = ["17"]
 ACCEPTABLE_SERIES = [f"{series}" for series in range(38,39,1)]
-ACCEPTABLE_FILENAMES = ["38175-h50"]
+ACCEPTABLE_FILENAMES = ["38211-i10","38212-i10","38214-i10","38213-i10","38331-i00","38181-i00","38133-i40","38321-i00","38174-i30","38300-i00","38104-i40","38175-h50","38113-i10","38355-i00","38108-i10","38106-i30","38114-i00"]
 
 def filter_ds_by_metadata(ds:pd.DataFrame,byRelease:bool,bySeries:bool,byFilename:bool):
     if byRelease:

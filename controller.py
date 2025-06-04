@@ -23,7 +23,7 @@ class Controller:
         self.output_parser = StrOutputParser()
         self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
 
-        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in 200 words with reference to the provided context:
 <context>
 {context}
 </context>
@@ -41,6 +41,7 @@ Question: {input}""")
         #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
         endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38211-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38212-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38213-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38214-i60.zip"]
+        endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38331-i51.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38181-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38133-i90.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38321-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38174-i70.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38300-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38104-i90.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38175-i10.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38113-i40.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38355-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38108-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38106-i80.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38114-i40.zip"]
         #ORAN Docs
         """print("38 series")
         endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.300","https://www.3gpp.org/ftp/Specs/archive/38_series/38.401","https://www.3gpp.org/ftp/Specs/archive/38_series/38.321","https://www.3gpp.org/ftp/Specs/archive/38_series/38.322","https://www.3gpp.org/ftp/Specs/archive/38_series/38.323","https://www.3gpp.org/ftp/Specs/archive/38_series/38.331",]
