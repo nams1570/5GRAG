@@ -69,13 +69,14 @@ def getMetadataFromLLM(text_chunk:str)->dict:
 ## Tokenizing Tools ##
 ######################
 
-def getTokenCount(text:str,model_name:str):
+def getTokenCount(text:str,model_name:str,supressWarning:bool=True):
     """Use this to get a picture of how many tokens the @text contains."""
     if "gpt" in model_name:
         try:
             encoding = tiktoken.encoding_for_model(model_name)
         except Exception as e:
-            print(f"ran into exception {e} when tokenizing, defaulting to 4o mini's tokenizer")
+            if not supressWarning:
+                print(f"ran into exception {e} when tokenizing, defaulting to 4o mini's tokenizer")
             encoding = tiktoken.encoding_for_model("gpt-4o-mini")
         finally:
             num_tokens = len(encoding.encode(text))
