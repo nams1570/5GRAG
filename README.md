@@ -14,6 +14,7 @@ It should have these vars:
 7. `TDOC_COLL_NAME`: "reason"
 8. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on.
 9. `ARE_ENDPOINTS_GETTABLE`: (boolean) indicates whether the endpoints you provide to the autofetcher can be immediately queried with a get request to download a file or not.
+10. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval
 
 
 # Running the system
