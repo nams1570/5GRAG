@@ -55,6 +55,18 @@ class ReferenceExtractor:
             allRefs.extend(references)
         return allRefs
     
+    def runREWithStrList(self,docs:list[str])->list[RefObj]:
+        """@docs: list of str objects.
+        Returns: a list of RefObj where each RefObj represents a reference found in the list of docs
+        RefObj: {reference:,src:}
+        """
+        allRefs = []
+        for doc in docs:
+            matchedStrings = self.findAllMatches(doc)
+            references = self.extractDocumentFromStrings(matchedStrings)
+            allRefs.extend(references)
+        return allRefs
+    
     def extractClauseNumbersOfSrc(self,refs:list[RefObj])->list[str]:
         results = set()
         patterns = [r"(\d+(.\d+)*)",r"(\d+([.\d+|\-\d])*)"]
