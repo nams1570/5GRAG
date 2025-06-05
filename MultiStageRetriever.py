@@ -18,9 +18,7 @@ class MultiStageRetriever:
         @llm: the llm used for rewriting queries
         returns: Nothing"""
         if selected_docs is None or len(selected_docs) == 0:
-            self.base_retriever = MultiQueryRetriever.from_llm(
-                            retriever=db.getRetriever(), llm=self.llm
-                        ) 
+            self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"]})
             self.selected_docs = None
         else:
             # If we have selected one or more docs, then apply filtering
@@ -28,9 +26,7 @@ class MultiStageRetriever:
             print("name_list: ", name_list)
             name_filter = {"source": {"$in": name_list}}
             self.selected_docs = name_list
-            self.base_retriever = MultiQueryRetriever.from_llm(
-                            retriever=db.getRetriever(search_kwargs={'filter': name_filter}), llm=self.llm
-                        )
+            self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"],'filter': name_filter})
 
     def getAdditionalContext(self,org_docs,db):
         """@org_docs: list of initially retrieved document chunks from vector db.
@@ -62,10 +58,10 @@ class MultiStageRetriever:
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
         org_docs = self.base_retriever.invoke(query)
-        print(f"org docs are {org_docs}")
+        print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"]:
             additional_docs = self.getAdditionalContext(org_docs,db)
-            print(f"\n\n additional docs are {additional_docs} \n\n")
+            print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
         else:
             additional_docs = []
 
