@@ -61,7 +61,7 @@ Question: {input}""")
         otherEndpoints = ["https://www.3gpp.org/ftp/TSG_RAN/WG2_RL2/TSGR2_01/Docs/zips"]
         self.afReason = AutoFetcher(otherEndpoints,unzipFile,doc_dir_path)
 
-        self.retriever = MultiStageRetriever(llm=self.llm)
+        self.retriever = MultiStageRetriever()
 
         self.isDatabaseTriggered = True
 
