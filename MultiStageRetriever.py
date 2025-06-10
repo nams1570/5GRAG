@@ -8,14 +8,12 @@ RExt = ReferenceExtractor()
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
 
 class MultiStageRetriever:
-    def __init__(self,llm):
-        self.llm = llm
+    def __init__(self):
         self.selected_docs = None
 
     def constructRetriever(self,db,selected_docs=None):
         """@selected_docs: list of documents to filter.
         @db: DBClient instance.
-        @llm: the llm used for rewriting queries
         returns: Nothing"""
         if selected_docs is None or len(selected_docs) == 0:
             self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"]})
