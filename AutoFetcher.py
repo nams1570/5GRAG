@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import os
 import random
 from utils import unzipFile
+import warnings
 # idea:
 # These pages are maintained quite consistently. 
 # two questions:
@@ -45,6 +46,10 @@ class AutoFetcher:
         @link: http[s] endpoint where a file can be downloaded with a get request
         returns: filename (not abs path)"""
         filename = link.split("/")[-1]
+
+        if ".zip" not in filename and ".docx" not in filename and ".doc" not in filename and ".pdf" not in filename:
+            warnings.warn(f"AutoFetcher: skipping {link} as it is not a gettable file")
+            return
         filepath = os.path.join(self.doc_dir_path,filename)
         while os.path.exists(filepath):
             filepath = os.path.join(self.doc_dir_path,filename+f"{random.randint(0,65535)}")
@@ -59,18 +64,27 @@ class AutoFetcher:
         self.post_processing_func(filepath,self.doc_dir_path)
         return filename
 
-    def run(self,params=None,areEndpointsGettable=False):
+    def run(self,params=None,areEndpointsGettable=False,getAllFilesFromLink=False):
         """@areEndpointsGettable: true if a file can be fetched from each endpoint with a get request.
-        False if there is at least one endpoint that must be parsed for a gettable link"""
+        False if there is at least one endpoint that must be parsed for a gettable link
+        `@getAllFilesFromLink`: True if you'd prefer to download all the files from the endpoint rather than only the most recently updated one"""
+        
         file_list = []
         for endpoint in self.fetch_endpoints:
             self.extractLinksFromEndpoint(endpoint,params)
             if not areEndpointsGettable:
-                link = self.getMostRecentLink(endpoint)
-                filename=self.downloadFileFromLink(link)
+                if not getAllFilesFromLink:
+                    link = self.getMostRecentLink(endpoint)
+                    filename=self.downloadFileFromLink(link)
+                    file_list.append(filename)
+                else:
+                    print(f"self.links is {self.links}")
+                    for link in self.links[endpoint]:
+                        filename = self.downloadFileFromLink(link)
+                        file_list.append(filename)
             else:
                 filename = self.downloadFileFromLink(endpoint)
-            file_list.append(filename)
+                file_list.append(filename)
         return file_list
 
 if __name__ == "__main__":
