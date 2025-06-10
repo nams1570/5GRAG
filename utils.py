@@ -33,6 +33,16 @@ def convertAllDocToDocx(input_dir:str,output_dir:str=None):
             subprocess.run(['soffice','--headless','--convert-to','docx','--outdir',output_dir,filepath])
             os.remove(filepath)
 
+def getAllFilesInDirMatchingFormat(target_dir:str,accepted_extensions:list[str]=[".docx"])->list[str]:
+    """Helper function to return the names of all the files in `@target_dir` that match any one of the `@accepted_extensions`"""
+    file_list = set()
+    for filename in os.listdir(target_dir):
+        for extension in accepted_extensions:
+            if extension in filename:
+                file_list.add(filename)
+    return list(file_list)
+
+
 ##############################
 ### Chunking Tools Section ###
 ##############################
@@ -105,4 +115,4 @@ class DocumentWideMetadata(BaseModel):
 
 if __name__ == "__main__":
     #print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))
-    print(getTokenCount("Hi, how are you?",config["MODEL_NAME"]))
+    print(getAllFilesInDirMatchingFormat(".",[".py"]))

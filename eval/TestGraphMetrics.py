@@ -4,8 +4,10 @@ from ReferenceExtractor import ReferenceExtractor
 from utils import RefObj
 from langchain_core.documents import Document
 from MetadataAwareChunker import getFullSectionChunks
+from AutoFetcher import AutoFetcher
+from utils import unzipFile,getAllFilesInDirMatchingFormat
 from typing import Tuple
-
+import json
 RE =ReferenceExtractor()
 
 SECTIONS_TO_BE_DROPPED = ["Foreword", "N/A", "Annex A (informative):\nChange history"]
@@ -59,17 +61,29 @@ def get_intrarelation_measure(chunks_with_metadata:list[Document])->Tuple[dict,d
             avg_per_chunk_with_refs += len(allRefs)
 
     avg_num_references /= len(chunks_with_metadata)
-    avg_per_chunk_with_refs /= num_chunks_with_any_refs
+    if num_chunks_with_any_refs == 0:
+        avg_per_chunk_with_refs = 0
+    else:
+        avg_per_chunk_with_refs = avg_per_chunk_with_refs/ num_chunks_with_any_refs
     return {"avg_num_references":avg_num_references,"avg_per_chunk_with_refs":avg_per_chunk_with_refs,"num_chunks_with_any_refs":num_chunks_with_any_refs,"num_chunks_with_internal_refs":num_chunks_with_internal_refs,"num_chunks_with_external_refs":num_chunks_with_external_refs},section_to_ref_num
 
 if __name__ == "__main__":
-    file_list = ["../data/38214-i60.docx"]
-    chunks_with_metadata = filter_chunks(getFullSectionChunks(file_list))
-    for chunk in chunks_with_metadata:
-        print(chunk.metadata["section"])
-    print(len(chunks_with_metadata))
-    result,breakdown = get_intrarelation_measure(chunks_with_metadata)
-    #print(breakdown)
-    print(f"{result}")
-    
+    #af = AutoFetcher(["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"],unzipFile,"./")
+    #file_list = af.run(params=None,getAllFilesFromLink=True)
+    results = []
+    file_list = getAllFilesInDirMatchingFormat(".")
+    print(file_list)
+    for file in file_list:
+        chunks_with_metadata = filter_chunks(getFullSectionChunks([file]))
+        for chunk in chunks_with_metadata:
+            print(chunk.metadata["section"])
+        print(len(chunks_with_metadata))
+        if len(chunks_with_metadata) == 0:
+            continue
+        result,breakdown = get_intrarelation_measure(chunks_with_metadata)
+        #print(breakdown)
+        obj = {"file_name":file,"number of chunks with either internal or external refs":result['num_chunks_with_any_refs'],"total number of chunks":len(chunks_with_metadata),"percentage of sections with any references":result['num_chunks_with_any_refs']/len(chunks_with_metadata)}
+        results.append(obj)
+    with open("interrelation.json", 'w') as f:
+        json.dump(results, f, indent=4)    
 
