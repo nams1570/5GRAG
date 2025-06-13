@@ -54,7 +54,8 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk,db):
     #ensure that only clauses that can be inthe document are accessed
     true_refs,all_sections_in_org_file = get_all_existing_sections(true_refs,chunks_in_file)
     print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
-    org_docs,_ = mr.invoke(org_chunk.page_content,db)
+    org_docs,add_docs = mr.invoke(org_chunk.page_content,db)
+    org_docs += add_docs
     #check the sections of the org_docs.  
     retriever_refs = get_refs_without_tables(RE.runREWithDocList(org_docs))
     retriever_refs = set(RE.extractClauseNumbersOfSrc(retriever_refs))
@@ -68,11 +69,20 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk,db):
     retrieved_complement  = all_sections_in_org_file.difference(retriever_refs)
     tn = true_complement.intersection(retrieved_complement)
 
-    precision = tp/(tp+fp) if tp+fp !=0 else None
-    recall = tp/(tp+fn) if tp+fn !=0 else None
-    f1_score = (2*precision*recall)/(precision+recall) if precision and recall else None
+    precision = tp/(tp+fp) if tp+fp !=0 else 0.0
+    recall = tp/(tp+fn) if tp+fn !=0 else 0.0
+    f1_score = (2*precision*recall)/(precision+recall) if precision and recall else 0.0
 
     return {org_chunk.metadata["section"]:{"precision":precision,"recall":recall,"f1_score":f1_score}}
+
+def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
+    tot_precision,tot_recall,tot_f1 = 0,0,0
+    n = len(results_dict)
+    for section in results_dict.keys():
+        tot_precision += results_dict[section]["precision"]
+        tot_recall += results_dict[section]["recall"]
+        tot_f1 += results_dict[section]["f1_score"]
+    return {"file_name":clean_file_name(file_name),"avg_precision":tot_precision/n,"avg_recall":tot_recall/n,"avg_f1":tot_f1/n}
 
 if __name__ == "__main__":
     ## Setup classes
@@ -88,6 +98,7 @@ if __name__ == "__main__":
 
         chunks = getFullSectionChunks([file])
         chunks_with_refs,_ = get_chunks_with_refs(chunks)
-        for chunk_with_ref in chunks_with_refs[:2]:
+        for chunk_with_ref in chunks_with_refs:
             results = {**results,**count_hit_rate_with_retrieval(chunks,chunk_with_ref,db)}
-    print(results)
+        #print(results)
+        print(get_avg_scores_for_file(file,results))
