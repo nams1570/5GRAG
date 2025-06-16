@@ -49,21 +49,22 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk,db):
     So tp,tn,fp,fn is calculated based on the number of sections not the number of chunks who meet criteria"""
     true_refs = get_refs_without_tables(RE.runREWithDocList([org_chunk]))
     true_refs = set(RE.extractClauseNumbersOfSrc(true_refs))
-    print(f"true_refs before:{true_refs}")
 
     #ensure that only clauses that can be inthe document are accessed
     true_refs,all_sections_in_org_file = get_all_existing_sections(true_refs,chunks_in_file)
-    print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
+    #print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
     org_docs,add_docs = mr.invoke(org_chunk.page_content,db)
     org_docs += add_docs
     #check the sections of the org_docs.  
-    retriever_refs = get_refs_without_tables(RE.runREWithDocList(org_docs))
-    retriever_refs = set(RE.extractClauseNumbersOfSrc(retriever_refs))
-    print(f"retriever refs: {retriever_refs}")
+    retriever_refs = set()
+    for doc in org_docs:
+        retriever_refs.add(doc.metadata["section"])
 
     tp = len(retriever_refs.intersection(true_refs))
     fp = len(retriever_refs.difference(true_refs))
+
     fn =len(true_refs.difference(retriever_refs))
+
     
     true_complement = all_sections_in_org_file.difference(true_refs)
     retrieved_complement  = all_sections_in_org_file.difference(retriever_refs)
@@ -98,6 +99,7 @@ if __name__ == "__main__":
 
         chunks = getFullSectionChunks([file])
         chunks_with_refs,_ = get_chunks_with_refs(chunks)
+        print(f"there are {len(chunks_with_refs)} chunks_with_refs")
         for chunk_with_ref in chunks_with_refs:
             results = {**results,**count_hit_rate_with_retrieval(chunks,chunk_with_ref,db)}
         #print(results)
