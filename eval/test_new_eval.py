@@ -19,8 +19,12 @@ chunk1:{chunk1content} which is from clause {section1}.
 chunk2:{chunk2content} which is from clause {section2}.
 Instructions:
 1. Do not use the terms chunk1 or chunk2 in the generated question
-2. The question generated MUST require information from both chunks to answer.
-3. Respond only with a json of the form {{"question":"...","answer":"..." }} where question is the generated question and answer is the answer to that question. There should be no ``` or word json in the response, only the dictionary'''
+2. The question generated MUST ask about a concept that is split between the two chunks/sections.
+3. The question generated MUST require bridging the reference between sections
+4. The question must require a logical connection between two points not found in the same chunk
+5. The question MUST be unanswerable using only chunk1 or only chunk2 in isolation
+6. Ensure the answer is complete and clearly grounded in content from both chunks.
+7. Respond only with a json of the form {{"question":"...","answer":"..." }} where question is the generated question and answer is the answer to that question. There should be no ``` or word json in the response, only the dictionary'''
 def get_response(client,chunk1,chunk2, seed):
     chunk1content,section1 = chunk1.page_content,chunk1.metadata["section"]
     chunk2content,section2 = chunk2.page_content, chunk2.metadata["section"]
