@@ -7,6 +7,7 @@ import json
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import argparse
 from openai import OpenAI
 
 
@@ -51,7 +52,9 @@ def process_item(client, chunk1,chunk2, seed, max_retries=3, delay=3):
             response_obj = json.loads(gpt_response)
             return {
                 'question': response_obj["question"],
-                'ground_truth': response_obj["answer"]
+                'ground_truth': response_obj["answer"],
+                'primary_chunk_section': chunk1.metadata["section"],
+                'primary_chunk_text': chunk1.page_content
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
@@ -75,14 +78,18 @@ def get_double_ref_pairs(chunks)->list[tuple]:
         for ref in true_refs:
             if ref_section_to_chunk.get(ref,None):
                 edges.append((chunk,ref_section_to_chunk[ref]))
-    return edges
+    return edges    
 
 if __name__ == "__main__":
     file = "../data/38211-i60.docx"
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--size',type=int,default=100)
+    args = argparser.parse_args()
+
     results = {}
 
     chunks = getFullSectionChunks([file])
-    edges = get_double_ref_pairs(chunks)
+    edges = get_double_ref_pairs(chunks)[:args.size]
 
     results = [None] * len(edges)
 
