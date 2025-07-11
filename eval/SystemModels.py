@@ -17,7 +17,7 @@ class GPTSystemModel(BaseSystemModel):
             api_key=config["API_KEY"],
             timeout=60,
             )
-        self.response_template = '''The following is a question about telecommunications and networking. Just give the answer.
+        self.response_template = '''The following is a question about telecommunications and networking. Just give the answer in about 200 words.
         Question:{question}
         Answer:'''
     
