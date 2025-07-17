@@ -10,6 +10,7 @@ import time
 import argparse
 from openai import OpenAI
 
+BLACKLISTED_SECTIONS = ["3.1","3.2","3.3","3","1","2","Foreword"]
 
 RE = ReferenceExtractor()
 
@@ -72,12 +73,13 @@ def get_double_ref_pairs(chunks)->list[tuple]:
     edges = []
     ref_section_to_chunk = {chunk.metadata["section"]:chunk for chunk in chunks}
     for chunk in chunks:
+        if chunk.metadata['section'] in BLACKLISTED_SECTIONS:
+            continue
         true_refs = RE.runREWithDocList([chunk])
-        true_refs = set(RE.extractClauseNumbersOfSrc(true_refs))
-
+        true_refs = set(RE.extractClauseNumbersOfSrc(true_refs)) - set(BLACKLISTED_SECTIONS)
         for ref in true_refs:
-            if ref_section_to_chunk.get(ref,None):
-                edges.append((chunk,ref_section_to_chunk[ref]))
+            if ref_section_to_chunk.get(ref,None) != None:
+                    edges.append((chunk,ref_section_to_chunk[ref]))
     return edges    
 
 if __name__ == "__main__":
@@ -90,7 +92,6 @@ if __name__ == "__main__":
 
     chunks = getFullSectionChunks([file])
     edges = get_double_ref_pairs(chunks)[:args.size]
-
     results = [None] * len(edges)
 
     output_path = "./results.json"

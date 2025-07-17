@@ -40,6 +40,7 @@ if __name__ == "__main__":
 
     if args.use_system:
         system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+        print("USIN SYSTEM")
     else:
         system = GPTSystemModel()
 
