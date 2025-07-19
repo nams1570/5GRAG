@@ -55,7 +55,9 @@ def process_item(client, chunk1,chunk2, seed, max_retries=3, delay=3):
                 'question': response_obj["question"],
                 'ground_truth': response_obj["answer"],
                 'primary_chunk_section': chunk1.metadata["section"],
-                'primary_chunk_text': chunk1.page_content
+                'primary_chunk_text': chunk1.page_content,
+                'secondary_chunk_section':chunk2.metadata["section"],
+                'secondary_chunk_text': chunk2.page_content,
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
@@ -79,6 +81,8 @@ def get_double_ref_pairs(chunks)->list[tuple]:
         true_refs = set(RE.extractClauseNumbersOfSrc(true_refs)) - set(BLACKLISTED_SECTIONS)
         for ref in true_refs:
             if ref_section_to_chunk.get(ref,None) != None:
+                    if chunk.page_content == "" or ref_section_to_chunk[ref].page_content == "":
+                        continue
                     edges.append((chunk,ref_section_to_chunk[ref]))
     return edges    
 
