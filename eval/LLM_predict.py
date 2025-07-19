@@ -7,6 +7,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel
 
+def get_other_keys(item:dict):
+    """get all the other keys of the dict that aren't explicitly delineated"""
+    other_keys = set(item.keys()) - {'question','ground_truth'}
+    return {key:item[key] for key in other_keys}
+
 def process_item(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)->dict:
     """This function represents the system model processing a single item"""
     question = item['question']
@@ -17,7 +22,8 @@ def process_item(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)
             return {
                 'question': question,
                 'ground_truth': ground_truth,
-                'predicted_answer':resp
+                'predicted_answer':resp,
+                **get_other_keys(item)
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
