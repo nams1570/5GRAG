@@ -7,11 +7,15 @@ SRC_DOC = "Current_Doc"
 class ReferenceExtractor:
     def __init__(self):
         self.regxs=[]
-        self.extractDocRegx = re.compile(r"\[\d+, [A-Za-z0-9_\. ]*\]",re.IGNORECASE)
+        self.extractSrcStringRegx = re.compile(r"\[\d+, [A-Za-z0-9_\. ]*\]",re.IGNORECASE)
+        self.extractDocIDRegx = re.compile(r"\b(?:TS\s*)?([0-9]{2}\.[0-9]{3})\b",re.IGNORECASE)
         patterns = [r"(clause\s+(\d+(.\d+)*).?(of \[\d+, [A-Za-z0-9_\. ]*\])?)",r"(Table\s+(\d+([.\d+|\-\d])*).?)",r"(subclause\s+(\d+(.\d+)*))",r"(subclauses\s+(\d+(.\d+)*) and (\d+(.\d+)*))"]
         for pattern in patterns:
             #re.compile turns a string into a regex. 
             self.regxs.append(re.compile(pattern,re.IGNORECASE))
+
+    def getSRCDOC(self):
+        return SRC_DOC
 
     def findAllMatches(self,doc:str)->list[str]:
         """@doc: the string that we compare against all regexes
@@ -33,12 +37,14 @@ class ReferenceExtractor:
         references:list[RefObj] = []
 
         for matchedStr in matchedStrings:
-            match = self.extractDocRegx.search(matchedStr)
+            match = self.extractSrcStringRegx.search(matchedStr)
             if match:
                 src = match.group()
             else:
                 src = SRC_DOC
             refWithoutSrc = matchedStr.replace(f" of {src}","")
+            if src != SRC_DOC:
+                src = self.extractDocIDRegx.search(src).group(1)
             references.append(RefObj(reference=refWithoutSrc,src=src))
         return references
 
@@ -68,19 +74,25 @@ class ReferenceExtractor:
         return allRefs
     
     def extractClauseNumbersOfSrc(self,refs:list[RefObj])->list[str]:
+        results = []
+        for ref in refs:
+            if ref.src == SRC_DOC:
+                results += self.extractClauseNumbersFromString(ref.reference)
+        return results
+    
+    def extractClauseNumbersFromString(self,reference:str):
         results = set()
         patterns = [r"(\d+(.\d+)*)",r"(\d+([.\d+|\-\d])*)"]
         extractRegxs = [ re.compile(pattern) for pattern in patterns]
-        for ref in refs:
-            if ref.src == SRC_DOC:
-                for regx in extractRegxs:
-                    temp = regx.findall(ref.reference)
-                    if temp:
-                        for tup in temp:
-                            if len(tup)>0 and tup[-1] != ".":
-                                results.add(tup[0]) 
+
+        for regx in extractRegxs:
+            temp = regx.findall(reference)
+            if temp:
+                for tup in temp:
+                    if len(tup)>0 and tup[-1] != ".":
+                        results.add(tup[0])
         return list(results)
-    
+
     def extractDocIdsFromStrList(self,str_list:list[str])->list[str]:
         """@str_list: list of strings which may or may not have docid references in them.
         Docid is of the form xy.pqr usually and identifies a specific document.

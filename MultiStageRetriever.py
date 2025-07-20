@@ -26,11 +26,34 @@ class MultiStageRetriever:
             self.selected_docs = name_list
             self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"],'filter': name_filter})
 
+    def buildDocIdandSectionFilter(ref:RefObj,org_docid):
+        section_names = RExt.extractClauseNumbersFromString(ref.reference)
+        if ref.src == RExt.getSRCDOC():
+            docId = org_docid
+        else:
+            docId = ref.src
+            
+        if docId == None:
+            return {'section':{"$in":section_names}}
+        filter = {'$and':[
+                {'docID':{"$eq":docId}},
+                {'section':{"$in":section_names}}
+            ]}
+        return filter
+
+    def buildFiltersFromRefs(self,docs)->list[RefObj]:
+        """We want to make sure when we are resolving references, we search for chunks of the requisite section and same docid as  the reference."""
+        ext_src: list[RefObj] = []
+        for doc in docs:
+            org_docid = doc.metadata.get("docID",None)
+            ext_src.extend(RExt.runREWithDocList(docs=[doc]))
+        return ext_src
+
     def getAdditionalContext(self,org_docs,db):
         """@org_docs: list of initially retrieved document chunks from vector db.
         In this method, we parse the org_docs for external references and perform additional retrievals.
         returns: list of document chunks"""
-        ext_src: list[RefObj] = RExt.runREWithDocList(docs=org_docs)
+        ext_src: list[RefObj] = self.buildFiltersFromRefs(docs=org_docs)
         section_names = []
         section_names = RExt.extractClauseNumbersOfSrc(ext_src)
         print(f"\n extr_src is {ext_src}\n")
