@@ -26,13 +26,14 @@ class MultiStageRetriever:
             self.selected_docs = name_list
             self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"],'filter': name_filter})
 
-    def buildDocIdandSectionFilter(ref:RefObj,org_docid):
+    def buildDocIdandSectionFilter(self,ref:RefObj,org_docid:str)->dict:
         section_names = RExt.extractClauseNumbersFromString(ref.reference)
         if ref.src == RExt.getSRCDOC():
             docId = org_docid
         else:
             docId = ref.src
-            
+        if section_names == []:
+            return {}
         if docId == None:
             return {'section':{"$in":section_names}}
         filter = {'$and':[
@@ -41,33 +42,30 @@ class MultiStageRetriever:
             ]}
         return filter
 
-    def buildFiltersFromRefs(self,docs)->list[RefObj]:
+    def buildFiltersFromRefs(self,docs)->dict:
         """We want to make sure when we are resolving references, we search for chunks of the requisite section and same docid as  the reference."""
-        ext_src: list[RefObj] = []
+        filters = []
         for doc in docs:
-            org_docid = doc.metadata.get("docID",None)
-            ext_src.extend(RExt.runREWithDocList(docs=[doc]))
-        return ext_src
+            org_docid:str = doc.metadata.get("docID",None)
+            ext_src:list[RefObj] = RExt.runREWithDocList(docs=[doc])
+            for ref in ext_src:
+                new_filter = self.buildDocIdandSectionFilter(ref,org_docid)
+                if new_filter != {}:
+                    filters.append(new_filter)
+        if filters == []:
+            return {}
+        if len(filters) == 1:
+            return filters[0]
+        metadata_filter = {'$or':filters}
+        return metadata_filter
 
     def getAdditionalContext(self,org_docs,db):
         """@org_docs: list of initially retrieved document chunks from vector db.
         In this method, we parse the org_docs for external references and perform additional retrievals.
         returns: list of document chunks"""
-        ext_src: list[RefObj] = self.buildFiltersFromRefs(docs=org_docs)
-        section_names = []
-        section_names = RExt.extractClauseNumbersOfSrc(ext_src)
-        print(f"\n extr_src is {ext_src}\n")
-        print(f"section_names are {section_names}")
-        if section_names == []:
+        metadata_filter = self.buildFiltersFromRefs(docs=org_docs)
+        if metadata_filter == {}:
             return []
-
-        if self.selected_docs:
-            metadata_filter = {'$and':[
-                {'source':{'$in':self.selected_docs}},
-                {'section':{"$in":section_names}}
-            ]}
-        else:    
-            metadata_filter = {"section":{"$in":section_names}}
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
