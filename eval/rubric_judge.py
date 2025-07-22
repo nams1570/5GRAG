@@ -14,7 +14,7 @@ response_template = '''# Task
 
 You are an expert in QA evaluation for 5G domain tasks. Your task is to determine whether a model-generated answer is accurate or not, given the following:
 
-- **Context:** A passage that provides all the necessary information. The answer must be based solely on this context.
+- **Context:** A passage that provides all the necessary information. It consists of 2 clauses identified by their clause number. These 2 clauses cross reference each other. The answer must be based solely on this context.
 - **Question:** The question being asked.
 - **Reference Answer:** A high-quality human-written answer for reference.
 
@@ -39,12 +39,13 @@ You are an expert in QA evaluation for 5G domain tasks. Your task is to determin
 1. Read the context and question carefully.
 2. Compare the model answer to the reference answer and context, focusing on:
     - **Accuracy:** Does the answer match the meaning of the reference answer, based on the given context?
-    - **Conciseness:** Is the answer concise and to the point, without unnecessary details or over-explanation?
+    - **Completeness:** Is there information from all of the clauses in the context in the answer?
+    - **Depth:** Does the model answer correctly resolve and integrate cross-references within the context?  
     - **Faithfulness to Context:** Is the answer based only on the given context, without involving external knowledge?
-3. Determine whether the model answer is accurate overall, considering all three criteria.
+3. Determine whether the model answer is accurate overall, considering all four criteria.
 4. Respond in the following format:
 
-{{"Reasoning": <Your brief reasoning. Mention accuracy, conciseness, and faithfulness to context.>,
+{{"Reasoning": <Your brief reasoning. Mention accuracy, completeness, depth, and faithfulness to context.>,
 "Judgment": <"Accurate" or "Inaccurate">}}'''
 
 def get_context_from_chunks(chunk1:str,chunk2:str,section1:str,section2:str):
