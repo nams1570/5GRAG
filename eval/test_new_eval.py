@@ -10,28 +10,29 @@ import time
 import argparse
 from openai import OpenAI
 
-BLACKLISTED_SECTIONS = ["3.1","3.2","3.3","3","1","2","Foreword"]
+BLACKLISTED_SECTIONS = ["3.1","3.2","3.3","3","1","2","Foreword","6.1","6.2","6.3","6.4","6.5","4.1","4.2","4.3","4.2.1","4.2.2","4.3.1","4.3.2","4.4"]
 
 RE = ReferenceExtractor()
 
 response_template = '''Here are two different chunks of text from a 3GPP specification. Each of these chunks represents a different clause/subclause in the text. The two chunks reference each other.
 This means that there are parts of chunk1 that need context from chunk2 to fully be understood and vice versa.
 Come up with a question that would require the context from both chunks to answer, and the answer to that question.
-chunk1:{chunk1content} which is from clause {section1}.
-chunk2:{chunk2content} which is from clause {section2}.
+From clause {section1} in document {docID1}, we have chunk1:{chunk1content}.\n\n
+From clause {section2} in document {docID1}, we have chunk2:{chunk2content}.\n\n
 Instructions:
 1. Do not use the terms chunk1 or chunk2 in the generated question
 2. The question generated MUST ask about a concept that is split between the two chunks/sections.
 3. The question generated MUST require bridging the reference between sections
 4. The question must require a logical connection between two points not found in the same chunk
-5. The question MUST be unanswerable using only chunk1 or only chunk2 in isolation
-6. Ensure the answer is complete and clearly grounded in content from both chunks.
-7. Respond only with a json of the form {{"question":"...","answer":"..." }} where question is the generated question and answer is the answer to that question. There should be no ``` or word json in the response, only the dictionary'''
+5. The question MUST be primarily based off the part in chunk1 where chunk2 is mentioned (via its clause number)
+6. The question MUST be unanswerable using only chunk1 or only chunk2 in isolation
+7. Ensure the answer is complete and clearly grounded in content from both chunks.
+8. Respond only with a json of the form {{"question":"...","answer":"...", "reason":"... }} where question is the generated question and answer is the answer to that question and reason is the reasoning behind why the question was created. There should be no ``` or word json in the response, only the dictionary'''
 def get_response(client,chunk1,chunk2, seed):
-    chunk1content,section1 = chunk1.page_content,chunk1.metadata["section"]
-    chunk2content,section2 = chunk2.page_content, chunk2.metadata["section"]
+    chunk1content,section1,docID1 = chunk1.page_content,chunk1.metadata["section"],chunk1.metadata["docID"]
+    chunk2content,section2, docID2 = chunk2.page_content, chunk2.metadata["section"],chunk2.metadata["docID"]
 
-    response_prompt = response_template.format(chunk1content=chunk1content,section1=section1,chunk2content=chunk2content,section2=section2)
+    response_prompt = response_template.format(chunk1content=chunk1content,section1=section1,chunk2content=chunk2content,section2=section2,docID1=docID1,docID2=docID2)
     print(response_prompt)
     response = client.chat.completions.create(
         model=config["MODEL_NAME"],
@@ -56,8 +57,10 @@ def process_item(client, chunk1,chunk2, seed, max_retries=3, delay=3):
                 'ground_truth': response_obj["answer"],
                 'primary_chunk_section': chunk1.metadata["section"],
                 'primary_chunk_text': chunk1.page_content,
+                'primary_chunk_doc': chunk1.metadata["docID"],
                 'secondary_chunk_section':chunk2.metadata["section"],
                 'secondary_chunk_text': chunk2.page_content,
+                'secondary_chunk_doc': chunk2.metadata["docID"]
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
@@ -70,7 +73,7 @@ def process_item(client, chunk1,chunk2, seed, max_retries=3, delay=3):
                     'answer': None
                 }
 
-# get chunks that refer to one another
+# get chunks that refer to one another, internal references
 def get_double_ref_pairs(chunks)->list[tuple]:
     edges = []
     ref_section_to_chunk = {chunk.metadata["section"]:chunk for chunk in chunks}
@@ -86,16 +89,56 @@ def get_double_ref_pairs(chunks)->list[tuple]:
                     edges.append((chunk,ref_section_to_chunk[ref]))
     return edges    
 
+def get_ext_ref_pairs(chunks,docIdToChunkMap):
+    edges = []
+    org_docid = chunks[0].metadata['docID']
+    for chunk in chunks:
+        if chunk.metadata['section'] in BLACKLISTED_SECTIONS:
+            continue
+        true_refs = RE.runREWithDocList([chunk])
+        for ref in true_refs:
+            section_names = RE.extractClauseNumbersFromString(ref.reference)
+            if ref.src == RE.getSRCDOC():
+                continue
+            else:
+                org_chunk = docIdToChunkMap[org_docid][chunk.metadata['section']]
+                if docIdToChunkMap.get(ref.src,None) == None:
+                    continue
+                if docIdToChunkMap[ref.src].get(section_names[0],None) == None:
+                    continue
+                ext_chunk = docIdToChunkMap[ref.src][section_names[0]]
+                edges.append((org_chunk,ext_chunk))
+    return edges
+
 if __name__ == "__main__":
-    file = "../data/38211-i60.docx"
+    files = ["../data/38211-i70.docx","../data/38212-i70.docx","../data/38213-i70.docx","../data/38214-i70.docx","../data/38304-i40.docx","../data/38321-i60.docx"]
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--size',type=int,default=100)
+    argparser.add_argument('--internal',action='store_true')
     args = argparser.parse_args()
 
     results = {}
+    docIdToChunkMap = {}
+    fileToChunks = {}
 
-    chunks = getFullSectionChunks([file])
-    edges = get_double_ref_pairs(chunks)[:args.size]
+    for file in files:
+        chunks = getFullSectionChunks([file])
+        fileToChunks[file] = chunks
+        docId = chunks[0].metadata["docID"]
+        docIdToChunkMap[docId] = {chunk.metadata["section"]:chunk for chunk in chunks}
+
+    edges = []
+
+    for file in files:
+        chunks = fileToChunks[file]
+        if not args.internal:
+            edges += get_ext_ref_pairs(chunks,docIdToChunkMap)
+        
+        else:
+            edges += get_double_ref_pairs(chunks)
+    
+    edges = edges[:args.size]
+
     results = [None] * len(edges)
 
     output_path = "./results.json"
