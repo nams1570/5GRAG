@@ -59,7 +59,7 @@ class MultiStageRetriever:
         metadata_filter = {'$or':filters}
         return metadata_filter
 
-    def getAdditionalContext(self,org_docs,db):
+    def getAdditionalContext(self,org_docs,db,query):
         """@org_docs: list of initially retrieved document chunks from vector db.
         In this method, we parse the org_docs for external references and perform additional retrievals.
         returns: list of document chunks"""
@@ -69,7 +69,7 @@ class MultiStageRetriever:
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
-        additional_docs.extend(db.vector_db.similarity_search("",NUM_EXTRA_DOCS,filter=metadata_filter))
+        additional_docs.extend(db.vector_db.similarity_search(query,NUM_EXTRA_DOCS,filter=metadata_filter))
 
         return additional_docs
 
@@ -79,7 +79,7 @@ class MultiStageRetriever:
         org_docs = self.base_retriever.invoke(query)
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"]:
-            additional_docs = self.getAdditionalContext(org_docs,db)
+            additional_docs = self.getAdditionalContext(org_docs,db,query)
             print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
         else:
             additional_docs = []
