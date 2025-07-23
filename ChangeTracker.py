@@ -22,11 +22,11 @@ class ChangeTracker:
             return False
 
         # Check for adjacency in y (and z must be same)
-        if abs(y1 - y2) == 1:
+        if y2 - y1 == 1:
             return True
 
         # Check for adjacency in z (and y must be same)
-        if abs(z1 - z2) == 1 and y1 == y2:
+        if z2 - z1 == 1 and y1 == y2:
             return True
 
         return False
@@ -93,7 +93,7 @@ class ChangeTracker:
         return DBDocList
 
 if __name__ == "__main__":
-    file_list = ["./testchange/38211-i40.docx","./testchange/38211-i50.docx"]
+    file_list = ["./testchange/38211-i60.docx","./testchange/38211-i70.docx"]
     """section = "6.3.3.1"
 
     sectioned_things = {}
