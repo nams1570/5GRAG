@@ -1,5 +1,5 @@
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from utils import RefObj,RetrieverResult
+from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range
 from ReferenceExtractor import ReferenceExtractor
 import os 
 from settings import config
@@ -89,10 +89,50 @@ class MultiStageRetriever:
 
         return org_docs,additional_docs
     
+    def buildDocIDandTimestampFilter(self,docID,fromTimestamp,toTimestamp):
+        if docID == None or fromTimestamp == None or toTimestamp == None:
+            return {}
+        
+        validTimestampRange = get_inclusive_tstmp_range(fromTimestamp,toTimestamp)
+        timestampFilter = {'timestamp':{'$in':validTimestampRange}}
+        return {'$and':[{'docID':{"$eq":docID}},timestampFilter]}
+    
+    def buildFiltersFromDiffs(self,diffs):
+        filters = []
+        for diff in diffs:
+            docID:str = diff.metadata.get("docID",None)
+            fromTimestamp = diff.metadata.get("fromTimestamp",None)
+            toTimestamp = diff.metadata.get("toTimestamp",None)
+            
+            new_filter = self.buildDocIDandTimestampFilter(docID,fromTimestamp,toTimestamp)
+            filters.append(new_filter)
+        
+        if filters == []:
+            return {}
+        if len(filters) == 1:
+            return filters[0]
+        metadata_filter = {'$or':filters}
+
+        return metadata_filter
+
     def retrieveReasoning(self,query):
         """gets the change from diff db, and searches discussion db for relevant information on why the change was made.
         Returns: documents from discussion db"""
-        return []
+        #get diff similar to query
+        diffRetriever = self.diffDB.getRetriever()
+        diffs = diffRetriever.invoke(query)
+        metadata_filter = self.buildFiltersFromDiffs(diffs)
+        print(f"\n\ndiffs\n*****")
+        print(diffs)
+        print(f"\n\n filters \n **")
+        print(metadata_filter)
+
+        discussion_docs = self.discussionDB.vector_db.similarity_search(query,3,filter=metadata_filter)
+        print(f"\n\n discussion_docs is \n**")
+        print(discussion_docs)
+
+
+        return discussion_docs
 
     def invoke(self,query):
         if not self.base_retriever:

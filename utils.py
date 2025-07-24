@@ -6,6 +6,8 @@ from openai import OpenAI
 from pydantic import BaseModel
 from settings import config
 import tiktoken
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 ###########################
 ## File Processing Tools ##
@@ -93,6 +95,26 @@ def getTokenCount(text:str,model_name:str,supressWarning:bool=True):
     else:
         raise Exception("Unsupported model type!")
     return num_tokens
+
+####################
+## Miscellaneous  ##
+####################
+def get_inclusive_tstmp_range(fromTimestamp:str,toTimestamp:str)->list[str]:
+    """timestamps must be in YYYY-MM format. from <= to. 
+    Returns an inclusive range of valid timestamps"""
+    start = datetime.strptime(fromTimestamp, "%Y-%m")
+    end = datetime.strptime(toTimestamp, "%Y-%m")
+    
+    if start > end:
+        raise ValueError("fromTimestamp must be earlier than or equal to toTimestamp")
+
+    result = []
+    current = start
+    while current <= end:
+        result.append(current.strftime("%Y-%m"))
+        current += relativedelta(months=1)
+
+    return result
 
 ####################
 ## Object Classes ##
