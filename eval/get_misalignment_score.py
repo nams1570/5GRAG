@@ -6,7 +6,7 @@ from langchain_openai import OpenAIEmbeddings
 from MetadataAwareChunker import getSectionedChunks,getFullSectionChunks,clean_file_name
 from DBClient import DBClient
 from settings import config
-from utils import RefObj
+from utils import RefObj, RetrieverResult
 from typing import Tuple
 #get the retriever and client
 
@@ -53,7 +53,9 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk,db):
     #ensure that only clauses that can be inthe document are accessed
     true_refs,all_sections_in_org_file = get_all_existing_sections(true_refs,chunks_in_file)
     #print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
-    org_docs,add_docs = mr.invoke(org_chunk.page_content,db)
+
+    retriever_result = mr.invoke(org_chunk.page_content)
+    org_docs,add_docs = retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs
     org_docs += add_docs
     #check the sections of the org_docs.  
     retriever_refs = set()
@@ -87,12 +89,12 @@ def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
 
 if __name__ == "__main__":
     ## Setup classes
-    mr = MultiStageRetriever()
     embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
     db = DBClient(embedding_model=embeddings,db_dir_path="../pickles",doc_dir_path="../data")
+    mr = MultiStageRetriever(specDB=db)
 
     ## for each doc, get chunks and see hit rate
-    file_list = ["../data/38211-i60.docx"]
+    file_list = ["../data/38211-i70.docx"]
     results = {}
     for file in file_list:
         mr.constructRetriever(db,selected_docs=[clean_file_name(file)])

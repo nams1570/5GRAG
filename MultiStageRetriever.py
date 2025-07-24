@@ -8,8 +8,11 @@ RExt = ReferenceExtractor()
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
 
 class MultiStageRetriever:
-    def __init__(self):
+    def __init__(self,specDB,discussionDB=None,diffDB=None):
         self.selected_docs = None
+        self.specDB = specDB
+        self.discussionDB = discussionDB
+        self.diffDB = diffDB
 
     def constructRetriever(self,db,selected_docs=None):
         """@selected_docs: list of documents to filter.
@@ -73,23 +76,32 @@ class MultiStageRetriever:
 
         return additional_docs
     
-    def retrieveFromSpecDB(self,query:str,db):
+    def retrieveFromSpecDB(self,query:str):
         """We retrieve context info from the spec db.
         returns: first order and (possible) second order retrieval results"""
         org_docs = self.base_retriever.invoke(query)
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"]:
-            additional_docs = self.getAdditionalContext(org_docs,db,query)
+            additional_docs = self.getAdditionalContext(org_docs,self.specDB,query)
             print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
         else:
             additional_docs = []
 
         return org_docs,additional_docs
+    
+    def retrieveReasoning(self,query):
+        """gets the change from diff db, and searches discussion db for relevant information on why the change was made.
+        Returns: documents from discussion db"""
+        return []
 
-    def invoke(self,query,db):
+    def invoke(self,query):
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
-        org_docs,additional_docs = self.retrieveFromSpecDB(query,db)
+        org_docs,additional_docs = self.retrieveFromSpecDB(query)
+        if self.discussionDB:
+            tdocs = self.retrieveReasoning(query)
+        else:
+            tdocs = []
 
         retriever_result = RetrieverResult(firstOrderSpecDocs=org_docs,secondOrderSpecDocs=additional_docs)
         return retriever_result

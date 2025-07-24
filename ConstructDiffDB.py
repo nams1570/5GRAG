@@ -8,7 +8,7 @@ from langchain_openai import OpenAIEmbeddings
 
 if __name__ == "__main__":
     embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
-    db = DBClient(embedding_model=embeddings,collection_name="diff",db_dir_path=config["CHROMA_DIR"],doc_dir_path="testchange")
+    db = DBClient(embedding_model=embeddings,collection_name=config["DIFF_COLL_NAME"],db_dir_path=config["CHROMA_DIR"],doc_dir_path="testchange")
     file_list = ["38211-i60.docx","38211-i40.docx","38211-i50.docx","38211-i70.docx"]
 
 
