@@ -1,5 +1,5 @@
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from utils import RefObj
+from utils import RefObj,RetrieverResult
 from ReferenceExtractor import ReferenceExtractor
 import os 
 from settings import config
@@ -72,10 +72,10 @@ class MultiStageRetriever:
         additional_docs.extend(db.vector_db.similarity_search(query,NUM_EXTRA_DOCS,filter=metadata_filter))
 
         return additional_docs
-
-    def invoke(self,query,db):
-        if not self.base_retriever:
-            raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
+    
+    def retrieveFromSpecDB(self,query:str,db):
+        """We retrieve context info from the spec db.
+        returns: first order and (possible) second order retrieval results"""
         org_docs = self.base_retriever.invoke(query)
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"]:
@@ -85,5 +85,13 @@ class MultiStageRetriever:
             additional_docs = []
 
         return org_docs,additional_docs
+
+    def invoke(self,query,db):
+        if not self.base_retriever:
+            raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
+        org_docs,additional_docs = self.retrieveFromSpecDB(query,db)
+
+        retriever_result = RetrieverResult(firstOrderSpecDocs=org_docs,secondOrderSpecDocs=additional_docs)
+        return retriever_result
     
     
