@@ -42,16 +42,20 @@ def addExtraDocumentWideMetadataForContext(text_chunk:str,filepath:str):
     extractVersionAndDocIDRegx = re.compile(r"(3GPP TS (\d+.\d+|\-\d)+ V\d+.\d+.\d)",re.IGNORECASE)
     extractVersion = re.compile(r"(V\d+.\d+.\d)")
     extractDocument = re.compile(r"(TS (\d+.\d+|\-\d)+)")
+    extractTimestamp = re.compile(r"\((\d{4}-\d{2})\)")
 
     searchRes = extractVersionAndDocIDRegx.search(text_chunk)
-    if searchRes:
+    timestamp = extractTimestamp.search(text_chunk)
+
+    if searchRes and timestamp:
         res = searchRes.group()
         version = extractVersion.search(res).group()[1:]
         docID = extractDocument.search(res).group()[3:]
+        timestamp = timestamp.group().replace("(","").replace(")","")
     else:
         return {}
     
-    metadata = {'version':version,'docID':docID}
+    metadata = {'version':version,'docID':docID,'timestamp':timestamp}
     return metadata
 
 def addExtraDocumentWideMetadataForReason(text_chunk:str,filepath:str):
@@ -188,8 +192,8 @@ if __name__ =="__main__":
         sectioned_things[doc.metadata["section"]] = sectioned_things.get(doc.metadata["section"],[]) + [doc.page_content]
     
     print(sectioned_things['2'])"""
-    file_list = ["./data/TR 38.845 v0.1.0.docx"]
+    file_list = ["./data/38331-i60.docx"]
     #print(Docx2txtLoader(file_list[0]).load())
-    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)[:50])
+    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForContext)[:50])
     
     
