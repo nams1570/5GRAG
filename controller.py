@@ -1,7 +1,7 @@
 from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
-from utils import unzipFile,convertAllDocToDocx, getTokenCount
+from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate 
@@ -111,14 +111,14 @@ Question: {input}""")
     
 
     def getResponseWithRetrieval(self,prompt,history):
-        org_docs,additional_docs = self.retriever.invoke(query=prompt,db=self.contextDB)
-        
-        retrieved_docs = org_docs + additional_docs
+        retriever_result:RetrieverResult = self.retriever.invoke(query=prompt,db=self.contextDB)
+
+        retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs
 
         resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
-        return resp,org_docs,additional_docs
+        return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs
 
     def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
         print('Selected Docs: ', selected_docs)

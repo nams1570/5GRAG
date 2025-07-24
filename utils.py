@@ -113,6 +113,11 @@ class DocumentWideMetadata(BaseModel):
     timestamp:str
     release:str
 
+class RetrieverResult:
+    def __init__(self,firstOrderSpecDocs,secondOrderSpecDocs):
+        self.firstOrderSpecDocs = firstOrderSpecDocs
+        self.secondOrderSpecDocs = secondOrderSpecDocs
+
 if __name__ == "__main__":
     #print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))
     print(getAllFilesInDirMatchingFormat(".",[".py"]))
