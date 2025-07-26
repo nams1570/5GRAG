@@ -136,9 +136,10 @@ class DocumentWideMetadata(BaseModel):
     release:str
 
 class RetrieverResult:
-    def __init__(self,firstOrderSpecDocs,secondOrderSpecDocs):
+    def __init__(self,firstOrderSpecDocs,secondOrderSpecDocs,retrievedDiscussionDocs):
         self.firstOrderSpecDocs = firstOrderSpecDocs
         self.secondOrderSpecDocs = secondOrderSpecDocs
+        self.retrievedDiscussionDocs = retrievedDiscussionDocs
 
 if __name__ == "__main__":
     #print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))

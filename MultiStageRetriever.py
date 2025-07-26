@@ -142,7 +142,7 @@ class MultiStageRetriever:
         else:
             tdocs = []
 
-        retriever_result = RetrieverResult(firstOrderSpecDocs=org_docs,secondOrderSpecDocs=additional_docs)
+        retriever_result = RetrieverResult(firstOrderSpecDocs=org_docs,secondOrderSpecDocs=additional_docs,retrievedDiscussionDocs=tdocs)
         return retriever_result
     
     
