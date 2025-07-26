@@ -66,7 +66,7 @@ def getMetadataFromLLM(text_chunk:str)->dict:
                 "role":"system","content":"You are an expert at structured data extraction. You will be given unstructured text in markdown and must convert it into the given structure. \
                     Some rules to keep in mind:\
                     1. version can be extracted by looking for something of the form 'x.y.z' where x,y, and z are numbers. It is prefaced by V or the word Version: \
-                        2. docID can be extracted by looking for something of the form 'az x.y' where x and y are numbers and az represents any two letters. This usually follows the phrase 3GPP \
+                        2. docID can be extracted by looking for something of the form 'az x.y' where x and y are numbers and az represents any two letters. This usually follows the phrase 3GPP. The docid is the x.y \
                             3. the timestamp is a date of the form YYYY-MM\
                                 4. Release is a number usually prefaced by the word 'Release' \
                                     5. If you cannot instantiate a field, populate it with the empty string."
