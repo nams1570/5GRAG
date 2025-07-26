@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 import re
 from collections.abc import Callable
-from utils import getFirstPageOfDocxInMarkdown,getMetadataFromLLM
+from utils import getFirstPageOfDocxInMarkdown,getMetadataFromLLM, convertAllDocToDocx
 
 BASE_SECTION_NAME = "N/A"
 
@@ -192,8 +192,9 @@ if __name__ =="__main__":
         sectioned_things[doc.metadata["section"]] = sectioned_things.get(doc.metadata["section"],[]) + [doc.page_content]
     
     print(sectioned_things['2'])"""
-    file_list = ["./data/38331-i60.docx"]
+    convertAllDocToDocx("./reasoning")
+    file_list = ["./reasoning/R4-2503038.docx"]
     #print(Docx2txtLoader(file_list[0]).load())
-    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForContext)[:50])
+    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)[:50])
     
     
