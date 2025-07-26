@@ -115,7 +115,7 @@ Question: {input}""")
     def getResponseWithRetrieval(self,prompt,history):
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
 
-        retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs
+        retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
 
         resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
