@@ -4,11 +4,23 @@ from langchain_core.documents import Document
 
 SENTENCE_SEPARATOR = ". "
 
+def get_doc_list_for_version_preceding_first(metadata:dict,version:str):
+    metadata = {**metadata,'version':version,'timestamp':'1800-01'}
+    return [Document(metadata=metadata,page_content='')]
+
+def get_empty_document(metadata:dict):
+    return Document(metadata=metadata,page_content='')
+
+
 def get_all_section_names(chunks:list[Document])->set:
     all_section_names = set()
     for chunk in chunks:
         all_section_names.add(chunk.metadata["section"])
     return all_section_names
+
+def get_version_preceding_first_in_release(releaseNum)->str:
+    """Assumption is that the first version of a release is x.0.0"""
+    return f"{releaseNum}" + ".0.-1"
 
 class ChangeTracker:
 
@@ -16,6 +28,11 @@ class ChangeTracker:
     def areAdjacentVersions(fromVersion,toVersion):
         x1, y1, z1 = map(int, fromVersion.split('.'))
         x2, y2, z2 = map(int, toVersion.split('.'))
+
+        if z1 == -1:
+            if y2 == 0 and z2 == 0:
+                return True
+            return False
         
         # Check if x values are equal
         if x1 != x2:
@@ -86,8 +103,12 @@ class ChangeTracker:
 
         DBDocList = []
 
+        for section_name in fromSectionMap.keys():
+            if fromSectionMap[section_name]:
+                def_metadata = fromSectionMap[section_name].metadata
+
         for section_name in toSectionMap.keys():
-            change_obj = ChangeTracker.getChanges(fromSectionMap[section_name],toSectionMap[section_name])
+            change_obj = ChangeTracker.getChanges(fromSectionMap.get(section_name,get_empty_document({**def_metadata,'section':section_name})),toSectionMap[section_name])
             DBDocList.extend(ChangeTracker.convertChangeObjToDocument(change_obj))
         
         return DBDocList
