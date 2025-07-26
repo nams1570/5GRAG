@@ -1,12 +1,12 @@
 from difflib import Differ
-from MetadataAwareChunker import getFullSectionChunks
+from MetadataAwareChunker import getFullSectionChunks,addExtraDocumentWideMetadataForReason
 from langchain_core.documents import Document
 
 SENTENCE_SEPARATOR = ". "
 
 def get_doc_list_for_version_preceding_first(metadata:dict,version:str):
     metadata = {**metadata,'version':version,'timestamp':'1800-01'}
-    return [Document(metadata=metadata,page_content='')]
+    return [Document(metadata=metadata,page_content='...')]
 
 def get_empty_document(metadata:dict):
     return Document(metadata=metadata,page_content='')
@@ -66,6 +66,7 @@ class ChangeTracker:
         change_metadata = {'from_version':from_version,'to_version':to_version,'docID':chunk1.metadata["docID"],'section':chunk2.metadata["section"],'fromTimestamp':chunk1.metadata["timestamp"],'toTimestamp':chunk2.metadata["timestamp"]}
 
         change_obj = {'metadata':change_metadata,'changes':{'add':[],'remove':[]}}
+        print(Differ().compare(text1.split(SENTENCE_SEPARATOR),text2.split(SENTENCE_SEPARATOR)))
         for delta in Differ().compare(text1.split(SENTENCE_SEPARATOR),text2.split(SENTENCE_SEPARATOR)):
             if len(delta)>0 and delta[0] == "+":
                 change_obj['changes']['add'].append(delta[1:])
@@ -114,7 +115,7 @@ class ChangeTracker:
         return DBDocList
 
 if __name__ == "__main__":
-    file_list = ["./testchange/38211-i60.docx","./testchange/38211-i70.docx"]
+    file_list = ["./testchange/38211-f10.docx","./testchange/38211-f00.docx"]
     """section = "6.3.3.1"
 
     sectioned_things = {}
@@ -127,6 +128,13 @@ if __name__ == "__main__":
     change_obj = ChangeTracker.getChanges(sectioned_things[section][0],sectioned_things[section][1])
     print(ChangeTracker.convertChangeObjToDocument(change_obj))"""
     fromVersionChunks = getFullSectionChunks([file_list[0]])
-    toVersionChunks = getFullSectionChunks([file_list[1]])
-    print(ChangeTracker.createDBDocumentsForAdjacentVersions(fromVersionChunks,toVersionChunks))
+    toVersionChunks = getFullSectionChunks([file_list[1]],addExtraDocumentWideMetadataForReason)
+    #print(ChangeTracker.createDBDocumentsForAdjacentVersions(fromVersionChunks,toVersionChunks))
+    for chunk in toVersionChunks:
+        if chunk.metadata['section'] == '6.3.1.1':
+            print(chunk)
+            fake_metadata = {**chunk.metadata,'version':'15.0-1','timestamp':'1800-01'}
+            fake_chunk = get_empty_document(fake_metadata)
+            print(ChangeTracker.getChanges(fake_chunk,chunk))
+            exit(0)
     

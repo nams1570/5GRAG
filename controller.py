@@ -37,7 +37,7 @@ Question: {input}""")
 
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.contextDB = DBClient(embedding_model=embeddings,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
-        self.reasonDB = DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
+        self.reasonDB = DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="reasoning")
         self.diffDB = DBClient(embedding_model=embeddings,collection_name=DIFF_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="testchange")
 
         #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]

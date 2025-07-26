@@ -6,6 +6,7 @@ from settings import config
 
 RExt = ReferenceExtractor()
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
+FILTER_START_TSTMP = '2000-01'
 
 class MultiStageRetriever:
     def __init__(self,specDB,discussionDB=None,diffDB=None):
@@ -89,22 +90,20 @@ class MultiStageRetriever:
 
         return org_docs,additional_docs
     
-    def buildDocIDandTimestampFilter(self,docID,fromTimestamp,toTimestamp):
-        if docID == None or fromTimestamp == None or toTimestamp == None:
+    def buildTimestampFilter(self,toTimestamp):
+        if toTimestamp == None:
             return {}
         
-        validTimestampRange = get_inclusive_tstmp_range(fromTimestamp,toTimestamp)
+        validTimestampRange = get_inclusive_tstmp_range(FILTER_START_TSTMP,toTimestamp)
         timestampFilter = {'timestamp':{'$in':validTimestampRange}}
-        return {'$and':[{'docID':{"$eq":docID}},timestampFilter]}
+        return timestampFilter
     
     def buildFiltersFromDiffs(self,diffs):
         filters = []
         for diff in diffs:
-            docID:str = diff.metadata.get("docID",None)
-            fromTimestamp = diff.metadata.get("fromTimestamp",None)
             toTimestamp = diff.metadata.get("toTimestamp",None)
             
-            new_filter = self.buildDocIDandTimestampFilter(docID,fromTimestamp,toTimestamp)
+            new_filter = self.buildTimestampFilter(toTimestamp)
             filters.append(new_filter)
         
         if filters == []:
