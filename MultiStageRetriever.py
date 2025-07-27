@@ -123,6 +123,11 @@ class MultiStageRetriever:
         metadata_filter = self.buildFiltersFromDiffs(diffs)
         print(f"\n\ndiffs\n*****")
         print(diffs)
+
+        if diffs == []:
+            print("Nothing could be retrieved from diff db")
+            return []
+
         print(f"\n\n filters \n **")
         print(metadata_filter)
 
