@@ -47,6 +47,7 @@ def process_item(client, item, seed, max_retries=3, delay=3):
                 'ground_truth':ground_truth,
                 'predicted_answer':prediction,
                 'completion': gpt_response,
+                **item,
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
@@ -59,6 +60,7 @@ def process_item(client, item, seed, max_retries=3, delay=3):
                     'ground_truth':ground_truth,
                     'predicted_answer':prediction,
                     'completion': None,
+                    **item,
                 }
 
 if __name__ == '__main__':
