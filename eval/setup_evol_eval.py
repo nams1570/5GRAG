@@ -14,6 +14,7 @@ from ChangeTracker import ChangeTracker, get_empty_document
 
 DIFF_DOC_DIR = "../testchange"
 
+BLACKLISTED_SECTIONS = ["3.1","3.2","3.3","3","1","2","Foreword","N/A"]
 
 #get diffs from docs in testchange.
 
@@ -37,6 +38,8 @@ def get_diff_list():
         for toVersion in versionToSectionToChunk.keys():
             if ChangeTracker.areAdjacentVersions(fromVersion=fromVersion,toVersion=toVersion):
                 for section in versionToSectionToChunk[toVersion].keys():
+                    if section in BLACKLISTED_SECTIONS:
+                        continue
                     defaultFromChunk = get_empty_document(metadata={**versionToMetadata[fromVersion],'section':section})
                     fromChunk = versionToSectionToChunk[fromVersion].get(section,defaultFromChunk)
                     toChunk = versionToSectionToChunk[toVersion][section]

@@ -1,0 +1,92 @@
+[
+    {
+        "question": "Why does the specification introduce support for multiple OFDM numerologies and allow the cyclic prefix to be configured via higher-layer parameters?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " Multiple OFDM numerologies are supported as given by Table 4.2-1 where  and the cyclic prefix for a bandwidth part are obtained from the higher-layer parameter subcarrierSpacing and cyclicPrefix, respectively",
+        "section": "4.2"
+    },
+    {
+        "question": "Why is aligning the start of a slot with the start of an OFDM symbol important for classifying OFDM symbols as downlink, flexible, or uplink within a subframe?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " The start of slot  in a subframe is aligned in time with the start of OFDM symbol  in the same subframe.OFDM symbols in a slot can be classified as 'downlink', 'flexible', or 'uplink'",
+        "section": "4.3.2"
+    },
+    {
+        "question": "Why is the signaling of slot formats introduced or enhanced as described in subclause 11.1 of TS 38.213?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " Signaling of slot formats is described in subclause 11.1 of [5, TS 38.213]",
+        "section": "4.3.2"
+    },
+    {
+        "question": "Why is it necessary to restrict UE transmissions to occur only after the end of the last received downlink symbol in non-full-duplex scenarios, and what benefits does this timing constraint provide in terms of interference management and network performance?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " In a slot in a downlink frame, the UE shall assume that downlink transmissions only occur in 'downlink' or 'flexible' symbols.In a slot in an uplink frame, the UE shall only transmit in 'uplink' or 'flexible' symbols.A UE not capable of full-duplex communication is not expected to transmit in the uplink earlier than  after the end of the last received downlink symbol in the same cell where  is given by [TS 38.101].Table 4.3.2-1: Number of OFDM symbols per slot, slots per frame, and slots per subframe for normal cyclic prefix.01410111420221440431480841416016Table 4.3.2-2: Number of OFDM symbols per slot, slots per frame, and slots per subframe for extended cyclic prefix.212404",
+        "section": "4.3.2"
+    },
+    {
+        "question": "Why is it necessary to restrict the inference of the PDSCH channel from the DM-RS symbol to only when both symbols are within the same resource, slot, and PRG?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " For DM-RS associated with a PDSCH, the channel over which a PDSCH symbol on one antenna port is conveyed can be inferred from the channel over which a DM-RS symbol on the same antenna port is conveyed only if the two symbols are within the same resource as the scheduled PDSCH, in the same slot, and in the same PRG as described in clause 5.1.2.3 of [6, TS 38.214]",
+        "section": "4.4.1"
+    },
+    {
+        "question": "Why is the carrier bandwidth now specified by the higher-layer parameter carrierBandwidth in the SCS-SpecificCarrier IE for the subcarrier spacing configuration?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " The carrier bandwidth  for subcarrier spacing configuration  is given by the higher-layer parameter carrierBandwidth in the SCS-SpecificCarrier IE",
+        "section": "4.4.2"
+    },
+    {
+        "question": "Why was the introduction of the higher-layer parameters offsetToCarrier and DCsubcarrierDL necessary for configuring subcarrier spacing and transmitter DC subcarrier location in the 3GPP specification?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " The starting position  for subcarrier spacing configuration  is given by the higher-layer parameter offsetToCarrier in the SCS-SpecificCarrier IE.The frequency location of a subcarrier refers to the center frequency of that subcarrier.For the downlink, the higher-layer parameter DCsubcarrierDL indicates the location of the transmitter DC subcarrier in the downlink for each of the numerologies configured in the downlink",
+        "section": "4.4.2"
+    },
+    {
+        "question": "Why is it necessary to support indicating whether the DC subcarrier location in the uplink is offset by 7.5 kHz relative to the center of the indicated subcarrier?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " Values in the range 0 \u2013 3299 represent the number of the DC subcarrier and the value 3300 indicates that the DC subcarrier is located outside the resource grid.For the uplink, the higher-layer parameter DCsubcarrierUL indicate the location of the transmitter DC subcarrier in the uplink for each of the configured bandwidth parts, including whether the DC subcarrier location is offset by 7.5 kHz relative to the center of the indicated subcarrier or not",
+        "section": "4.4.2"
+    },
+    {
+        "question": "What are the technical reasons or scenarios that necessitate representing the DC subcarrier position as located outside the resource grid or undetermined in the uplink?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " Values in the range 0 \u2013 3299 represent the number of the DC subcarrier, the value 3300 indicates that the DC subcarrier is located outside the resource grid, and the value 3301 indicates that the position of the DC subcarrier in the uplink is undetermined.",
+        "section": "4.4.2"
+    },
+    {
+        "question": "Why is Point A defined differently for the PCell downlink and other cases when determining resource block grids, and what advantages does this approach provide in terms of frequency alignment or network performance?",
+        "fromVersion": "15.1.0",
+        "toVersion": "15.2.0",
+        "fromTimestamp": "2018-03",
+        "toTimestamp": "2018-06",
+        "srcContentForQuestion": " Point A serves as a common reference point for resource block grids and is obtained from:-\toffsetToPointA for a PCell downlink represents the frequency offset between point A and the lowest subcarrier of the lowest resource block of the SS/PBCH block used by the UE for initial cell selection, expressed in units of resource blocks assuming 15 kHz subcarrier spacing for FR1 and 60 kHz subcarrier spacing for FR2; -\tabsoluteFrequencyPointA for all other cases where absoluteFrequencyPointA represents the frequency-location of point A expressed as in ARFCN.",
+        "section": "4.4.4.2"
+    }
+]
