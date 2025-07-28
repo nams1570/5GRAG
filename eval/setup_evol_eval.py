@@ -7,6 +7,9 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils import embedding_functions
 
 from utils import getAllFilesInDirMatchingFormat
 from MetadataAwareChunker import getFullSectionChunks,addExtraDocumentWideMetadataForReason
@@ -107,13 +110,57 @@ def get_question_from_diff(client,diff:dict,seed, max_retries=3, delay=3):
                 }
 # then, use this created question to query the discussion db
 # grab the context from the discussion db
-def get_related_tdoc(db,question):
-    related_tdocs = db.vector_db.similarity_search(question,3)
-    return "\n".join([tdoc.page_content for tdoc in related_tdocs])
 
-# filter to see if tdocs are actually relevant to the questions    
-def are_docs_relevant(docs,question):
-    pass
+def buildMetadataFilterFromKeywords(keywords:list[str]):
+    filters = []
+    for keyword in keywords:
+        filters.append({'$contains':keyword})
+    if filters == []:
+        return {}
+    if len(filters) == 1:
+        return filters[0]
+    return {'$or':filters}
+
+def get_related_tdoc(client,collection,question,seed):
+    gpt_response = get_keywords_from_question(client,question,seed)
+    keywords = gpt_response.strip("[]").split(",")
+    print(f"for question {question}, keywords are {keywords}")
+    metadata_filter = buildMetadataFilterFromKeywords(keywords)
+
+    #related_tdocs = db.vector_db.similarity_search(question,3,filter=metadata_filter)
+    related_tdocs = collection.query(
+    query_texts=[question],
+    n_results=3,
+    where_document=metadata_filter 
+)
+    if related_tdocs == []:
+        return ""
+    return "\n".join([tdoc for tdoc in related_tdocs["documents"][0]])
+
+# filter to see if tdocs are actually relevant to the questions   
+docs_relevant_template = '''Extract 3 keywords from the question given below.
+<question>
+{question}
+</question>
+Instructions:
+1. Return only a list of the form [<keyword1>,<keyword2>,<keyword3>].
+2. Acronyms are usually keywords.
+3. Keywords are usually one word.
+4. Do not change how the keyword is written in the question.
+5. Keywords are usually objects of the sentence.''' 
+def get_keywords_from_question(client,question,seed):
+    response_prompt = docs_relevant_template.format(question=question)
+    response = client.chat.completions.create(
+        model=config["MODEL_NAME"],
+        messages=[
+            {
+                'role': 'user',
+                'content': response_prompt
+            }
+        ],
+        seed=seed,
+    )
+    return response.choices[0].message.content
 
 # pass this context into second prompt, along with question. Ask it to come up with a ground truth answer
 answer_gen_template = '''Answer the following question in 200 words with reference to the provided context:
@@ -159,10 +206,17 @@ def get_answer_to_question(client,question_obj,context,seed,max_retries=3,delay=
                 }
 
 if __name__ == "__main__":
-    output_path = "./results.json"
+    output_path = "./results2.json"
 
-    embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
-    db = DBClient(embedding_model=embeddings,collection_name=config["TDOC_COLL_NAME"],db_dir_path=os.path.join("..",config["CHROMA_DIR"]),doc_dir_path=os.path.join("..","reasoning"))
+    #embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
+    #db = DBClient(embedding_model=embeddings,collection_name=config["TDOC_COLL_NAME"],db_dir_path=os.path.join("..",config["CHROMA_DIR"]),doc_dir_path=os.path.join("..","reasoning"))
+
+    embedding_fn = embedding_functions.OpenAIEmbeddingFunction(
+        api_key=config["API_KEY"],
+        model_name="text-embedding-3-large"
+    )
+    db = chromadb.PersistentClient(path=os.path.join("..",config["CHROMA_DIR"]))
+    collection = db.get_collection(name=config["TDOC_COLL_NAME"],embedding_function=embedding_fn)
 
     client = OpenAI(
         api_key=config["API_KEY"],
@@ -204,7 +258,9 @@ if __name__ == "__main__":
         # Submit each item and store a mapping from Future -> index
         future_to_index = {}
         for i, question_obj in enumerate(question_objs):
-            context = get_related_tdoc(db,question_obj["question"])
+            context = get_related_tdoc(client,collection,question_obj["question"],seed=0)
+            if context == "":
+                continue
             future = executor.submit(get_answer_to_question, client, question_obj,context, seed=0)
             future_to_index[future] = i
 
