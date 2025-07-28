@@ -78,7 +78,8 @@ def process_item(client, item, seed, max_retries=3, delay=3):
                 'ground_truth':ground_truth,
                 'predicted_answer':model_answer,
                 'judgment':response_obj['Judgment'],
-                'reasoning':response_obj['Reasoning']
+                'reasoning':response_obj['Reasoning'],
+                **item,
             }
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
@@ -90,7 +91,8 @@ def process_item(client, item, seed, max_retries=3, delay=3):
                     'question': question,
                     'ground_truth':ground_truth,
                     'predicted_answer':model_answer,
-                    'completion': None,
+                    'judgment': None,
+                    **item
                 }
 
 if __name__ == '__main__':

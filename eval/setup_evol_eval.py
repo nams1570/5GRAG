@@ -206,7 +206,7 @@ def get_answer_to_question(client,question_obj,context,seed,max_retries=3,delay=
                 }
 
 if __name__ == "__main__":
-    output_path = "./results2.json"
+    output_path = "./results.json"
 
     #embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
     #db = DBClient(embedding_model=embeddings,collection_name=config["TDOC_COLL_NAME"],db_dir_path=os.path.join("..",config["CHROMA_DIR"]),doc_dir_path=os.path.join("..","reasoning"))
@@ -223,7 +223,7 @@ if __name__ == "__main__":
         timeout=60,
     )
 
-    diff_list = get_diff_list()[:10]
+    diff_list = get_diff_list()[:600]
     question_objs = [None] * len(diff_list)
     
     # Use ThreadPoolExecutor to process up to 60 items at once
@@ -274,13 +274,13 @@ if __name__ == "__main__":
             answer_objs[i] = result
             n_finished += 1
 
-            # Write partial results to disk after each item completes
-            if n_finished == 1 or n_finished % 100 == 0:
-                with open(output_path, 'w') as f:
-                    json.dump(answer_objs, f, indent=4)
         
+    results = []
+    for obj in answer_objs:
+        if obj:
+            results.append(obj)
     # Write final results to disk
     with open(output_path, 'w') as f:
-        json.dump(answer_objs, f, indent=4)
+        json.dump(results, f, indent=4)
 
     
