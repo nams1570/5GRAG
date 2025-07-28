@@ -6,9 +6,11 @@ import time
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
+from langchain_openai import OpenAIEmbeddings
 
 from utils import getAllFilesInDirMatchingFormat
 from MetadataAwareChunker import getFullSectionChunks,addExtraDocumentWideMetadataForReason
+from DBClient import DBClient
 from settings import config
 from ChangeTracker import ChangeTracker, get_empty_document
 
@@ -52,14 +54,13 @@ def get_diff_list():
     
 
 #ask llm to come up with a question from the diff. Question should be about why that change was introduced
-question_gen_template = '''Here is a chunk of text that represents the change between two versions of a 3GPP Technical Specification.
+question_gen_template = '''Here is a chunk of text that represents text that was added between two versions of a 3GPP Technical Specification.
 Come up with a question that asks about why this change is made or why the new feature in the change is supported. 
 The change: {diff_text}
 Instructions:
 1. The question should not be answerable with only the text of the change.
 2. Respond only with the question.'''
 def get_response_question_generation(client,diff_text,seed):
-
     response_prompt = question_gen_template.format(diff_text=diff_text)
     response = client.chat.completions.create(
         model=config["MODEL_NAME"],
@@ -106,10 +107,62 @@ def get_question_from_diff(client,diff:dict,seed, max_retries=3, delay=3):
                 }
 # then, use this created question to query the discussion db
 # grab the context from the discussion db
-# pass this context int osecond prompt, along with question. Ask it to come up with a ground truth answer
+def get_related_tdoc(db,question):
+    related_tdocs = db.vector_db.similarity_search(question,3)
+    return "\n".join([tdoc.page_content for tdoc in related_tdocs])
+
+# filter to see if tdocs are actually relevant to the questions    
+def are_docs_relevant(docs,question):
+    pass
+
+# pass this context into second prompt, along with question. Ask it to come up with a ground truth answer
+answer_gen_template = '''Answer the following question in 200 words with reference to the provided context:
+<context>
+{context}
+</context>
+Question: {question}
+'''
+def get_response_answer_gen(client,question,context,seed):
+    response_prompt = answer_gen_template.format(question=question,context=context)
+    response = client.chat.completions.create(
+        model=config["MODEL_NAME"],
+        messages=[
+            {
+                'role': 'user',
+                'content': response_prompt
+            }
+        ],
+        seed=seed,
+    )
+    return response.choices[0].message.content
+
+def get_answer_to_question(client,question_obj,context,seed,max_retries=3,delay=3):
+    """Encapsulates the logic for processing a single item."""
+    question = question_obj["question"]
+    for attempt in range(1, max_retries + 1):
+        try:
+            gpt_response = get_response_answer_gen(client,question,context,seed)
+            return {
+                **question_obj,
+                'ground_truth':gpt_response,
+                'context_for_answer': context
+            }
+        except Exception as e:
+            print(f"Attempt {attempt} failed with error: {e}")
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                print(f"Max retries reached, skipping this item.")
+                return {
+                    **question_obj,
+                    'ground_truth':None
+                }
 
 if __name__ == "__main__":
     output_path = "./results.json"
+
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
+    db = DBClient(embedding_model=embeddings,collection_name=config["TDOC_COLL_NAME"],db_dir_path=os.path.join("..",config["CHROMA_DIR"]),doc_dir_path=os.path.join("..","reasoning"))
 
     client = OpenAI(
         api_key=config["API_KEY"],
@@ -117,7 +170,7 @@ if __name__ == "__main__":
     )
 
     diff_list = get_diff_list()[:10]
-    results = [None] * len(diff_list)
+    question_objs = [None] * len(diff_list)
     
     # Use ThreadPoolExecutor to process up to 60 items at once
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -134,14 +187,44 @@ if __name__ == "__main__":
                            desc="Processing"):
             i = future_to_index[future]
             result = future.result()
-            results[i] = result
+            question_objs[i] = result
+            n_finished += 1
+
+        
+    # Write questions to disk
+    #with open(output_path, 'w') as f:
+        #json.dump(question_objs, f, indent=4)
+    
+######################################################################################################################
+
+    answer_objs = [None] * len(question_objs)
+    
+    # Use ThreadPoolExecutor to process up to 60 items at once
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit each item and store a mapping from Future -> index
+        future_to_index = {}
+        for i, question_obj in enumerate(question_objs):
+            context = get_related_tdoc(db,question_obj["question"])
+            future = executor.submit(get_answer_to_question, client, question_obj,context, seed=0)
+            future_to_index[future] = i
+
+        # As each future finishes, insert its result into `results`
+        n_finished = 0
+        for future in tqdm(as_completed(future_to_index),
+                           total=len(future_to_index),
+                           desc="Processing"):
+            i = future_to_index[future]
+            result = future.result()
+            answer_objs[i] = result
             n_finished += 1
 
             # Write partial results to disk after each item completes
             if n_finished == 1 or n_finished % 100 == 0:
                 with open(output_path, 'w') as f:
-                    json.dump(results, f, indent=4)
+                    json.dump(answer_objs, f, indent=4)
         
     # Write final results to disk
     with open(output_path, 'w') as f:
-        json.dump(results, f, indent=4)
+        json.dump(answer_objs, f, indent=4)
+
+    
