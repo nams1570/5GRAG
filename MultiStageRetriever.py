@@ -142,7 +142,7 @@ class MultiStageRetriever:
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
         org_docs,additional_docs = self.retrieveFromSpecDB(query)
-        if self.discussionDB:
+        if self.discussionDB and (config["IS_SMART_RETRIEVAL"] == True):
             tdocs = self.retrieveReasoning(query)
         else:
             tdocs = []
