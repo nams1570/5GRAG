@@ -66,8 +66,8 @@ if __name__ == "__main__":
         timeout=60,
     )
 
-    input_path = "./results.json"
-    output_path = "./relevant_questions.json"
+    input_path = "./results2.json"
+    output_path = "./relevant_questions2.json"
 
     with open(input_path,"r") as f:
         input_data = json.load(f)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     final_results = []
 
     for result in results:
-        if result["is_good_question"] == "Yes":
+        if result["is_good_question"] != "No":
             final_results.append(result)
 
     with open(output_path, 'w') as f:
