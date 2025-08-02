@@ -19,8 +19,11 @@ from docx import Document as DocxDocument
 # Import utilities from existing codebase
 from settings import config
 from utils import convertAllDocToDocx, getAllFilesInDirMatchingFormat
-from MetadataAwareChunker import getSectionedChunks
+from MetadataAwareChunker import getSectionedChunks, addExtraDocumentWideMetadataForReason
 
+
+CROSS_CONTEXT_BENCHMARK_COLL_NAME = "pure_specs"
+EVOLUTION_BENCHMARK_COLL_NAME = "specs_and_discussions"
 
 class SimpleRAGController:
     """
@@ -30,7 +33,7 @@ class SimpleRAGController:
     
     def __init__(self, 
                  db_dir_path: str = "./chroma_db",
-                 collection_name: str = "simple_rag",
+                 collection_name: str = CROSS_CONTEXT_BENCHMARK_COLL_NAME,
                  api_key: Optional[str] = None,
                  model_name: str = "gpt-4o-mini"):
         """
@@ -81,7 +84,7 @@ class SimpleRAGController:
     def _setup_chain(self):
         """Set up the prompt template and document chain."""
         self.prompt_template = ChatPromptTemplate.from_template("""
-Answer the following question based on the provided context. 
+Answer the following question based on the provided context in about 200 words. 
 If the answer cannot be found in the context, say so clearly.
 
 <context>
@@ -125,42 +128,10 @@ Source: {source}
         
         # Get all files matching extensions
         file_list = getAllFilesInDirMatchingFormat(doc_dir_path, file_extensions)
+        file_list = [os.path.join(doc_dir_path,file) for file in file_list]
+        print(file_list)
         
-        # Text splitter
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            add_start_index=True
-        )
-        
-        all_chunks = []
-        
-        for filename in file_list:
-            filepath = os.path.join(doc_dir_path, filename)
-            
-            # Extract text based on file type
-            if filename.endswith('.docx'):
-                text = self._extract_text_from_docx(filepath)
-            elif filename.endswith('.txt'):
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    text = f.read()
-            else:
-                continue
-            
-            # Split into chunks
-            chunks = text_splitter.split_text(text)
-            
-            # Create Document objects
-            for i, chunk in enumerate(chunks):
-                doc = Document(
-                    page_content=chunk,
-                    metadata={
-                        'source': filename,
-                        'chunk_index': i,
-                        'total_chunks': len(chunks)
-                    }
-                )
-                all_chunks.append(doc)
+        all_chunks = getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)
         
         return all_chunks
     
@@ -291,12 +262,12 @@ def quick_setup_and_query(doc_dir: str,
 if __name__ == "__main__":
     # Example 1: Basic usage
     controller = SimpleRAGController(
-        db_dir_path="./my_rag_db",
-        collection_name="my_documents"
+        db_dir_path="./db",
+        collection_name=EVOLUTION_BENCHMARK_COLL_NAME
     )
     
     # Add documents from a directory
-    controller.add_documents_to_db("./data")
+    #controller.add_documents_to_db("./data")
     
     # Ask a question
     answer, docs = controller.runController("What is 5G?")
