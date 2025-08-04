@@ -5,3 +5,5 @@ Chroma/*
 .gradio/
 pickles/*
 old_eval/*
+baseline/data/*
+baseline/db/*

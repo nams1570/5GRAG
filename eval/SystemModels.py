@@ -5,6 +5,7 @@ from abc import ABC,abstractmethod
 from openai import OpenAI
 from settings import config
 from controller import Controller
+from baseline.simple_rag_controller import SimpleRAGController, EVOLUTION_BENCHMARK_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
 
 class BaseSystemModel(ABC):
     @abstractmethod
@@ -48,10 +49,26 @@ class ControllerSystemModel(BaseSystemModel):
         response,_,_ = self.c.runController(prompt=question,history=[],selected_docs=[])
         return response
 
+class BaselineSystemModel(BaseSystemModel):
+    def __init__(self,db_dir_path,isEvol=True):
+        if isEvol:
+            collection_name = EVOLUTION_BENCHMARK_COLL_NAME
+        else:
+            collection_name = CROSS_CONTEXT_BENCHMARK_COLL_NAME
+        print(f"collection name is {collection_name}")
+        api_key = config["API_KEY"]
+        model_name = config["MODEL_NAME"]
+        self.c = SimpleRAGController(db_dir_path=db_dir_path,collection_name=collection_name,api_key=api_key,model_name=model_name)
+    
+    def get_response(self,question:str):
+        response,_ = self.c.runController(question,k=config["NUM_DOCS_INITIAL_RETRIEVAL"])
+        return response
+
 
 if __name__ == "__main__":
     gpt = GPTSystemModel()
     c = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+    baseline = BaselineSystemModel("../baseline/db",True)
 
     question = "What is spurious response?"
-    print(c.get_response(question))
+    print(baseline.get_response(question))
