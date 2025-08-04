@@ -5,7 +5,7 @@ import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel
+from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel, BaselineSystemModel
 
 def get_other_keys(item:dict):
     """get all the other keys of the dict that aren't explicitly delineated"""
@@ -41,12 +41,19 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--input_path','-i',type=str)
     argparser.add_argument('--output_path','-o',type=str)
-    argparser.add_argument('--use-system',action='store_true',help="pass this argument to use 5grag")
+    argparser.add_argument('--use-system',action='store_true',help="pass this argument to use deepspecs")
+    argparser.add_argument('--use-baseline',action='store_true',help='pass this argument to use the baseline')
     args = argparser.parse_args()
+
+    if args.use_system and args.use_baseline:
+        raise Exception("Error: Can't use baseline and system")
 
     if args.use_system:
         system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
-        print("USIN SYSTEM")
+        print("USING SYSTEM")
+    elif args.use_baseline:
+        system = BaselineSystemModel("../baseline/db",isEvol=True)
+        print("USING Baseline")
     else:
         system = GPTSystemModel()
 
