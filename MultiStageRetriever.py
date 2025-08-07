@@ -131,7 +131,7 @@ class MultiStageRetriever:
         print(f"\n\n filters \n **")
         print(metadata_filter)
 
-        discussion_docs = self.discussionDB.vector_db.similarity_search(query,3,filter=metadata_filter)
+        discussion_docs = self.discussionDB.vector_db.similarity_search(query,5,filter=metadata_filter)
         print(f"\n\n discussion_docs is \n**")
         print(discussion_docs)
 
