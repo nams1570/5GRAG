@@ -24,7 +24,7 @@ class Controller:
         self.output_parser = StrOutputParser()
         self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
 
-        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in 200 words with reference to the provided context:
+        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in 200 words based only on the provided context:
 <context>
 {context}
 </context>
@@ -120,7 +120,7 @@ Question: {input}""")
         resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
-        return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs
+        return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs,retriever_result.retrievedDiscussionDocs
 
     def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
         print('Selected Docs: ', selected_docs)
@@ -132,9 +132,10 @@ Question: {input}""")
             # retrieval chain passed the load of deciding what document to use to answer to the retriever.
             history = self.convert_history(history)
             if self.isDatabaseTriggered:
-                resp,orig_docs,additional_docs = self.getResponseWithRetrieval(prompt,history)
+                resp,orig_docs,additional_docs,discussion_docs = self.getResponseWithRetrieval(prompt,history)
                 print(f"resp is {resp}")
                 response = resp['answer']
+                additional_docs += discussion_docs
             else:
                 chain = self.prompt_template | self.llm
                 resp = chain.invoke({"input":prompt,"history": history})

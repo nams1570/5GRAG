@@ -48,7 +48,15 @@ class ControllerSystemModel(BaseSystemModel):
             self.isDBInitialized = True
         response,_,_ = self.c.runController(prompt=question,history=[],selected_docs=[])
         return response
+    
+    def get_response_with_docs(self,question:str):
+        if not self.isDBInitialized:
+            self.c.updateContextDB()
+            self.isDBInitialized = True
+        response,_,additional_docs = self.c.runController(prompt=question,history=[],selected_docs=[])
+        return response,additional_docs
 
+    
 class BaselineSystemModel(BaseSystemModel):
     def __init__(self,db_dir_path,isEvol=True):
         if isEvol:
@@ -63,6 +71,10 @@ class BaselineSystemModel(BaseSystemModel):
     def get_response(self,question:str):
         response,_ = self.c.runController(question,k=config["NUM_DOCS_INITIAL_RETRIEVAL"])
         return response
+
+    def get_response_with_docs(self,question:str):
+        response,docs = self.c.runController(question,k=config["NUM_DOCS_INITIAL_RETRIEVAL"])
+        return response,docs
 
 
 if __name__ == "__main__":
