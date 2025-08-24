@@ -7,15 +7,29 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import json
 
-context_answer_question_prompt = '''Below you are given a question and some context. Does the context answer the question?
+UNACCEPTABLE_JUDGMENTS = ["Strongly Disagree","Disagree"]
+
+context_answer_question_prompt = '''Below you are given a question and some context. Does the context help answer the question?
 <context>
 {context}
 </context>
 Question: {question}
+
 Instructions:
-1. Reply only with "Yes" or "No".
-2. If the context does contain a clear and specific answer to the question, respond with "Yes"
-3. If the context does not contain enough information to answer the question, or if the answer is ambiguous, missing, or requires external knowledge, respond with "No"
+Respond with one of the following options:
+"Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"
+
+Use these guidelines:
+
+Strongly Agree – The context clearly and directly answers the question.
+
+Agree – The context reasonably supports an answer to the question, even if it's not fully explicit.
+
+Neutral – The context is somewhat related, but it's unclear whether it supports or answers the question.
+
+Disagree – The context is only loosely relevant or requires too much inference to confidently answer the question.
+
+Strongly Disagree – The context does not help answer the question at all or is completely unrelated.
 '''
 def get_response(client,question,context,seed):
     response_prompt = context_answer_question_prompt.format(question=question,context=context)
@@ -67,7 +81,7 @@ if __name__ == "__main__":
     )
 
     input_path = "./results2.json"
-    output_path = "./relevant_questions2.json"
+    output_path = "./relevant_questions_weaker_filter2.json"
 
     with open(input_path,"r") as f:
         input_data = json.load(f)
@@ -90,7 +104,7 @@ if __name__ == "__main__":
     final_results = []
 
     for result in results:
-        if result["is_good_question"] != "No":
+        if result["is_good_question"] not in UNACCEPTABLE_JUDGMENTS:
             final_results.append(result)
 
     with open(output_path, 'w') as f:

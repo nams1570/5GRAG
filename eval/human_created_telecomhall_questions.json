@@ -1,0 +1,716 @@
+[
+    {
+        "question": "How many maximum 5QI we can create under one PDU Session?",
+        "ground_truth": "Seems about same as 4G.<br/>In 4G it used 16 TFTs per PDU, 8DL + 8 UL so 8 QCIs per PDU.<br/>Interesting they kept same for 5G.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/how-many-maximum-5qi-we-can-create-under-one-pdu-session/30149",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Anyone having SINR value for single SSB beam for 2 layers?<br/>Is it same value or different?",
+        "ground_truth": "As much as I know & According to my reading<br/>Imagine two cars (representing the layers) traveling from the same starting point (the SSB beam) to the same destination (your device).<br/>:point_right:t5:Each car might encounter different traffic (interference) and road conditions (channel quality), leading to different travel times (SINR values).<br/>so, SINR values for a single SSB beam for 2 layers (Rank 2) are generally different. Each layer experiences different channel conditions and interference levels,",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/sinr-value-for-single-ssb-beam-for-2-layers/30148",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How many active BWPs can a UE have for an FDD system, configured with 2 component carriers?",
+        "ground_truth": "For each component carrier, there is 1 BWP, and for each direction (DL and UL), there is 1 BWP defined; therefore, there are 2 BWP per CC, so in total, an FDD system with 2 CC will have 4 active BWPs.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/active-bwps-in-fdd-for-2cc/30267",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Do you know how exactly number of configured SSB beams can influence on SSB coverage?<br/>Do we have the same SS-RSRP levels in case of 1 SSB beam and in case of 8 SSB?<br/>As far as I understand total output power is the same.<br/>Difference is in  antenna output radiation shape.<br />So I think yes, there is some difference but it depends on UE position.",
+        "ground_truth": "As the number of beams increases, the beam width reduces. So the output power is concentrated in narrower region and as a result the coverage increases.",
+        "timestamp": "2023/12",
+        "source": "https://www.telecomhall.net/t/how-number-of-ssb-beams-impact-on-ss-rsrp-q-coverage/26718",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What is use of capability req filter and applied freq band filter in NR UE capability enquiry message?",
+        "ground_truth": "Reduces msg size and improves accessibility.<br/>But if no failures in the network due to UE capability size then you wont see any direct gains.",
+        "timestamp": "2020/08",
+        "source": "https://www.telecomhall.net/t/what-is-the-purpose-of-capability-requirement-filter-and-applied-frequency-band-filter-in-nr-ue-capability-enquiry-message/30472",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Because LTE TTI (1ms), in DSS (LTE/NR), the NR need to set only with SCS=15KHz. Is it correct?",
+        "ground_truth": "Yes , for DSS both SCS 15 KHZ an 30 KHZ can be used simultaneously but both required different MBSFN subframe. we know MBSFN subframe restricts CS RS to 1st two symbol in a subframe . so , suppose Subframe 1 and Subframe 2 is for MBSFN subframe ,then we can use SF#1 for SCS 30 and SF#2 for SC15 . for SCS 30 KHZ ,SSB transmission needed and 1 SSB need 4 consecutive symbol .<br/>As said in MBSFN , only 1st two symbol will be used for Control signaling and 3rd symbol will be used for PDSCH-DMRS . so that we need to adjust SSB between remaining 11 symbol in that subframe .<br/>if 1st ssb using Symbol 4,5,6,7th and 2nd SSB using 8,9,10,11th symbol then 11th Symbol will be overlapping with PDSCH -DMRS . so to avoid this collision with SSB with 11TH Symbol of PDSCH-DMRS , Symbol 12 used for PDSCH-DMRS and thsi is the only change required when SCS 30 KHZ used in DSS",
+        "timestamp": "2020/08",
+        "source": "https://www.telecomhall.net/t/scs-setting-in-5g-dss/9344",
+        "author": "Ziyue"
+    },
+    {
+        "question": "With FDD cell, can we support SCS 30 kHz?<br/>Any network having such support? I.e.NR FDD band + sub carrier spacing 30 kHz?",
+        "ground_truth": "30 kHz is used above 2.5 GHz.<br/>Mostly band are TDD.<br/>Not seen any deployment with FDD and 30 kHz.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/can-fdd-cells-support-30-khz-scs-in-nr-networks/30451",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For NR (NSA) carrier aggression between FDD and TDD, is there any requirement to keep the FDD cells as PCC or in higher priority regardless of Bandwidth?",
+        "ground_truth": "I think there is no strict requirement that FDD must be used as the PCC.<br/>However, FDD bands are often preferred as PCC because they usually provide more consistent coverage and lower latency due to their continuous transmission (in contrast to TDD, which has to switch between transmit and receive modes.<br/>The decision is usually based on a combination of factors including the network performance, coverage, interference considerations, and device capabilities. Operators may choose to use FDD as PCC for stability and coverage, but this is not mandated by the standard.<br/>I remember in E// there are few parameters where yiu set CA Priority and Proportion for sCell Candidates. Distributed the traffic based on Ratio and Load.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/fdd-vs-tdd-in-nr-nsa-carrier-aggregation-must-fdd-cells-always-be-pcc/30572",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Is it possible to configure SCS i.e. 30 kHz and SSB SCS i.e. 15 kHz?<br/>For TDD band.",
+        "ground_truth": "Yes, possible.<br/>Like SSB 30 kHz and data 15 kHz.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/configuring-30-khz-scs-and-15-khz-ssb-scs-is-it-possible/30504",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Can anyone please comment what is the good/average value of latency in 5G SA network?",
+        "ground_truth": "<5 ms excellent<br/><10 ms is good<br/>> 10 ms is average.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/latency-value-in-5g-sa-network/30556",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For the people who deployed 5G SA recently with epsFb (no VONR) what is the impact saw on signaling load increase on control plane?",
+        "ground_truth": "There should not be any signaling load increase on 5G RAN side.<br/>Reason: After UE initiate VoNR call, gNB will receive PDU session resource add / modification request, since gNB cannot entertain VoNR call, it will reply with PDU Session reject or PDU session accept with rejected 5QI-1.<br/>And then gNB will send RRC release to UE.<br/>So compare to VoNR enable Vs EPSFB enable, there is no change in signalling, rather we are reducing RRC reconfiguration to UE for 5QI-1 configuration.<br/>But signaling on n26 interface will increase, as its needed for EPSFB",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/impact-of-5g-sa-deployment-with-eps-fb-on-control-plane-signaling-load/30632",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Iis it possible to redirect VoNR call to VoLTE?<br/>I mean, if in VoNR call user move to poor condition, is it possible to redirect call to VoLTE without failure?<br/>What threshold set in NR to redirect data call / voice call to LTE?",
+        "ground_truth": "Call will smoothly be transferred from 5G to 4G. No RTP packet should drop without any mute. End User will not experience it.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/redirecting-vonr-calls-to-volte-in-poor-conditions/30699/13",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What is the calculations for NCI in 5G NR networks?",
+        "ground_truth": "The NR Cell Global Identity (NCGI) shall be composed of the concatenation of the PLMN Identifier (PLMN-Id) and the NR Cell Identity (NCI) as shown in Figure 19.6A-1 and shall be globally unique:<br/>The NCI shall be of fixed length of 36 bits and shall be coded using full hexadecimal representation. The exact coding of the NCI is the responsibility of each PLMN operator.For more details on NCI and NCGI, see TS 38.413.<br/>NOTE:<br/>In the 5G Core Network protocols, when the NCGI needs to be identified in the context of Standalone Non-Public Networks (SNPN), the Network Identifier (NID) of the SNPN is included as part of the NCGI Information Element (see TS 29.571); this is a protocol aspect that does not imply any change on the system-wide definition of the NCGI.<br />Source: inside TS 23.003: Identifiers for EPC (cont'd)",
+        "timestamp": "2021/05",
+        "source": "https://www.telecomhall.net/t/what-is-the-formula-for-cell-id-nci-in-5g-nr-networks/12623",
+        "author": "Ziyue"
+    },
+    {
+        "question": "If UE doesnt support long and short DRX, but have to send NCGI report in case of ANR, do we have any other way by which UE can read CGI of unknown cell?",
+        "ground_truth": "There are 2 ways only:<br/>DRX config<br/>Autonomous gaps r16 IE to configure<br />No, part of report config id for CGI, there you will find this IE.<br />\"Check definition of autonomous gaps in 5G NR: As part of reporting configuration, the network may ask the UE to report Cell Group Identity (CGI). This report is not exactly a measurement but it requires the UE to acquire system information from neighbour cells. The relevant messages to decode are MIB and SIB1. For doing this, IE useAutonomousGaps may be configured. Autonomous gaps is when the network doesn't configure measurement gaps for the UE. UE autonomously selects suitable gaps to receive system information of neighbour cells.\"",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/alternative-methods-for-ue-to-read-cgi-of-unknown-cell-without-drx-support-in-anr-scenarios/30722",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Anyone working on FWA networks?<br/>I want to understand if they spend efforts to find optimized location of the gNodeB AAU antenna.<br/>Since all users are static, gNodeB antenna location is crucial to get as many users paired for MU-MIMO as possible.",
+        "ground_truth": "No such optimized locations.<br/>Guideline is to install the device within 500 m from the site, RSRP> -100 dBm and preferably site is on Fiber.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/optimizing-gnodeb-antenna-placement-for-maximum-mu-mimo-efficiency-in-fwa-networks/30714",
+        "author": "Ziyue"
+    },
+    {
+        "question": "i could not find any IE inside UE capability or Registration or Attach request indicating the support of \u201csingle or dual registration\u201d.<br/>Could you please tell me how to understand that?",
+        "ground_truth": "It depends on use case to make practical reasoning. As per documentation available online, UE manages these dual registrations using separate Radio Resource Control (RRC) connections. So registering in EPC through 5G nr-ran or vice virca is out of debate. Its done independently as if a UE is in lte or its in 5G. (Standard Initial Registration).<br/>Further thoughts:<br/>Considering N1 mode without N26 interface, such devices must be able to have at least 2 modems to communicate separately and simultaneously in 5G and Lte.<br/>Such devices are able to transit the independently running sessions in coverage gaps as required if the networks indicate the support for dual registrations. So such devices play driving role. Each LTE or 5G network doesnt know by some IE that the device is dual registration mode supporting.<br/>Such transitions without N26 interface are conducted through common subscriber information databases, which is udm/hss.<br/>Further details on interworking can be learnt here: inside TS 23.502: 5GS to EPS Mobility",
+        "timestamp": "2023/11",
+        "source": "https://www.telecomhall.net/t/ue-support-single-or-dual-registration-support-in-5g-sa/26395",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Can SRVCC be configured like blind handover?<br/>Or can it only be done with measurements?",
+        "ground_truth": "Yes, but you dont want that.<br />Lets assume you set up cell A in 3G as blind, so the UE is going to perform SRVCC to this cell A no matter what.<br/>This cell A was facing a hardware issue, and it was off.<br/>Whats going to happen?",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/srvcc-configuration-can-it-be-set-up-like-blind-handover-or-only-with-measurements/30736",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Is it possible in NR to have 2 codewords with FR1 when no of layers > 4?<br/>Any network having such deployment?<br/>Does it require 6 RX at UE end?",
+        "ground_truth": "It is possible to have 2 codewords when layers > 4 but no vendor and UE implemented yet 8 x 8 MIMO in DL in 5G.<br/>Just for LTE Huawei has such a CPE with 8x8 DL MIMO:<br/>https://www.huawei.com/en/news/2019/10/world-first-8x8-mimo-outdoor-cpe-b3368",
+        "timestamp": "2022/12",
+        "source": "https://www.telecomhall.net/t/is-it-possible-in-nr-to-have-2-codewords-with-fr1-when-no-of-layers-4/20942",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How a 4T4R vs 8T8R Configuration will impact CQI in 5G NSA?",
+        "ground_truth": "4T4R \u2192 Lower CQI, more suited for less dense areas, reduced throughput.<br/>8T8R \u2192 Higher CQI, better performance in dense and challenging environments, higher throughput due to improved signal quality.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/impact-of-4t4r-vs-8t8r-configuration-on-cqi-in-5g-nsa/30940",
+        "author": "Ziyue"
+    },
+    {
+        "question": "If there is measurement based PSCell Configuration with B1 event to add secondary node then why there is NSA_Blind_SCG_Addition_Switch?<br/>Means it can blindly add any cell either Coverage/Quality is Poor or Good?",
+        "ground_truth": "It will be benifical for co sector.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/purpose-of-nsa-blind-scg-addition-switch-when-b1-event-based-pscell-configuration-is-in-use/30980",
+        "author": "Ziyue"
+    },
+    {
+        "question": "I saw that the time allocation parameters for PDSCH from the associated DCI are SLIV and K_0, plus one parameter that represents the ratio between PDSCH and PDCCH numerologies.<br/>I didnt understand from the standard if it can happen on the same BWP, or if this value takes place in cases of BWP switching only.",
+        "ground_truth": "Yes, it is possible for the same BWP.<br/>Example:<br/>n= 1 slot<br/>pdcch = 15 (scs= 0)<br/>pdsch = 30 (scs=1)<br/>k0=1<br/>Then according to formulate<br/>=( 1*(2/1)) + 1<br/>= 3<br/>So if PDCCH with SCS 15 comes in slot 1 so according to the formula, UE can read pdsch data on slot 4 (1+3).<br/>Most of the operators use the same SCS only and k0 value also they are keeping 0 so according to the formula, UE can find PDCCH and PDSCH data in the same slot.",
+        "timestamp": "2022/09",
+        "source": "https://www.telecomhall.net/t/is-it-possible-to-have-different-scs-for-pdsch-and-pdcch-on-the-same-bwp/19577",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Is PRACH SCS the same as Band numerology / SCS?<br/>Or should I ask can we have different SCS for PRACH and RB (PUCCH)?",
+        "ground_truth": "SCS need to same for carrier = PDCCH = SSB / PBCH = PDSCH, like if it's TDD band then SCS need to be 30 kHz.<br/>PRACH SCS depends on long or short PRACH format used, like it can be 1.25 kHz as per PRACH format used.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/is-prach-scs-the-same-as-band-numerology-scs/30939",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For NR, if UE miss DCI in Downlink sent by gNB, then will UE send any response like NACK?<br/>Will network again send same DCI to UE?",
+        "ground_truth": "No\u2026in both LTE and NR.<br/>This is called DTx i.e. the UE is not able to decode PDCCH.<br/>The gNB may increase the aggregation level in retransmission.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/does-the-network-resend-dci-if-missed-by-the-ue/30933",
+        "author": "Ziyue"
+    },
+    {
+        "question": "SCS 60 kHz as mentioned can be used for FR1 and FR2.<br/>Can we use it for SSB SCS as well or is it for carrier SCS?<br/>Do we need to define SCS for SSB, PDCCH, PDSCH channel or only for carrier SCS needed?",
+        "ground_truth": "60 KHz SCS is not allowed for SSB.<br />Except SSB, you can use 60 KHz SCS for both FR1 and FR2 in PDCCH / PDSCH.<br/>But nobody is using 60 KHz SCS.<br/>For FR2, 120 KHz SCS is used normally for both SSB and PDCCH / PDSCH.<br/>There is an option to use 240 KHz SCS for SSB as well for FR2.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/60-khz-scs-for-fr1-fr2-is-it-applicable-to-ssb-pdcch-and-pdsch/30974",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How does gNB indicate session AMBR to UE?<br/>Any IEs?",
+        "ground_truth": "It can be seen in PDU establishment accept message.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/how-does-gnb-indicate-session-ambr-to-ue/30751",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For NR SA, if for medium bitmap all bits set to 1 i.e. 11111111, then it indicates 8 SSB beam index there and UE will select best index?<br/>How to activate PDSCH beam here for data transfer for rank 4 reporting?",
+        "ground_truth": "SSB beams are dividing cell coverage area in to parts.<br/>Objective of having SSB beam is to increase idle mode coverage with the help of beam, SSB beam.<br/>Don't get confuse with SSB beam and PDSCH beam.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/nr-sa-activating-pdsch-beam-for-data-transfer-with-rank-4-reporting-in-medium-bitmap-scenario/30732",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Why do we use Polar for control channels and LDPC for data channels?<br/>One reason I could find is Polar gives better performance for low SNR cases, it doesnt give a noise floor.<br/>Can someone help me with more eleborated answer?",
+        "ground_truth": "One of the main reason is: PDCCH majorly carries the Downlink Control Information (DCI). 5G DCI is ~35 bits long.<br/>This is starkingly different from the 1000s of bit the Physical Data Shared Channel (PDSCH) has to transmit.<br/>So, for PDCCH, we need an encoding method which is optimized for the small block sizes.",
+        "timestamp": "2020/09",
+        "source": "https://www.telecomhall.net/t/why-do-we-use-polar-for-control-channels-and-ldpc-for-data-channels/10438",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What are the criteria for selecting the optimized value of SSB periodicity in 5G NR?<br/>(5, 10, 20\u2026)",
+        "ground_truth": "Depend on many factors:<br/>5ms / 10ms setting for high mobility, dense traffic, mmWave bands, low latency.<br/>20ms / 40ms for medium mobility, moderate traffic, sub-6GHz bands (like 2.5G TDD ot 3.7G C-Band), balance of efficiency and performance.<br />If the SSB periodicity is not optimized based on the specific deployment scenario (cell size, user mobility, traffic density, etc.), it can indeed create accessibility issues like connection delays, handover failures, frequent disconnections, and degraded user experience.<br/>Depend on the clutter and traffic trending.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/criteria-for-optimizing-ssb-periodicity-in-5g-nr/30701/3",
+        "author": "Ziyue"
+    },
+    {
+        "question": "The scenario we want to use is the combination of LTE and NR standards, which is performed in the 3480-3540 frequency range.<br/>According to the Ericssons document, it is possible to use \u201cMix Mode\u201d in this frequency range.<br/>But the main problem is that, considering that we use this method and activate the \u201cMix Mode Radio\u201d and \u201cMix Mode Baseband\u201d features, it causes interference after the cells of the site are up.<br/>The main question is, is it really possible to use \u201cMix Mode\u201d on this frequency range or not?<br/>BaseBand 6630 , AIR6488 (Band LTE n42 , Band NR n77)",
+        "ground_truth": "Mixed mode and DSS are two separate technologies<br/>Mixed mode is possible but LTE and NR should have different frequency blocks on the band (e.g. 3480-3500 for LTE and 3500-3540 for NR)<br/>DSS allows to use same frequency block for bith LTE and NR. However, I dont think Ericsson supports DSS for this band",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/mix-mode-radio-and-dss-in-ercisson/30272",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Do we also have information on physical antennas while generating csirs beams? Like in this case, 32 CSI-RS ports are used. By using N1 and N2, we get to no the number of physical and vertical alignment of antennas?",
+        "ground_truth": "Each AAU can have different real antenna elements. But csi-rs can be maximum 32 no matter if 256 or 384 or 1024 real antenna elements. UE does not need to know how many real antenna elemenst has the AAU. UE only needs to know CSI-RS ports and their configuration to report the PMI.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/how-can-we-determine-the-suitable-coverage-scenario-for-3d-beamforming-5g/31094",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How to increase Max RRC connected UEs in 5G NSA Mode?",
+        "ground_truth": "Enhanced Long PUCCH Feature: Transmission of CSI-RS reports and beam reports is possible using single PUCCH F3 resource, due to bundling of these reports, Maximum number of RRC Connected UEs per cell is up to two times higher compared to earlier capacity capabilities.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/how-to-increase-max-rrc-connected-ues-in-5g-nsa-mode/31130",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What Im not understanding is if SIB4 is mandatory to let UEs to perform inter-frequency measurements.",
+        "ground_truth": "SIB4 for idle mode measurements to be able to perform cell reselection",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/5g-ue-does-not-report-inter-frequency-neighboring-cell-measurements/30534",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What is the SS-RSRP threshold for 5G NR on the 3.5 GHz band to determine good coverage?",
+        "ground_truth": "I would say -116 dBm for B1 NR event, but it depends also on SSB PBCH Block Power.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/what-is-the-ss-rsrp-threshold-for-5g-nr-on-the-3-5-ghz-band-to-determine-good-coverage/31205",
+        "author": "Ziyue"
+    },
+    {
+        "question": "The options for subcarrier spacing can be seen in the following locations:<br/>Downlink Config Common under the SCS-SpecificCarrier IE<br/>Initial Downlink BWP under the SubCarrierSpacing IE<br/>Uplink Config Common under the SCS-SpecificCarrier IE<br/>Initial Uplink BWP under the SubCarrierSpacing IE<br/>RACH-ConfigGeneric, which has MSG1-SubCarrierSpacing<br/>TDD UL-DL configuration with a reference to SubCarrierSpacing<br/>All this information is part of SIB1 for NR SA.<br/>Can we say:<br/>The DL option under Initial Downlink BWP indicates the SCS for PDSCH and PDCCH channels?<br/>The UL option under Uplink BWP indicates the SCS for PUCCH, PRACH, and PUSCH channels?",
+        "ground_truth": "scs within initial BWP or other bwp is used for all the channel and reference signal unless explicitly configured somewhere.<br/>scsCommon in MIB is used SIB1, Msg2/Msg4 and other SIBs. Here we used to see two value and UE pick the value as per carrier frequency like for <6GHz use first value and for >6GHz select second one.<br/>For PRACH yes its depends on preamble format.<br/>Above statements are as per 38.331",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/clarification-on-subcarrier-spacing-for-downlink-and-uplink-channels-in-nr/31108/2",
+        "author": "Ziyue"
+    },
+    {
+        "question": "My phone is displaying 5G icon, but there's no 5G coverage\u2026",
+        "ground_truth": "It's perfectly possbile. In NSA mode (suppose your case), the 5G icon simply means that the ULI (Upper Layer lndication) received via SIB2 in LTE is set to \"True.\" That makes possible some UEs to display 5G icon even if there is no 5G coverage. Due to (UpperLayerIndication in SIB 2).",
+        "timestamp": "2020/10",
+        "source": "https://www.telecomhall.net/t/5g-icon-displayed-but-no-5g-coverage-area/9503",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Is UpperLayerIndication mandatory IE for 5G? And if it is configured in SIB2, then will it show or not?",
+        "ground_truth": "Upper layer indicator is not mandatory. Some UE need upper layer indicator to display the 5G icon. Nothing more than that.",
+        "timestamp": "2020/10",
+        "source": "https://www.telecomhall.net/t/5g-icon-displayed-but-no-5g-coverage-area/9503",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What specific inputs does the MAC scheduler consider when allocating downlink resources? Please avoid generic responses like channel conditions, CQI, or SINR.",
+        "ground_truth": "Scheduler for one UE is based on available resources, retransmissions, how long data is waiting in the buffer, buffer size, priorities etc. MCS is based purely on PDSCH BLER. SO scheduler will lower the MCS till it reaches a PDSCH BLER of 10%. Also CQI is taken into account.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/what-specific-inputs-does-the-mac-scheduler-consider-when-allocating-downlink-resources/31252",
+        "author": "Ziyue"
+    },
+    {
+        "question": "When you say out of sync from base station in that case is there any mechanism or phy layer which monitor by base station to declare it out of sync?",
+        "ground_truth": "There is always UL SINR, there is CQI reported there is ACK and NACK ratio. So gNodeB has means to conclude if a Radiolink is good or useless.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/what-specific-inputs-does-the-mac-scheduler-consider-when-allocating-downlink-resources/31252",
+        "author": "Ziyue"
+    },
+    {
+        "question": "I wanted to understand the algorithm / strategy it uses while allocating PRB, MCS, Number of layer etc. because finally these attributes will be accommodated in to transport block. I am seeking for some reference if possible for Ericsson or atleast Nokia.",
+        "ground_truth": "It is purely based on amount of data for each UE in the buffer, QCI for each UE and how long data is staying in the buffer. If there are 100 UEs on the cell you can imagine none will get great throughput. There are also parameters for scheduling like type: proportional fair, enhanced proportional fair, round robin, max C/I.<br />Each vendor has specific scheduling algorithms and it is proprietary. Betting is done on robust scheduling algorithm. In case of multi UE, based on UE reporting, scheduling will be done. It is not some thing with one parameter and scenario, scheduling is decided. They are multiple factors. Same scheduling algorithm works differently with different multi UE at different location.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/what-specific-inputs-does-the-mac-scheduler-consider-when-allocating-downlink-resources/31252",
+        "author": "Ziyue"
+    },
+    {
+        "question": "I am hearing a lot about using L1 acceleration in 5G, but I don't understand why acceleration was mentioned in 5G specifically and not in 4G for example? Could you please explain it?",
+        "ground_truth": "Sure. As you know, in Rel.15, 3GPP defined the 5G baseband unit to be composed of CU and DU using HLS (Higher Layer Split) by option 2, where DU will handle L1 functions. Also, with Open RAN, when LLS (Lower Layer Split) was introduced using option 7.2x, DU will still handle the higher part of L1 functions such as channel estimation, modulation/demodulation, FEC (Forward Error Correction), so the problem is that these L1 functions are real-time, very complex and consume a lot of computing power specially in 5G compared with 4G as 5G will have higher speed and lower latency which means 5G needs more efficient HW and faster processing of L1 functions, please check the below graph. And to meet these requirements in 5G, some techniques inside these L1 functions were introduced in 5G and were not in 4G. For example, 5G is using LDPC coding instead of Turbo coding, which is used in 4G, and LDPC is more complex and requires more computation power.",
+        "timestamp": "2024/02",
+        "source": "https://www.telecomhall.net/t/what-is-5g-l1-acceleration-and-why-do-we-need-it-in-5g-cloud-ran-and-open-ran/27472",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Why the L1 acceleration was started with 5G Cloud RAN and Open RAN?",
+        "ground_truth": "The common thing between Open RAN, Cloud RAN and even vRAN is the disaggregation of HW from SW. So, we are using COTS HW from any vendor and install the SW of any 5G function, like DU, on it. The problem of this approach is that the COTS HW is less efficient compared with the purpose-built HW that is built specifically for RAN. So, it is like using a normal PC that can be used for any purpose to play games compared with a gaming PC that was designed specifically for gaming\u200b. So, we need to enhance the COTS HW by offloading these complex, real-time, and compute-intensive functions from it to a HW accelerator to enhance the whole performance in 5G Cloud RAN and Open RAN.",
+        "timestamp": "2024/02",
+        "source": "https://www.telecomhall.net/t/what-is-5g-l1-acceleration-and-why-do-we-need-it-in-5g-cloud-ran-and-open-ran/27472",
+        "author": "Ziyue"
+    },
+    {
+        "question": "In 5G-NR, How the gNB map CQI to a MCS?",
+        "ground_truth": "gNodeB maps CQI (Channel Quality Indicator) to a MCS (Modulation and Coding Scheme) through a predefined mapping table.<br/>The CQI to MCS mapping table is specified in 3GPP TS 38.214 (where you can find definition of physical layer procedures for data transmission in 5G-NR)<br/>CQI table definitions provides the detailed mapping of CQI indices to modulation schemes and coding rates.<br/>MCS tables define how the MCS index is used to determine the modulation (QPSK, 16QAM, 64QAM, 256QAM) and the transport block size (TBS).<br/>You can find these tables in Section 5.2.2.1 of the document, which outlines how the CQI values reported by the UE are mapped to MCS indices that control the modulation and coding rate used for data transmission.<br />In 5G-NR, the gNB (Next Generation Node B) assigns the CQI (Channel Quality Indicator) to an MCS (Modulation and Coding Scheme) through the following process:<br/>Channel measurement: The user equipment (UE) measures the channel quality and sends feedback information to the gNB, including the CQI.<br/>CQI: The CQI is a value that represents the channel quality, with values ranging from 0 (worst quality) to 15 (best quality).<br/>Mapping table: The gNB uses a predefined mapping table to assign the CQI to a specific MCS.<br/>MCS selection: The gNB selects the appropriate MCS according to the mapping table and the received CQI.<br/>Resource allocation: The gNB assigns transmission resources (such as bandwidth, power, and modulation) based on the selected MCS.<br />Considerations:<br/>The mapping table can vary based on the implementation profile and network conditions.<br/>The gNB can dynamically adjust the mapping table depending on network conditions and UE performance.<br/>MCS assignment may also consider other factors such as traffic load, interference, and UE mobility.<br/>The gNB assigns the CQI to an MCS using a predefined mapping table, taking into account the channel quality and network conditions.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/5g-nr-mapping-cqi-to-mcs/31287",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For 5G NSA deployment, what criteria should be considered when selecting the appropriate frame slot configuration?",
+        "ground_truth": "It depends on the amount of traffic you have in the uplink (UL) and downlink (DL).",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/criteria-for-choosing-frame-slot-configuration-in-5g-nsa-deployment/31313",
+        "author": "Ziyue"
+    },
+    {
+        "question": "What is the recommended 5G inactivity timer setting for NSA?",
+        "ground_truth": "10s is for most of the customers.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/what-is-the-recommended-5g-inactivity-timer-setting-for-nsa/31322",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Is anyone familiar with the overheatingAssistanceConfig setup? Specifically, what should the UE's behavior be once it receives a value for the \"overheatingIndicatorProhibitTimer\" in the RRC reconfiguration? According to 38.331, the UE starts timer t345, but it's unclear what actions the UE and gNB will take while this timer is running. Any insights?",
+        "ground_truth": "The UE will wait for this specified amount of time before applying any new configurations received in the RRC reconfiguration, such as reducing the number of layers, CCs, etc.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/ue-behavior-during-overheatingassistanceconfig-and-t345-timer/31306",
+        "author": "Ziyue"
+    },
+    {
+        "question": "I didn't quite understand. The UE has received the UE assistance information in the RRC reconfiguration, and now t345 is triggered. Will the UE apply the configuration received in that same RRC reconfiguration? Or will the gNB send a new RRC reconfiguration with updated settings? Alternatively, will the UE start receiving resource assignments with reduced layers, RBs, MCS, etc., on the physical layer?",
+        "ground_truth": "The UE will ignore any new RRC reconfiguration with changes while the prohibit timer is active.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/ue-behavior-during-overheatingassistanceconfig-and-t345-timer/31306",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Okay, and what about the resource assignments from the gNB side? Will the gNB start reducing resources after this RRC reconfiguration? Is there any defined criteria for this behavior?",
+        "ground_truth": "CUCP informs the DU, and then, through MAC CE, the UE and gNB reduce the MIMO layers and CA component carriers.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/ue-behavior-during-overheatingassistanceconfig-and-t345-timer/31306",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Does anyone here can explain what is Unified Access Control in 5G?",
+        "ground_truth": "Traffic Congestion Control Mechanism in 5G NR by Unified Access Control (new feature introduced in Release 15)<br/>A small effort has been given to draw the attention regarding Unified Access Control.<br/>Basically there are 2 types by which access can be controlled:<br/>At UE end that is Access Control and<br/>At gNB end that is RRC Rejection Method.<br/>The decisions are taken on the basis of the Access Identities and Access Categories (new terminologies in Release 15) .<br/>Concept of Access Identities are quite similar to Access Classes in earlier releases.<br/>Access Identies-Total of 16 in nos.<br/>Access Categories-Total 10 in nos.(Cat 0 is for paging,MT Calls and Cat 2 is for emergency services)<br/>Now to play around these features, 3GPP Release 16 has given us 02 timers T302 and T390.",
+        "timestamp": "2020/08",
+        "source": "https://www.telecomhall.net/t/what-is-unified-access-control-in-5g/8851",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How many UEs can be multiplexed in PUCCH Format 1 in 5G?<br/>Is it 7?<br/>Is it 84?<br/>Is it 12?<br/>My understanding is:<br/>Since cyclic shift version of dmrs is not orthogonal with itself.<br/>In that case, channel estimation cant be done properly.<br/>Then we can only multiplex 7 UEs.",
+        "ground_truth": "PUCCH format 1 is for long PUCCH with small payloads of up to two bits and User Equipment multiplexing capacity of up to 84 UEs without frequency hopping and 36 UEs with frequency hopping in the same PRB. PUCCH format 2 is for Short PUCCH with large payloads of more than two bits and no UE multiplexing. PUCCH format 3 is for Long PUCCH with large UCI payloads and no UE multiplexing capability in the same PRBs. Finally, PUCCH format 4 is for Long PUCCH, moderate UCI payloads, and multiplexing capacity of up to 4 UEs in the same PRBs.",
+        "timestamp": "2024/07",
+        "source": "https://www.telecomhall.net/t/how-many-ues-can-be-multiplexed-in-pucch-format-1-in-5g/29236/3",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Does anyone can give me a simple explantion about the new concept \u201cPoint A\u201d introduced in 5G NR?",
+        "ground_truth": "Point A is reference point in 5G system.<br/>There is another paramater - offset to carrier.<br/>By using both parameter UE compute the actual carrier where different BWP reside.",
+        "timestamp": "2020/03",
+        "source": "https://www.telecomhall.net/t/what-is-point-a-in-5g-nr/7305",
+        "author": "Ziyue"
+    },
+    {
+        "question": "We know that in NSA (Non-Standalone) mode, a 5G node (gNodeB) is part of the setup, with 4G serving as the Master and connected to the 4G Core (EPC), which also supports the 5G node. This allows us to use both 4G and 5G traffic simultaneously.<br/>So, what exactly is different in EN-DC mode, and how does it differ from regular NSA? I understand that EN-DC is a subset or feature of NSA.",
+        "ground_truth": "In NSA (Non-Standalone) mode, we can have either EN-DC or NE-DC configurations:<br/>EN-DC (E-UTRAN New Radio Dual Connectivity): The eNodeB (4G node) serves as the anchor for the control plane or signaling.<br/>NE-DC (NR E-UTRAN Dual Connectivity): The gNodeB (5G node) acts as the anchor.<br/>Standalone (SA) mode also has different configurations, such as NR-DC (NR Dual Connectivity), where the 5G gNodeB manages both control and user planes independently of LTE.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/understanding-the-differences-between-nsa-and-en-dc-modes-in-5g-networks/31461",
+        "author": "Ziyue"
+    },
+    {
+        "question": "So, NSA can't operate on its own, right? It requires either EN-DC or NE-DC to be enabled?",
+        "ground_truth": "As I understand it, NSA means either EN-DC or NE-DC is enabled.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/understanding-the-differences-between-nsa-and-en-dc-modes-in-5g-networks/31461",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For SCS = 30 kHz and a 5G band between 3 GHz and 6 GHz, what are the criteria for choosing between the two SSB OFDMA symbol configurations?",
+        "ground_truth": "To avoid interference in SSB. PSS/SSS and PBCH in LTE are located at the centre of the carrier. In NR, SSB can be placed away from the centre where SCS is 30 kHz in adjacency scenarios of LTE and NR in mid band.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/criteria-for-choosing-ssb-ofdma-symbol-configurations-in-5g-3-6-ghz-scs-30-khz/31472",
+        "author": "Ziyue"
+    },
+    {
+        "question": "After an SCELL is added and activated in 5G through MAC CE, does a timer start for its deactivation?<br/>On what basis will the SCELL be deactivated and removed?",
+        "ground_truth": "Secondary cell deactivation timer.<br/>The UE (and the network) can deactivate the activated SCell without explicit signaling which is based on sCellDeactivationTimer.<br/>This is the amount of time (in radio frames) the UE has not received any data on the SCell.<br/>SCell Activation is done via MAC Control Element whereas the deactivation mechanism is either by using MAC control element or by the expiry of the sCellDeactivationTimer.<br/>RRC will configure the UE with sCellDeactivationTimer which is located in the IE mac-MainConfig. It is configured only if the UE is configured with one or more SCells.<br/>sCellDeactivationTimer can take values starting from 20ms to 1280ms (20, 40, 80, 160, 320, 640, and 1280ms); configured in ServingCellConfig.<br/>If the field is absent, the UE shall delete any existing value for this field and assume the value to be set to infinity.<br/>UE maintains a sCellDeactivationTimer (as configured by the RRC) timer per configured SCell and deactivates the associated SCell upon its expiry.<br/>If the UE receives an Activation/Deactivation MAC CE in subframe n activating the SCell, the UE shall start (SCell Activation) or restart (SCell Reactivation) the sCellDeactivationTimer associated with the SCell in subframe n+8.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/scell-deactivation-and-removal-in-5g/31474",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Hi, for SS/PBCH SCS 30Khz there two option case B and case C having different symbol mapping in time domain.<br/>What is condition or use case based on which network choose either one?",
+        "ground_truth": "The fundamental difference between case B and case C<br/>The fundamental difference is the symbol location of ssburst.<br/>For case B, ssburst takes symbols [4,5,6,7 & 8,9,10,11 \u2026] whereas for case C, ssburst takes symbols [2,3,4,5 & 8,9,10,11,\u2026]. You can notice that in case C, there is a 2 OFDM symbol gap between 2 consecutive SSBlocks. Therefore:<br/>In case B since there are 4 available OFDM symbols in the front you can have a 3-symbol PDCCH allocation, which is not possible in case C.<br/>In case C since there are 2 OFDM symbols [symbol 6 & 7] available in between 2 SSBlocks, you have symbol 6 for TDD switching and symbol 7 as UL symbol for ACK/NACKs. This way you can facilitate URLLC communication.<br/>SSB Class as per band<br/>Case B and Case C are specified in the 3gpp specification as per the band. As per the below image from 38.101-1 and 38.101-2 for every band [range of the frequency], SSB class is fix.",
+        "timestamp": "2020/04",
+        "source": "https://www.telecomhall.net/t/condition-for-case-b-and-case-c/8001",
+        "author": "Ziyue"
+    },
+    {
+        "question": "How many BWP defined from gNB to UE? Like we have initial DL/UL BWP\u2026 What does default DL and UL BWP indicate?",
+        "ground_truth": "I think max 4 BWP can be configured for one UE. But only 1 active at a time. BWP is where the UE will receive PDSCH in RB and symbols. Initial BWP Small dedicated BWP Large dedicated BWP Power saving BWP These are BWP types that can be configured to UE. However at the moment only 1 will be active.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/how-many-bwp-defined-from-gnb-to-ue/30787",
+        "author": "Ziyue"
+    },
+    {
+        "question": "For search space need to configure monitoring symbols within slot what these 14 bits means? Any idea?",
+        "ground_truth": "It indicate which symbol in slot have pdcch monitoring occassion. Usually 1st and 2nd bit is 1.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/how-many-bwp-defined-from-gnb-to-ue/30787",
+        "author": "Ziyue"
+    },
+    {
+        "question": "In PUCCH dynamic power control, when the TPC command in DCI 1_1 adjusts the power (up or down), after how many slots will this power change take effect?<br/>Is this timing specified in any 3GPP documentation?",
+        "ground_truth": "In my search for documentation, I found this: After 1 slot(dci 1_1) no more, and 3GPP especifications is 38213.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/timing-of-power-adjustments-in-pucch-dynamic-power-control/31477",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Does kssb play any role in case of an ENDC?<br/>Since SSB and PointA freq are already known.",
+        "ground_truth": "The Kssb shall play an important role in case of an ENDC. This come to the basic function of kssb, which inform UE the the carrier frequency separation of two concurrent active carriers, which help UE be aware that its RF front end design to avoid the adjacent channel interference. According to info @Ashish_Satasiya, Kssb should chose a larger value in NSA mode than in SA mode, this is because in SA mode ENDC, two active modem in UE are better synchronized than NSA mode, which put less constrains on kssb.",
+        "timestamp": "2021/02",
+        "source": "https://www.telecomhall.net/t/does-kssb-play-any-role-in-case-of-an-endc/10511",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Where UE indicates this band combo to network? In which message?",
+        "ground_truth": "UE CAPABILITIES. This is what CACOMBOS>COM process: UE capability information NR and EUTRA",
+        "timestamp": "2021/04",
+        "source": "https://www.telecomhall.net/t/parameter-in-gnb-to-control-type1-singlepanel-ri-restriction-ie/12638",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Does anyone have any insights or experience with the cell radius of the 2.3 GHz N40 TDD band?",
+        "ground_truth": "600-900 meters in dense urban areas.",
+        "timestamp": "2024/11",
+        "source": "https://www.telecomhall.net/t/understanding-the-cell-radius-of-2-3-ghz-n40-tdd-band/31760",
+        "author": "Ziyue"
+    },
+    {
+        "question": "In 5G NR for PDSCH PHY processing, the scrambled bits after the modulation mapper go through a layer mapping operation followed by antenna port mapping, as shown below.<br/>Where the maximum number of layers $(N_{\\nu})$ that can be assigned is equal to $N_{\\nu, \\mathrm{max}} = 8$ and the maximum number of antenna ports $(N_{p})$ for PDSCH is equal to $N_{p, \\mathrm{max}} = 12$ with $p = {1000, 1001, \\cdots, 1011}$.<br/>The antenna port mapping operation is defined in $138.211$<br />How do 8 layers get mapped to 12 antenna ports?",
+        "ground_truth": "You cannot map 8 layers to 12 antenna ports. You can see in the equation, v layers are mapped to v antenna ports, and the set of antenna ports are determined according to table 7.3.1.2.2-1 to 7.3.1.2.2-4 in 3GPP TS 38.212. In this case, the PDSCH antenna ports mean 1000+dmrs ports.<br/>For example, 8 layer with dmrs-type=1 and maxLength=2, will be mapped to 8 antenna port {1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007} according to Table 7.3.1.2.2-2.",
+        "timestamp": "2024/11",
+        "source": "https://www.telecomhall.net/t/how-do-8-layers-get-mapped-to-12-pdsch-antenna-ports/31732",
+        "author": "Ziyue"
+    },
+    {
+        "question": "When the UE sends a Scheduling Request (SR), how does the gNB determine the size of the grant to allocate?",
+        "ground_truth": "It depends on the vendor implementation.<br/>gNB generally allocates the SR grant for a fixed bytes where it can receive some of the required MAC CE (like BSR, PHR) and also if it can accommodate smaller upper layer packet in first grant itself.<br/>I have seen it to be not configurable (e.g. fixed 180 bytes) which makes to 2/3 PRBs. But if UE is running at poor radio condition, it could go low also to keep lower number of PRBs.",
+        "timestamp": "2024/10",
+        "source": "https://www.telecomhall.net/t/how-does-the-gnb-determine-the-grant-size-after-a-ue-sends-a-scheduling-request-sr/31266/11",
+        "author": "Ziyue"
+    },
+    {
+        "question": "Which is better for 5G implementation: 2.5 GHz or 3.5 GHz frequency?<br/>Which one is better and why?",
+        "ground_truth": "For Coverage requirements 2.5 is good<br/>For Capacity \u2192 3.5 GHz<br/>2.5 GHz can give max 100 MHz bandwidth;<br/>Whereas 3.5 GHz one operator can get 200 MHz can be utilized 2 CC CA each with 100 MHz.<br/>1 MHz cost wise 3.5 GHz will be cheaper.<br />But in an overall view, you cant say absolutely that one frequency band is best than other one.<br/>It mainly depends on the area also and the needs.Is it an urban, rural area?<br/>In urban area, mostly we try to find a good balance within coverage and capacity.<br/>And in rural area, coverage is more important.<br/>So thats also a good parameter to take into consideration regarding frequency band planning and choice.",
+        "timestamp": "2024/07",
+        "source": "https://www.telecomhall.net/t/which-is-better-for-5g-2-5ghz-or-3-5ghz-and-why/30121",
+        "author": "Ziyue"
+    },
+    {
+        "question": "When the NSA UE inactive timer expires in 5G (e.g., after 10 seconds), the gNB notifies the eNB to release the PSCell, and the UE transitions to RRC_CONNECTED mode in 4G. Consequently, Will the eNB send a B1 measurement control message again to this UE?",
+        "ground_truth": "Yes, the eNB can send a B1 measurement control message again to the UE. This is typically done to ensure that the UE continues to monitor and report the presence of 5G cells, which helps in deciding when to re-establish the 5G connection.",
+        "timestamp": "Dec 2024",
+        "source": "https://www.telecomhall.net/t/nsa-ue-behavior-after-inactive-timer-expiry/31951/2",
+        "author": "Aman"
+    },
+    {
+        "question": "When the NSA UE inactive timer expires in 5G (e.g., after 10 seconds), the gNB notifies the eNB to release the PSCell, and the UE transitions to RRC_CONNECTED mode in 4G. Consequently, Does the UE retain the previous B1 event information and continue searching for a 5G cell and reporting it? If so, wouldn\u00e2\u20ac\u2122t this cause a ping-pong state transition?",
+        "ground_truth": "The UE does retain the previous B1 event information and continues to search for and report 5G cells. However, to avoid frequent ping-pong transitions between 4G and 5G, the network employs hysteresis and time-to-trigger mechanisms. These mechanisms help stabilize the connection by preventing immediate re-selection to 5G unless the conditions are consistently met over a period of time.",
+        "timestamp": "Dec 2024",
+        "source": "https://www.telecomhall.net/t/nsa-ue-behavior-after-inactive-timer-expiry/31951/2",
+        "author": "Aman"
+    },
+    {
+        "question": "If a MAC CE is received from the network for SCELL activation in NR, within what time frame will the network assume the SCELL has been successfully activated by the UE and start sending DCI for monitoring?",
+        "ground_truth": "The typical time for a UE to process the MAC CE and configure/synchronize with the new SCell is 8ms, as defined in TS 38.133.\n\nWhen the UE receives an activation command for a secondary cell in a PDSCH ending in slot n, it performs the corresponding actions specified in TS 38.321 no later than the minimum requirement outlined in TS 38.133 and no earlier than slot n + k.",
+        "timestamp": "Dec 2024",
+        "source": "https://www.telecomhall.net/t/time-frame-for-scell-activation-confirmation-and-dci-monitoring-in-nr/31992",
+        "author": "Aman"
+    },
+    {
+        "question": "What is use of I-RNTI in 5G SA?",
+        "ground_truth": "RNTI having 2 types - Full IRNTI 40bit and short IRNTI 24 bits.\n\nIn layman\u00e2\u20ac\u2122s language, if signal is good and UE has enough resources then Full IRNTI is used else Short IRNTI.\nIts actual flag is transmitted inside SIB1. It\u00e2\u20ac\u2122s linked with RRC inactive state in NR.",
+        "timestamp": "Dec 2024",
+        "source": "https://www.telecomhall.net/t/what-is-use-of-i-rnti-in-5g-sa/17361/2",
+        "author": "Aman"
+    },
+    {
+        "question": "How many carriers can be aggregated in 5G NSA and 5G SA for non-contiguous bands?",
+        "ground_truth": "In 5G NR Phase-1, upto 16 CCs (both contiguous and non-contiguous) can be aggregated.",
+        "timestamp": "17 Jan",
+        "source": "https://www.telecomhall.net/t/carrier-aggregation-limits-in-5g-nsa-and-5g-sa-for-non-contiguous-bands/32481",
+        "author": "Aman"
+    },
+    {
+        "question": "In 5G Standalone (SA) and Non-Standalone (NSA) modes, can a UE switch bandwidth parts (BWP) using DCI, or is an RRC Reconfiguration message always required for changing the BWP?",
+        "ground_truth": "For BWP switching 3 methods can be used\n\nDCI based\nMAC CE \nRRC based",
+        "timestamp": "17 Jan",
+        "source": "https://www.telecomhall.net/t/bwp-switching-mechanism-in-5g-sa-and-nsa/32511",
+        "author": "Aman"
+    },
+    {
+        "question": "If a UE switches its Bandwidth Part (BWP) from the first active BWP (e.g., BWP 1) to another BWP (e.g., BWP 2), will the newly activated BWP become the default BWP?",
+        "ground_truth": "No, it will not.\nThe UE is configured with three main types of BWPs:\n\nInitial BWP\nDedicated BWP\nPower Saving BWP\nThe Initial BWP is sometimes referred to as the Default BWP. When the UE is in RRC Connected mode, all three BWPs are configured, but only one BWP is active at a time.",
+        "timestamp": "4 Feb",
+        "source": "https://www.telecomhall.net/t/understanding-bwp-switching-in-5g-nr/32736/4",
+        "author": "Aman"
+    },
+    {
+        "question": "How does UE do PLMN selection in 5G/NR?\n",
+        "ground_truth": "The UE shall scan all RF channels in the NR bands according to its capabilities to find available PLMNs.\n\nOn each carrier, the UE shall search for the strongest cell and read its system information, in order to find out which PLMN(s).\n\nIf the UE can read one or several PLMN identities in the strongest cell, each found PLMN shall be reported to the NAS as a high-quality PLMN (but without the RSRP value), provided that the following high-quality criterion is fulfilled.\n\nThe search for PLMNs may be stopped on request from the NAS.\n\nThe UE may optimise PLMN search by using stored information e.g. frequencies and optionally also information on cell parameters from previously received measurement control information elements\n\nOnce the UE has selected a PLMN, the cell selection procedure shall be performed in order to select a suitable cell of that PLMN to camp on.\n\nThe UE select (decides) for a particular PLMN after reading SIB1 and getting PLMN information.",
+        "timestamp": "Feb 12",
+        "source": "https://www.telecomhall.net/t/plmn-selection-in-5g-nr/11397/2",
+        "author": "Aman"
+    },
+    {
+        "question": "How many max carriers can be aggregated in ENDC?",
+        "ground_truth": "In 5G NR Phase-1, upto 16 CCs (both contiguous and non-contiguous) can be aggregated",
+        "timestamp": "Mar",
+        "source": "https://www.telecomhall.net/t/how-many-max-carriers-can-be-aggregated-in-endc/27701",
+        "author": "Aman"
+    },
+    {
+        "question": "Why SIB 19 is Important ?",
+        "ground_truth": "Enabling NTN Access: SIB 19 provides UEs with vital configuration information to establish and maintain connections with NTNs. This includes synchronization details, frequency information, and beam management, which are essential for ensuring seamless connectivity in remote and underserved regions.\nSeamless Network Integration: SIB 19 facilitates smooth transitions between terrestrial and non-terrestrial networks, allowing UEs to maintain connectivity across different network types. This is crucial for uninterrupted service in environments where terrestrial network coverage is limited or non-existent.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/system-information-19-sib19-for-5g-satellite-ntn/30178",
+        "author": "Yifei"
+    },
+    {
+        "question": "How does the network decide when to include SIB 19 in its system information broadcasts?",
+        "ground_truth": "The inclusion of SIB 19 in system information broadcasts is typically decided by the network operator based on the deployment strategy and coverage requirements. If the network supports NTN services, such as satellite connectivity, and if the service area falls within the coverage of these NTNs, the operator configures the gNB to broadcast SIB 19. This decision is often based on geographical considerations, user demand, and the availability of NTN infrastructure.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/system-information-19-sib19-for-5g-satellite-ntn/30178",
+        "author": "Yifei"
+    },
+    {
+        "question": "How does SIB 19 handle time synchronization for UEs in Non-Terrestrial Networks?",
+        "ground_truth": "SIB 19 includes the ntn-SystemTimeInfo element, which provides the system time information of the NTN. This is crucial for UEs to synchronize their operations with the satellite or other non-terrestrial platform. The time synchronization is especially important in NTNs because of the potential latency differences compared to terrestrial networks. SIB 19 ensures that UEs can accurately align their time settings with the NTN, reducing the risk of communication errors due to time discrepancies.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/system-information-19-sib19-for-5g-satellite-ntn/30178",
+        "author": "Yifei"
+    },
+    {
+        "question": "How does SIB 19 support the dynamic nature of satellite coverage and beamforming?",
+        "ground_truth": "SIB 19 supports dynamic satellite coverage and beamforming by including detailed ntn-BeamInformation. This information specifies the beam ID, geographical coverage, and operational parameters for each beam. Since satellite beams can be dynamically adjusted to focus on different areas based on demand, SIB 19 ensures that UEs receive up-to-date information about which beams are active and relevant to their current location. Additionally, SIB 19 may include parameters for adaptive beam management, allowing UEs to switch between beams as the satellite\u2019s coverage area changes.",
+        "timestamp": "2024/08",
+        "source": "https://www.telecomhall.net/t/system-information-19-sib19-for-5g-satellite-ntn/30178",
+        "author": "Yifei"
+    },
+    {
+        "question": "\ud835\udc07\ud835\udc28\ud835\udc30 \ud835\udc2d\ud835\udc28 \ud835\udc03\ud835\udc1e\ud835\udc29\ud835\udc25\ud835\udc28\ud835\udc32 5\ud835\udc06 \ud835\udc12\ud835\udc00 \ud835\udc1a\ud835\udc27\ud835\udc1d \ud835\udc0d\ud835\udc12\ud835\udc00?",
+        "ground_truth": "5G offers endless possibilities, but its deployment varies. Operators choose options based on spectrum, geography, equipment, and business factors. 3GPP guidelines ease the transition from 4G to 5G. Typically, 5G NR deploys first, coexisting with 4G RAN. Then, the 5G Core arrives. Expect 4G+5G handsets connecting seamlessly to both 4G eNB and 5G gNB.",
+        "timestamp": "2023/03",
+        "source": "https://www.telecomhall.net/t/5g-deployment-options-know-all-in-details-options-1-2-3-4-5-6-7/22432",
+        "author": "Yifei"
+    },
+    {
+        "question": "\ud835\udc16\ud835\udc21\ud835\udc22\ud835\udc1c\ud835\udc21 \ud835\udc1a\ud835\udc2b\ud835\udc1e \ud835\udc2d\ud835\udc21\ud835\udc1e \ud835\udc26\ud835\udc1a\ud835\udc22\ud835\udc27 5\ud835\udc06 \ud835\udc1d\ud835\udc1e\ud835\udc29\ud835\udc25\ud835\udc28\ud835\udc32\ud835\udc26\ud835\udc1e\ud835\udc27\ud835\udc2d \ud835\udc28\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27\ud835\udc2c?",
+        "ground_truth": "\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 1 (\ud835\udc1e\ud835\udc0d\ud835\udc01 + \ud835\udc04\ud835\udc0f\ud835\udc02):\n\nIt represents the foundational LTE (4G) connectivity deployment. In this configuration, the eNB connects to the 4G Core Network, forming the backbone of 4G cellular communication. This setup enables high-speed data transmission and typical 4G services.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 2 (\ud835\udc20\ud835\udc0d\ud835\udc01 + 5\ud835\udc06\ud835\udc02):\n\nIt entails a standalone 5G deployment. Here, the gNB (5G New Radio Base Station) connects directly to the 5G Core Network. This setup harnesses the full potential of 5G technology, enabling ultra-low latency, massive device connectivity, and advanced services like network slicing.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 3 (\ud835\udc04\ud835\udc0f\ud835\udc02 + 4\ud835\udc06 \ud835\udc1e\ud835\udc0d\ud835\udc01 \ud835\udc26\ud835\udc1a\ud835\udc2c\ud835\udc2d\ud835\udc1e\ud835\udc2b + 5\ud835\udc06 \ud835\udc1e\ud835\udc27-\ud835\udc20\ud835\udc0d\ud835\udc01 \ud835\udc2c\ud835\udc1e\ud835\udc1c\ud835\udc28\ud835\udc27\ud835\udc1d\ud835\udc1a\ud835\udc2b\ud835\udc32):\n\nOne of the most popular options within the NSA (Non-Standalone) framework. It combines 4G (eNB master) and 5G (en-gNB secondary) components, both connected to the existing 4G EPC. This hybrid approach allows for the coexistence of 4G and 5G, enhancing data speeds while leveraging the 4G core network\u2019s infrastructure.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 4 (5\ud835\udc06\ud835\udc02 + 5\ud835\udc06 \ud835\udc20\ud835\udc0d\ud835\udc01 \ud835\udc26\ud835\udc1a\ud835\udc2c\ud835\udc2d\ud835\udc1e\ud835\udc2b + 4\ud835\udc06 \ud835\udc27\ud835\udc20-\ud835\udc1e\ud835\udc0d\ud835\udc01 \ud835\udc2c\ud835\udc1e\ud835\udc1c\ud835\udc28\ud835\udc27\ud835\udc1d\ud835\udc1a\ud835\udc2b\ud835\udc32):\n\nIt represents a deployment where the 5G Core Network (5GC) is integrated with a primary 5G gNB and a secondary 4G ng-eNB. In this setup, 5G is the primary network, while 4G serves as a complementary technology.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 5 (\ud835\udc27\ud835\udc20-\ud835\udc0d\ud835\udc01 + 5\ud835\udc06\ud835\udc02):\n\nThis is a deployment scenario where the Next-Generation eNodeB (ng-eNB) connects directly to the 5G Core Network (5GC). This configuration is characteristic of a standalone 5G (5G SA) deployment, offering the full suite of 5G capabilities independently.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 7 (5\ud835\udc06\ud835\udc02 + 4\ud835\udc20 \ud835\udc27\ud835\udc20-\ud835\udc1e\ud835\udc0d\ud835\udc01 \ud835\udc26\ud835\udc1a\ud835\udc2c\ud835\udc2d\ud835\udc1e\ud835\udc2b + 5\ud835\udc20 \ud835\udc20\ud835\udc0d\ud835\udc01 \ud835\udc2c\ud835\udc1e\ud835\udc1c\ud835\udc28\ud835\udc27\ud835\udc1d\ud835\udc1a\ud835\udc2b\ud835\udc32):\n\nIt features a deployment where the 5G Core Network (5GC) is at the core, with a primary 4G ng-eNB master and a secondary 5G gNB. In this setup, 4G serves as the primary access network, while 5G gNB acts as a supplementary technology.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 6 (4\ud835\udc06 \ud835\udc02\ud835\udc28\ud835\udc2b\ud835\udc1e + 5\ud835\udc06 \ud835\udc20\ud835\udc0d\ud835\udc01 ):\n\nThis configuration may not be as attractive because it doesn\u2019t fully leverage the capabilities of a 5G core network (5GC)\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 8 (5\ud835\udc06\ud835\udc02 + 4\ud835\udc06 \ud835\udc1e\ud835\udc0d\ud835\udc01 + 4\ud835\udc06 \ud835\udc27\ud835\udc20-\ud835\udc1e\ud835\udc0d\ud835\udc01 \ud835\udc2c\ud835\udc1e\ud835\udc1c\ud835\udc28\ud835\udc27\ud835\udc1d\ud835\udc1a\ud835\udc2b\ud835\udc32):\n\nThe 5G Core Network (5GC) is deployed alongside a primary 4G eNB and a secondary 4G ng-eNB. This configuration may be used when transitioning from 4G to 5G, but it doesn\u2019t maximize the potential of 5G technology.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 3, 3\ud835\udc1a & 3\ud835\udc31:\n\nAll three options involve a control plane connection between the EPC and the eNB via the S1-C interface, as well as between the eNB and the gNB via the X2-C interface. Notably, there is no direct signaling traffic exchange between the EPC and the gNB. However, the distinctions among these options lie in how user plane traffic is routed, particularly in the downlink direction, although these principles also apply to the uplink.",
+        "timestamp": "2023/03",
+        "source": "https://www.telecomhall.net/t/5g-deployment-options-know-all-in-details-options-1-2-3-4-5-6-7/22432",
+        "author": "Yifei"
+    },
+    {
+        "question": "\ud835\udc16\ud835\udc21\ud835\udc1a\ud835\udc2d \ud835\udc1a\ud835\udc2b\ud835\udc1e \ud835\udc2d\ud835\udc21\ud835\udc1e \ud835\udc1d\ud835\udc22\ud835\udc1f\ud835\udc1f\ud835\udc1e\ud835\udc2b\ud835\udc1e\ud835\udc27\ud835\udc1c\ud835\udc1e\ud835\udc2c \ud835\udc1a\ud835\udc1c\ud835\udc2b\ud835\udc28\ud835\udc2c\ud835\udc2c \ud835\udc28\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27\ud835\udc2c 3, 3\ud835\udc1a \ud835\udc1a\ud835\udc27\ud835\udc1d 3\ud835\udc31?",
+        "ground_truth": "\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 3, user plane traffic originates from the EPC and is initially directed to the eNB. Here, the Packet Data Convergence Protocol (PDCP) sublayer plays a pivotal role by dividing the traffic, allowing a portion of it to be transmitted to the gNB through the X2-U interface.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 3\ud835\udc1a, a notable change is that the EPC establishes a direct S1-U interface to the gNB. Within this option, the EPC is responsible for splitting the user plane traffic.\n\n\ud835\udc0e\ud835\udc29\ud835\udc2d\ud835\udc22\ud835\udc28\ud835\udc27 3\ud835\udc31 represents a hybrid approach where the EPC divides the user plane traffic for both the eNB and the gNB. Additionally, the gNB\u2019s PDCP sublayer can send certain portions of the traffic back to the eNB.",
+        "timestamp": "2023/03",
+        "source": "https://www.telecomhall.net/t/5g-deployment-options-know-all-in-details-options-1-2-3-4-5-6-7/22432",
+        "author": "Yifei"
+    },
+    {
+        "question": "I understand that, in MU-MIMO, the same PRB on different layers can be shared between different UEs, with enough space between them. However, can the same PRB on different layers be used by a single user, effectively double, triple or even quadruple the throughput?",
+        "ground_truth": "Basically, each layer has its own resource grid, so for example, in the case of 4 layers, it means 4 resource grids are transmitted simultaneously. UE can decode based on different DMRS signals on each layer. 5G supports up to 12 orthogonal DMRS ports, which allows a maximum of 12 layers without reusing DMRS ports.",
+        "timestamp": "2025/07",
+        "source": "https://www.telecomhall.net/t/how-does-mimo-work-with-a-single-ue/34544",
+        "author": "Yifei"
+    },
+    {
+        "question": "I\u2019m recently confused about the CSI_RS in connected mode. So the SSB will still be transmitting due to the need of synchronization even in connected mode. So does gNB still do beam sweeping periodically even the user and gNB are connected? If it does, is the beam sweeping based on SSB or CSI-RS? Also, I read some books and papers said that the CSI-RS are framed in the PDSCH which means that CSI-RS are surrounded by data, but some says it\u2019s independent from PDSCH and in time domain it\u2019s right after the SSB.\nIf there is beam refinement in connected mode periodically, then it\u2019s based on CSI-RS (RSRP). Also CSI-RS is used for channel estimation (feedback includes PMI RI and CQI\u2026), are these two CSI-RS the same in time and frequency domain or they are separated?",
+        "ground_truth": "SSBs are for all UEs. gNB transmits SSB beams by means of beam sweeping, no matter a specific UE is connected or not.\nBut for UEs in connected mode, they can use CSI-RS beams for more accurate beam selection. In my opinion, SSB is for first-step beam selection, and CSI-RS is for further.",
+        "timestamp": "2023/06",
+        "source": "https://www.telecomhall.net/t/about-csi-rs-in-connected-mode/24118",
+        "author": "Yifei"
+    },
+    {
+        "question": "I also got another question, as you mentioned CSI-RS beams, is CSI-RS framed in the PDSCH data or they are separated from the PDSCH data and are transmitted like pilots with no user data around? If the CSI-RS is framed in PDSCH data, does that mean when gNB is doing CSI-RS beam sweeping, some of the user data are beamformed in different directions?",
+        "ground_truth": "CSI-RSs are transmitted in the BWP assigned to a UE, independently of PDSCH. The UE can be assigned different CSI-RS resources for different use. PDSCH beam can be formed according to CSI-RS beam measurement result (CSI report). PDSCH resource should be punched at CSI-RS REs.",
+        "timestamp": "2023/06",
+        "source": "https://www.telecomhall.net/t/about-csi-rs-in-connected-mode/24118",
+        "author": "Yifei"
+    },
+    {
+        "question": "Which 3gpp specs say 5G DL support max 16 layers?",
+        "ground_truth": "According to my interpretation of 3GPP 38.211 6.4.1.1 (PUSCH DMRS) and 7.4.1.1 (PDSCH DMRS), up to 8 layers and 12 layers are supported, using DM-RS Configuration Type 1 and Type 2, respectively.",
+        "timestamp": "2023/07",
+        "source": "https://www.telecomhall.net/t/which-3gpp-specs-say-5g-dl-support-max-16-layers/25280",
+        "author": "Yifei"
+    },
+    {
+        "question": "How many max carriers can be aggregated in ENDC?",
+        "ground_truth": "In 5G NR Phase-1, upto 16 CCs (both contiguous and non-contiguous) can be aggregated.",
+        "timestamp": "2024/01",
+        "source": "https://www.telecomhall.net/t/how-many-max-carriers-can-be-aggregated-in-endc/27701",
+        "author": "Yifei"
+    },
+    {
+        "question": "Question about the SA and NSA options.\nHaven\u2019t read much about the 5GC, but when the EPC is able to serve to inter operate with the NR, why should an operator to decide to work with 5GC?\nLet me ask this way, what does an operator get in terms of features/services through 5GC?\nIn the 5G NSA case, the LTE EPC is able to work well with 5G NR and provide the 5G service.",
+        "ground_truth": "It is not possible to achieve URLLC and mMTC without 5GC.\nAlso Network Slicing and Edge Computing.",
+        "timestamp": "2020/05",
+        "source": "https://www.telecomhall.net/t/why-should-an-operator-decide-to-work-with-5gc/8173",
+        "author": "Yifei"
+    },
+    {
+        "question": "Yesterday, during a conversation with a LinkedIn connection, my interlocutor raised some questions about the X2 alarm. How to resolve it?",
+        "ground_truth": "Here are some best practices for tuning and analysis:\n\nTuning HO parameters:\n\nHO Thresholds: Adjust thresholds for events like A3 and A5 to ensure the handover occurs at the optimal moment.\nTimers (TTT and HO Prep): Configure appropriate times to avoid premature or delayed HO decisions.\nNeighbors (ANR): Ensure neighbors are properly configured and that the X2 is enabled.\nVerify IP connectivity:\nEnsure the links between eNodeBs/gNodeBs are operational and have low latency.\n\nMonitor KPIs:\nTrack metrics such as HO success rate and X2 failures to identify improvement areas.",
+        "timestamp": "2025/01",
+        "source": "https://www.telecomhall.net/t/x2-link-failure-alarm/32494",
+        "author": "Yifei"
+    },
+    {
+        "question": "I want to discuss a specific scenario related to the Handover between VoWiFi to VoLTE in a 5G coverage. We have a  smartphone who supports a VoWiFi and VoLTE, but he doesn\u2019t support the VoNR.\n\nSo, let\u2019s imagine the scenario that we are in a 5G coverage, enable the VoWiFi and start a call. When the user starts to move, he will lose the Wi-Fi signal and the call must handover to VoLTE. However, we are seeing some problems on this scenario, when the mobile loses the signal from wifi he tries to connect to the 5G again and the call droped.Smartphone deals\n\nI want to understand better the flow for this scenario and why the correct HO for VoLTE doesn\u2019t happen.",
+        "ground_truth": "This is a very common issue when youare deploying 5G SA initially as well as VoNR and this is called cross procedure.So when the subscriber is trying to move from one coversge area to another it wont have to change the Core node Ideally you If you have a dual mode core.If not then you have to which can trigger a TAU .But for the handover that wont be an issue,But in UE there is a behaviour called \"Cross procedure \"where when UE trying to establish a new PDN connection,Lets say 5G if in the middle of it if 4G requests a new procedure UE will abandon the old one and start a new 4G procedure.So this will make the call setup up time longer and eventually disconnection as well.Therefore when doing the testing you need to adjust some timers in the network like T409 which is retry timer so handset will try not loos the pdn flow.For wifi call there is another issue in Ericsson WMG and PCG which they have fixed in a later LCM cycle which is VoWIFI to VoNR handover is not working as a workaround you need to set implicit unsubscription feature in HLR so UE will select volte instead.",
+        "timestamp": "2023/09",
+        "source": "https://www.telecomhall.net/t/handover-between-vowifi-to-volte-in-a-5g-coverage/25716/2",
+        "author": "Yifei"
+    },
+    {
+        "question": "I would like to clarify the following regarding the uplink HARQ process in 5G NR.\n\nWhen the UE sends PUSCH data to the gNB, and the gNB either successfully decodes it or fails, at what specific parameter or field in the gNB indicates the slot timing at which it has sent the HARQ ACK/NACK feedback to the UE?\n\nAdditionally, in which specific message or control format (such as DCI or PUCCH) can we find this HARQ feedback timing parameter that reflects when the gNB schedules or transmits the ACK/NACK to the UE?",
+        "ground_truth": "HARQ feedback timing in 5G NR is critically important for correct uplink-downlink coordination.\n\nBelwo is step by step breakdown:\n\nWhen UE sends PUSCH to gNB:\n\nThe UE sends uplink data using PUSCH in a specific slot (let\u2019s call it slot N).\nThe gNB must then process this data and respond with HARQ feedback (ACK/NACK), typically via PUCCH (from UE) or DL DCI (from gNB).\nThe timing of when this feedback is sent is determined by HARQ timing configuration, which is defined at configuration time via RRC signalling, and indicated at runtime via DCI formats.\n1. Where is the HARQ feedback timing configured (gNB-side)?\n\nThe timing between PUSCH transmission and HARQ feedback is controlled by:\n\nt-UL-HARQ parameter: This defines the number of slots between the UE\u2019s PUSCH transmission and the gNB\u2019s HARQ feedback (ACK/NACK).\nIt is configured by the gNB and communicated to the UE through RRC signalling:\nIn PUSCH-Config (RRC layer):\n\nt-Ul-HARQ ::= ENUMERATED {\n\nn4, n6, n10, n16, n20, n30, \u2026\n\n}\n\nThis tells the UE that the gNB will provide feedback t slots after it sends the PUSCH.\n\n2. At runtime, where is the HARQ feedback delivered or scheduled?\n\nDL DCI Format 1_0 / 1_1 (Downlink Control Information)\n\nThe ACK/NACK for uplink HARQ is typically delivered via DL DCI Format 1_0 or 1_1 on the PDCCH.\nThe DCI can schedule:\nA new DL transmission\nOr signal HARQ feedback and scheduling decisions\nBut DCI itself doesn\u2019t explicitly state the ACK/NACK timing. Instead, the timing is predefined based on configuration (t-UL-HARQ).\n\nSo, when the gNB sends a DCI to schedule DL or UL resources, the UE uses t-UL-HARQ and slot numbering to infer when to expect or send HARQ feedback.\n\n3. Where is HARQ ACK/NACK physically sent?\n\nThe ACK/NACK is typically delivered via:\n\nPUCCH: When UE sends ACK/NACK in response to downlink data (DL HARQ).\nPDSCH + DCI (PDCCH): When gNB sends ACK/NACK for uplink HARQ (what you\u2019re asking about).\nSo in your scenario (PUSCH from UE, ACK/NACK from gNB):\n\nThe feedback is sent on the PDCCH, in the form of DCI (usually Format 1_0 or 1_1).\nBut the timing (i.e., the slot in which ACK/NACK is expected to be sent) is not explicitly in the DCI \u2014 it\u2019s based on t-UL-HARQ.",
+        "timestamp": "2025/06",
+        "source": "https://www.telecomhall.net/t/harq-ack-nack-timing-indication-in-5g-nr-uplink/34087",
+        "author": "Yifei"
+    },
+    {
+        "question": "In 5G NR, what do you mean by High-MAC and Low-MAC?",
+        "ground_truth": "In practical deployments, a 5G base station or gNB is not a monolith located at the cell site.\n\nIt\u2019s often disaggregated into Radio Unit (RU), Distributed Unit (DU) and Centralized Unit (CU).\n\n5G allows multiple ways in which gNB functions can be split across RU, DU and CU.\n\nOne way is to split MAC sublayer into two parts: High-MAC and Low-MAC.\n\nSuch a split is called Intra-MAC Split.\n\nWith this split, High-MAC, RLC, PDCP and RRC will be in the CU.\n\nLow-MAC will be in the DU.\n\nThe DU-CU interface is commonly called midhaul.\n\nMultiplexing/demultiplexing are done in High-MAC. High-level scheduling decisions are part of High-MAC.\n\nInter-cell interference coordination as needed in CoMP can be done in High-MAC in a more centralized manner.\n\nTime-critical processing such as HARQ, random access control, scheduling-related information processing and reporting are in Low-MAC.",
+        "timestamp": "2025/06",
+        "source": "https://www.telecomhall.net/t/in-5g-nr-what-do-you-mean-by-high-mac-and-low-mac/34144",
+        "author": "Yifei"
+    },
+    {
+        "question": "Can anyone share some details on mapping of featuresetCombination for a supported band combination in NR?\nI just want to understand mapping by one example.",
+        "ground_truth": "Please follow below procedure on any actual UE capability mesage.\n\nFrom UE capability, check required band combination under supportedBandCombinationList.\nNote down \u201cfeatureSetCombination\u201d number in the same band combination\n\nGo to featureSetCombinations IE. Indexing start form 0. Go the index pointed by step1.\nIn this structure, there will be sub structures per band in the band combination. Each structure will have multiple entries. These multiple entries points to featureSetsDownlink and featureSetsUplink supported for that band.\nNote down index numbers for downlinkSetNR and uplinkSetNR\n\nNow go to IE \u201cfeatureSets ->featureSetsDownlink\u201d. Indexing start form 1.\nGo the index pointed in step 2. It gives index numbers for featureSetsDownlinkPerCC/ featureSetsUplinkPerCC\n\nGo to IE featureSetsDownlinkPerCC/ featureSetsUplinkPerCC. Indexing start form 1.\nGo the index numbers noted in step 3. Number of indexes is equal to number of entries in structure observed in step 2.",
+        "timestamp": "2024/09",
+        "source": "https://www.telecomhall.net/t/mapping-of-featuresetcombination-for-a-supported-band-combination-in-nr/30697",
+        "author": "Yifei"
+    },
+    {
+        "question": "I want 5G QCI, 5G CQI, MCS value",
+        "ground_truth": "Below are the 5QI,CQI and MCS values for your reference.\n\nFirst of all, We have Multiple 5Q(QCI) with advance QoS implementation . Now its called as 5QI in 5G .\n\nCQI\nWe have totally 3 CQI tables, which CQI table values will be allocated to UE purely based on the radio conditions and UE should consider more things in 5G.\n\nCan be understood by the below details as per 3GPP\n\nA combination of modulation scheme and transport block size corresponds to a CQI index if:\n\nthe combination could be signaled for transmission on the PDSCH in the CSI reference resource according to the\nTransport Block Size determination described in Subclause 5.1.3.2, and\nthe modulation scheme is indicated by the CQI index, and\nthe combination of transport block size and modulation scheme when applied to the reference resource results in the effective channel code rate which is the closest possible to the code rate indicated by the CQI index. If morethan one combination of transport block size and modulation scheme results in an effective channel code rate equally close to the code rate indicated by the CQI index, only the combination with the smallest of suchtransport block sizes is relevant\n\nSimilarly we have 3 tables for MCS\n\nFor the PDSCH scheduled by a PDCCH with DCI format 1_0 or format 1_1 with CRC scrambled by C-RNTI, MCS-CRNTI, TC-RNTI, CS-RNTI, SI-RNTI, RA-RNTI, or P-RNTI, or for the PDSCH scheduled without corresponding PDCCH transmissions using the higher-layer-provided PDSCH configuration SPS-config,\nif the higher layer\nparameter mcs-Table given by PDSCH-Config is set to \u2018qam256\u2019, and the PDSCH is scheduled by a PDCCH with DCI format 1_1 with CRC scrambled by C-RNTI\n\nthe UE shall use IMCS and Table 5.1.3.1-2 to determine the modulation order (Qm) and Target code rate R used in the physical downlink shared channel.\nelseif\nthe UE is not configured with MCS-C-RNTI, the higher layer parameter mcs-Table given by PDSCH-Config is set to \u2018qam64LowSE\u2019, and the PDSCH is scheduled by a PDCCH in a UE-specific search space with CRC scrambled by\nC-RNTI\nthe UE shall use IMCS and Table 5.1.3.1-3 to determine the modulation order (Qm) and Target code rate R used in the physical downlink shared channel.\nelseif\nthe UE is configured with MCS-C-RNTI, and the PDSCH is scheduled by a PDCCH with CRC scrambled by\nMCS-C-RNTI\nthe UE shall use IMCS and Table 5.1.3.1-3 to determine the modulation order (Qm) and Target code rate R used in the physical downlink shared channel.\nelseif\nthe UE is not configured with the higher layer parameter mcs-Table given by SPS-config, the higher layer parameter mcs-Table given by PDSCH-Config is set to \u2018qam256\u2019,\nif the PDSCH is scheduled by a PDCCH with DCI format 1_1 with CRC scrambled by CS-RNTI or\nif the PDSCH is scheduled without corresponding PDCCH transmission using SPS-config,\nthe UE shall use IMCS and Table 5.1.3.1-2 to determine the modulation order (Qm) and Target code rate R\nused in the physical downlink shared channel.\nelseif\nthe UE is configured with the higher layer parameter mcs-Table given by SPS-config set to \u2018qam64LowSE\u2019\nif the PDSCH is scheduled by a PDCCH with CRC scrambled by CS-RNTI or\nif the PDSCH is scheduled without corresponding PDCCH transmission using SPS-config,\nthe UE shall use IMCS and Table 5.1.3.1-3 to determine the modulation order (Qm) and Target code rate R used in the physical downlink shared channel.\nelse\nthe UE shall use IMCS and Table 5.1.3.1-1 to determine the modulation order (Qm) and Target code rate R used in the physical downlink shared channel\nend\nThe UE is not expected to decode a PDSCH scheduled with P-RNTI, RA-RNTI, SI-RNTI and Qm > 2",
+        "timestamp": "2020/04",
+        "source": "https://www.telecomhall.net/t/what-are-5g-qci-cqi-mcs-values/7463",
+        "author": "Yifei"
+    },
+    {
+        "question": "what is ARP and any table is there for 5G",
+        "ground_truth": "ARP Allocation and Retention Priority is just used for controlling call admission. Indicates a priority value used to decide whether to activate a new SDF(Service Data Flow) or EPS(Evolved Packet System) bearer by removing an existing one in a network with limited resources.\n\nOnce an SDF or EPS bearer is established, ARP has no impact on the packet forwarding treatment.\n\nARP has the following parameters:-\n\nPriority level (1 \u2013 15):- defines relative importance of are source request, where 1 is the highest.\n\nPreemption capability (yes or no):- defines whether an SDF or EPS bearer can get resources already assigned to another SDF or EPS bearer with a lower priority level.\n\nPreemption vulnerability (yes or no):- defines whether an SDF or EPS bearer can lose the resources already assigned to it to an SDF or EPS bearer with a higher priority level.\n\nYou can check this in EndcProfile configuration for QCI 1 5 and 9 specially.\n\nEndcProfile controls how the S1-U shall be terminated for EN-DC capable UEs (meNbS1TermReqArpLev) and if configuration of split bearers is allowed for the UE (splitNotAllowedUeArpLev).\n\nBelow Example for your understanding .\nQCI 9 - SN Split bearer:\nARP.PriorityLevel is higher than (>) meNbS1TermReqArpLev, this bearer will be setup as SN terminated.\nARP.PriorityLevel is higher than (>) splitNotAllowedUeArpLev, bearers in UE can be setup as SN terminated.\n\nQCI 5 - MN MCG bearer:\nARP.PriorityLevel is lower than (<) meNbS1TermReqArpLev, this bearer will not be setup as SN terminated.\nARP.PriorityLevel is higher than (>) splitNotAllowedUeArpLev, other bearers in UE can still be setup as SN terminated.\n\nQCI 1 - MN MCG bearer:\nARP.PriorityLevel is equal to or lower than (<=) meNbS1TermReqArpLev, this bearer will not be setup as SN terminated.\nARP.PriorityLevel is higher than (>) splitNotAllowedUeArpLev, other bearers in UE can still be setup as SN terminated.",
+        "timestamp": "2020/04",
+        "source": "https://www.telecomhall.net/t/what-are-5g-qci-cqi-mcs-values/7463",
+        "author": "Yifei"
+    },
+    {
+        "question": "If an NR UE does not support the configured NR cell bandwidth, which parameter needs to be adjusted to ensure the user can still access the cell?\n\nVendors: Huawei & Ericsson.",
+        "ground_truth": "Here\u2019s an example:\n\nI\u2019m not sure if I fully understood your question, but in Huawei, when users are REDCAP, we need to configure NRDUCELLBWP as follows:\n\nCommand:\n\nMOD NRDUCELLBWP:BWPCONFIGSWITCH=UE_BW_ADAPTIVE_SW-1,ULMINCARRIERBW=20M,DLMINCARRIERBW=20M;\nThis configuration ensures that REDCAP UEs can access the network.\n\nParameter Descriptions:\nUE_BW_ADAPTIVE_SW: Enables UE bandwidth adaptation. When enabled, the gNodeB verifies whether UEs support the configured cell bandwidth. If not, it adjusts the UE bandwidth based on the UlMinCarrierBw and DlMinCarrierBw values, the existing BWPs in the cell, and UE capabilities. If disabled, the gNodeB assigns bandwidth based on the full cell bandwidth by default. This is applicable only to low-frequency cells.\nUlMinCarrierBw: Defines the minimum uplink carrier bandwidth supported by the cell.\nDlMinCarrierBw: Defines the minimum downlink carrier bandwidth supported by the cell.\nThis might be similar to what you need to configure in your case.",
+        "timestamp": "2025/02",
+        "source": "https://www.telecomhall.net/t/ensuring-nr-ue-access-when-configured-cell-bandwidth-is-not-supported/32824",
+        "author": "Yifei"
+    },
+    {
+        "question": "How To Calculate Max 5G-NR Throughput?",
+        "ground_truth": "Peak data rate is the maximum data rate achieved by a cell (mobile station) in an ideal radio condition, when all the available radio resources are utilized without error. It is measured in bits per second (bps).Smartphone deals\n\nPeak data rate formula defined is applicable to both downlink (DL) and uplink (UL) transmissions with TDD (Time Division Duplex) and FDD (Frequency Division Duplex) techniques.\n\nSpectrum (bandwidth) is one of the valuable and expensive resource allocated to telcos and it must be used judiciously in conjunction with right number of layers (MIMO), modulation, parameters with best possible radio conditions on field to achieve the maximum data rates/throughput.\n\nNote:\n\nScaling factors are constant values:\nAlpha (DL/UL resource proportion) value is 1 (FDD) & 0.76 (TDD).\nf (mismatch in BB & RF), it is considered 1 (no mismatch)\nJ is number of carriers aggregated. Maximum 16 possible\nModulation considered: 256QAM\nCoding rate is constant: 0.93\nPRB for FR1:\ni). 270 for BW 50 MHz, SCS 15 kHz;\nii). 273 for BW 100 MHz, SCS 30 kHz;\niii). 135 for BW 100 MHz, SCS 60 kHz\nPRB for FR2:\ni). 264 for BW 200 MHz, SCS 60 kHz;\nii). 264 for BW 400 MHz, SCS 120 kHz\nOverhead (OH): Resources occupied by signaling/guard band: In FR1, it ranges from 0.10 to 0.12; In FR2, it is 0.18\nT is the OFDM symbol duration: 10^-3/(14*2^numerology)\nTDD DL - frame structure considered is 6D:2U:2F\nTDD UL \u2013 frame structure considered is 6U:2D:2F",
+        "timestamp": "2022/11",
+        "source": "https://www.telecomhall.net/t/how-to-calculate-max-5g-nr-throughput/20409",
+        "author": "Yifei"
+    },
+    {
+        "question": "In an NSA network, VoLTE has three strategies:\n\nDelete SN: The UE transmits VoLTE only on the LTE carrier, with no NR transmission. This improves VoLTE UL coverage but disables 5G data.\nKeep SN: The UE transmits over both 4G and 5G links, with total power capped at the UE\u2019s maximum output.\nDynamic SN: Based on the UL SINR received at the gNB, the network decides whether to keep or delete the secondary node (SN).\nWhich strategy is most commonly used?",
+        "ground_truth": "Delete SN.",
+        "timestamp": "2024/11",
+        "source": "https://www.telecomhall.net/t/preferred-volte-strategy-in-nsa-networks/32182",
+        "author": "Yifei"
+    },
+    {
+        "question": "Once the VoLTE call is set up, should the 5G leg be released, and data transmission occur only on 4G?",
+        "ground_truth": "Yes, correct.",
+        "timestamp": "2024/11",
+        "source": "https://www.telecomhall.net/t/preferred-volte-strategy-in-nsa-networks/32182",
+        "author": "Yifei"
+    },
+    {
+        "question": "UE supports VoLTE and SA, but not VoNR. UE capability Info to the n/w clearly indicates that the device does not support VoNR. When a call is triggered in 5G SA, and if the network configures the VoNR bearer (ignoring UE capability) what should the UE do here? Any specification reference would be helpful",
+        "ground_truth": "The UE should reject the VoNR bearer establishment attempt with an appropriate cause code.\nAccording to 3GPP TS 24.501 (5G NAS protocol), section 6.4.1.3 \u201cUE requested PDU session establishment procedure accepted by the network,\u201d when the network attempts to establish a PDU session with parameters the UE cannot support, the UE should:\nSend a PDU SESSION ESTABLISHMENT REJECT message\nInclude cause #43 \u201cInvalid PDU session identity\u201d or the appropriate failure cause\nAdditionally, 3GPP TS 38.331 (5G RRC protocol) specifies that when receiving RRC configuration for capabilities the UE doesn\u2019t support, the UE should:\nReject the configuration\nSend an RRC reconfiguration failure message\nFor fallback procedures, 3GPP TS 23.502 section 4.13 details the \u201cEPS Fallback for IMS voice\u201d procedure. The UE should trigger EPS fallback to utilize its VoLTE capability instead.",
+        "timestamp": "2025/01",
+        "source": "https://www.telecomhall.net/t/ue-behavior-when-vonr-unsupported-network-attempts-dedicated-bearer/32333",
+        "author": "Yifei"
+    },
+    {
+        "question": "I am trying to understand Rate Matching with respect to 4G/5G.\nCould somebody give a brief idea on what exactly is Rate Matching?",
+        "ground_truth": "Think is it this way:\n\nYou have some radio resources (like PRBs, layers, OFDM symbols). You can transmit B1 bits to those resources for some given modulation and other configurations.\nNow lets say you have you have a transport block which undergo CRC attachment and encoding (LDPC or Polar or any other). Now after this processing you have B2 bits\n\nB2 bits need to be transmitted where you have resources for B1 bits\n\ncase 1: B2 > B1\nMeans you have less resources campared to bits you have to transmit. So what you will do, you just transmit B1 bits and skip the remaining B1-B2 bits. Knows as puncturing\n\ncase 2: B1 > B2\nMeans you have more resources compared to the bits you need to transmit. What you should do now? repeat some of the bits to fill the remaining resources. Known as repetition.",
+        "timestamp": "2020/05",
+        "source": "https://www.telecomhall.net/t/what-is-rate-matching/8422",
+        "author": "Yifei"
+    },
+    {
+        "question": "Any useful hints/ideas/parameter changes for offloading 4G traffic to 5G? 5G is E// and is on 3.5Ghz+ NR2100 on FDD.",
+        "ground_truth": "What I understood from offloaing is that you have a 5G RAN as well as SA CORE ready and deployed and now you are ready to offload am I correct.There are several methods of doing it.Initially you can start with connecting the RAN to EPC like 5G NSA and then allow 5G SA services to handle traffic using techniques such as CUPS and ultimately the final netowkr should be a 5G and 4G RAN connected to Dual Mode Core(DMC)",
+        "timestamp": "2023/02",
+        "source": "https://www.telecomhall.net/t/offload-4g-traffic-to-5g/22242",
+        "author": "Yifei"
+    },
+    {
+        "question": "In the process of initial access between the gNB and the UE, the gNB needs to send a RAR message in order to complete the process.\n\nThe sending of the RAR message occurs after a PRACH message is received, the PRACH message is sent at a certain time and frequency that is marked in advance within the SIB message 1.\n\nI want to know if there is a parameter that defines to the UE where the RAR message is going to be transmitted?\n\nIs there any parameter that indicates CORESET with the DCI sent for the RAR message?",
+        "ground_truth": "ra-searchSpace in SIB1 tells the UE where it needs to looks for DCI with RA-RNTI scrambling.",
+        "timestamp": "2023/04",
+        "source": "https://www.telecomhall.net/t/is-there-any-parameter-that-indicates-coreset-with-the-dci-sent-for-the-rar-message/23083",
+        "author": "Yifei"
+    },
+    {
+        "question": "Can N1 with 10 MHz be implemented using an SCS of 30 kHz?\n\nAdditionally, is there a relationship between SCS and NR bandwidth?",
+        "ground_truth": "Most UEs may not support it, as SCS is generally related to the band in the standard.",
+        "timestamp": "2025/03",
+        "source": "https://www.telecomhall.net/t/n1-with-10-mhz-and-scs-30-khz-feasibility-relationship-with-nr-bandwidth/33414",
+        "author": "Yifei"
+    }
+]
