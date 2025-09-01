@@ -10,14 +10,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 import time
 
-response_template = '''Evaluate the correctness of a provided answer to a telecommunications and networking question. 
+response_template = '''Evaluate the accuracy of a provided answer to a telecommunications and networking question. 
 Question: {question}
 Ground Truth Answer: {ground_truth}
 Provided Answer: {prediction}
 Instructions:
-1. Compare Provided Answer to Ground Truth Answer
-2. Determine if Provided Answer is correct based on Ground Truth Answer
-3. Respond with only Yes or No
+1. Compare Provided Answer to Ground Truth Answer. 
+2. A provided answer is 'Accurate' if it covers all the same points as the ground truth answer. 
+3. A provided answer is 'Inaccurate' if it misses out on any of the points that the ground truth answer covers.
+4. The confidence level field should be populated by only the number.
+5. Respond in the following format:
+
+{{"Reasoning": <Your brief reasoning on why the judgment should be accurate or inaccurate>,
+"Judgment": <"Accurate" or "Inaccurate">,
+"Confidence level":<How confident you feel about the judgment. It should be on a scale of 1-5, where 5 means absolutely confident and 1 means not confident at all.> }}
 Is the Provided Answer Correct?'''
 def get_response(client,question,ground_truth,prediction, seed):
     response_prompt = response_template.format(question=question,ground_truth=ground_truth,prediction=prediction)
@@ -42,11 +48,14 @@ def process_item(client, item, seed, max_retries=3, delay=3):
     for attempt in range(1, max_retries + 1):
         try:
             gpt_response = get_response(client, question,ground_truth,prediction, seed)
+            response_obj = json.loads(gpt_response)
             return {
                 'question': question,
                 'ground_truth':ground_truth,
                 'predicted_answer':prediction,
-                'completion': gpt_response,
+                'judgment': response_obj['Judgment'],
+                'reasoning': response_obj['Reasoning'],
+                'confidence_level': response_obj['Confidence level'],
                 **item,
             }
         except Exception as e:
