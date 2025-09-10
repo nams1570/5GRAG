@@ -120,7 +120,6 @@ class Chat3GPPRetriever:
         reranker_model, tokenizer = load_reranker()
         #must pass langchain Documents as docs to get_rerank_scores
         reranked_results = get_rerank_scores(model=reranker_model,tokenizer=tokenizer,query=query,docs=preranked_results)
-        reranked_results = [result[0] for result in reranked_results]
         return reranked_results[:k2]
 
     def invoke(self,query,k1,k2):
@@ -167,13 +166,19 @@ Source: {source}
             document_prompt=self.document_prompt
         )
     
-    
+    def runController(self,question,k1,k2):
+        retrieved_docs = self.retriever.invoke(question,k1=k1,k2=k2)
+        answer = self.doc_chain.invoke({
+            "context": retrieved_docs,
+            "input": question
+        })
+        
+        return answer, retrieved_docs
+
 
 if __name__ == '__main__':
-    c = Chat3GPPRetriever(db_dir_path='./db',collection_name='specs_and_discussions')
+    c = Chat3GPPAnalogue(db_dir_path='./db',collection_name='specs_and_discussions')
     query = "How many maximum 5QI we can create under one PDU Session?"
-    preranked_results = c.get_preranked_results(query,100)
-    preranked_results = [result["doc"] for result in preranked_results]
-    print(c.rerank(preranked_results,query,5))
+    print(c.runController(query,100,5))
 
         
