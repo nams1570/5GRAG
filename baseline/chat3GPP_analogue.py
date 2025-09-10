@@ -3,11 +3,14 @@ sys.path.append("..")
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain.schema import Document
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
 import chromadb
 import json
 from settings import config
+from reranker import get_rerank_scores, load_reranker
 #keyword search + BM 25 + cosine similarity between query & chunk embedding. RRF to ge weighted sum of BM25 and cosine score. 
 # Retrn  top 1/10th o these chunks
 # Rerank the 1/10th retrieved using  BGE-M3. Return top k2 of these reranked
@@ -79,7 +82,6 @@ class Chat3GPPRetriever:
             if dict_key not in all_docs:
                 all_docs[dict_key] = {"bm25_rank":None, "vector_rank":rank+1}
             else:
-                print("************\n\n\n\n")
                 all_docs[dict_key]["vector_rank"] = rank+1
             cos_lookup[dict_key] = cosine_score
         
@@ -110,14 +112,68 @@ class Chat3GPPRetriever:
         print(len(bm25_chunks))
         print("\n\n bm25 above^")
         cos_sim_chunks_with_Scores = self.vector_store.similarity_search_with_score(query,k=k1)
-        
+        print(f"cos scores \n \n {len(cos_sim_chunks_with_Scores)}")
         preranked_results_from_rrf = self._compute_rrf_with_scores(bm25_results=bm25_chunks,cos_results=cos_sim_chunks_with_Scores,num_to_return=k1//10)
         return preranked_results_from_rrf
 
+    def rerank(self,preranked_results, query, k2):
+        reranker_model, tokenizer = load_reranker()
+        #must pass langchain Documents as docs to get_rerank_scores
+        reranked_results = get_rerank_scores(model=reranker_model,tokenizer=tokenizer,query=query,docs=preranked_results)
+        reranked_results = [result[0] for result in reranked_results]
+        return reranked_results[:k2]
+
+    def invoke(self,query,k1,k2):
+        """@k1; the number of docs retrieved by BM25 and cosine similarity each in preranking. 
+        @k2: the number of reranked documents returned."""
+        preranked_results = self.get_preranked_results(query,k1)
+        preranked_results = [result["doc"] for result in preranked_results]
+
+        reranked_results = self.rerank(preranked_results,query=query,k2=k2)
+        reranked_results = [result[0] for result in reranked_results]
+        return reranked_results
+
+class Chat3GPPAnalogue:
+    def __init__(self,db_dir_path,collection_name,api_key=config["API_KEY"], model_name=config["MODEL_NAME"]):
+        self.retriever =  Chat3GPPRetriever(db_dir_path=db_dir_path,collection_name=collection_name,api_key=api_key)
+        self.llm = ChatOpenAI(
+            api_key=api_key,
+            model=model_name
+        )
+        self._setup_chain()
+
+    def _setup_chain(self):
+        """Set up the prompt template and document chain."""
+        self.prompt_template = ChatPromptTemplate.from_template("""
+Answer the following question based on the provided context in about 200 words. 
+If the answer cannot be found in the context, say so clearly.
+
+<context>
+{context}
+</context>
+
+Question: {input}
+
+Answer:""")
+        
+        self.document_prompt = ChatPromptTemplate.from_template("""
+Content: {page_content}
+Source: {source}
+""")
+        
+        self.doc_chain = create_stuff_documents_chain(
+            self.llm, 
+            self.prompt_template,
+            document_prompt=self.document_prompt
+        )
+    
+    
 
 if __name__ == '__main__':
     c = Chat3GPPRetriever(db_dir_path='./db',collection_name='specs_and_discussions')
     query = "How many maximum 5QI we can create under one PDU Session?"
-    print(c.get_preranked_results(query,20))
+    preranked_results = c.get_preranked_results(query,100)
+    preranked_results = [result["doc"] for result in preranked_results]
+    print(c.rerank(preranked_results,query,5))
 
         
