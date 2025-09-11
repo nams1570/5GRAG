@@ -10,7 +10,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 import chromadb
 import json
 from settings import config
-from reranker import get_rerank_scores, load_reranker
+from baseline.reranker import get_rerank_scores, load_reranker
 #keyword search + BM 25 + cosine similarity between query & chunk embedding. RRF to ge weighted sum of BM25 and cosine score. 
 # Retrn  top 1/10th o these chunks
 # Rerank the 1/10th retrieved using  BGE-M3. Return top k2 of these reranked
@@ -29,6 +29,7 @@ class Chat3GPPRetriever:
 
         self.bm25Retriever = None
         self.all_documents = None
+        self.vector_store = None
 
         self._setup_cosine_vector_store()
     
