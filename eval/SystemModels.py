@@ -6,6 +6,7 @@ from openai import OpenAI
 from settings import config
 from controller import Controller
 from baseline.simple_rag_controller import SimpleRAGController, EVOLUTION_BENCHMARK_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
+from baseline.chat3GPP_analogue import Chat3GPPAnalogue
 
 class BaseSystemModel(ABC):
     @abstractmethod
@@ -76,11 +77,29 @@ class BaselineSystemModel(BaseSystemModel):
         response,docs = self.c.runController(question,k=config["NUM_DOCS_INITIAL_RETRIEVAL"])
         return response,docs
 
+class Chat3GPPAnalogueModel(BaseSystemModel):
+    def __init__(self,db_dir_path,isEvol=True):
+        if isEvol:
+            collection_name = EVOLUTION_BENCHMARK_COLL_NAME
+        else:
+            collection_name = CROSS_CONTEXT_BENCHMARK_COLL_NAME
+        api_key = config["API_KEY"]
+        model_name = config["MODEL_NAME"]
+        self.c = Chat3GPPAnalogue(db_dir_path=db_dir_path,collection_name=collection_name,api_key=api_key,model_name=model_name)
+    
+    def get_response(self, question:str):
+       response,_ = self.c.runController(question=question,k1=100,k2=5)
+       return response
+
+    def get_response_with_docs(self, question:str):
+       response,docs = self.c.runController(question=question,k1=100,k2=5)
+       return response,docs
 
 if __name__ == "__main__":
     gpt = GPTSystemModel()
     c = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
     baseline = BaselineSystemModel("../baseline/db",True)
+    chat3gpp = Chat3GPPAnalogueModel("../baseline/db",True)
 
     question = "What is spurious response?"
-    print(baseline.get_response(question))
+    print(chat3gpp.get_response(question))

@@ -5,7 +5,7 @@ import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel, BaselineSystemModel
+from SystemModels import BaseSystemModel,GPTSystemModel, ControllerSystemModel, BaselineSystemModel, Chat3GPPAnalogueModel
 
 def get_other_keys(item:dict):
     """get all the other keys of the dict that aren't explicitly delineated"""
@@ -37,16 +37,20 @@ def process_item(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)
                     'predicted_answer':None,
                 }
 
+def are_passing_multiple_models_in_args(args):
+    return (args.use_system and args.use_baseline) or (args.use_system and args.use_3gpp) or (args.use_baseline and args.use_3gpp)
+
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--input_path','-i',type=str)
     argparser.add_argument('--output_path','-o',type=str)
     argparser.add_argument('--use-system',action='store_true',help="pass this argument to use deepspecs")
     argparser.add_argument('--use-baseline',action='store_true',help='pass this argument to use the baseline')
+    argparser.add_argument('--use-3gpp',action='store_true',help='pass this argument to use chat3gpp analogue')
     args = argparser.parse_args()
 
-    if args.use_system and args.use_baseline:
-        raise Exception("Error: Can't use baseline and system")
+    if are_passing_multiple_models_in_args(args):
+        raise Exception("Error: Can't use multiple models at once")
 
     if args.use_system:
         system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
@@ -54,6 +58,9 @@ if __name__ == "__main__":
     elif args.use_baseline:
         system = BaselineSystemModel("../baseline/db",isEvol=True)
         print("USING Baseline")
+    elif args.use_3gpp:
+        system = Chat3GPPAnalogueModel("../baseline/db",isEvol=True)
+        print("USING Chat3gpp")
     else:
         system = GPTSystemModel()
 
