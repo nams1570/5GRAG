@@ -1,6 +1,8 @@
 from zipfile import ZipFile
 import os
 import subprocess
+import json
+import pandas as pd
 from markitdown import MarkItDown
 from openai import OpenAI
 from pydantic import BaseModel
@@ -43,6 +45,12 @@ def getAllFilesInDirMatchingFormat(target_dir:str,accepted_extensions:list[str]=
             if extension in filename:
                 file_list.add(filename)
     return list(file_list)
+
+def convertJsonToCsv(input_filename:str,output_filename:str):
+    with open(input_filename, "r") as read_file:
+        data = json.load(read_file)
+    df = pd.DataFrame(data)
+    df.to_csv(output_filename)
 
 
 ##############################
