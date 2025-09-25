@@ -177,7 +177,12 @@ Source: {source}
         
         if documents:
             # Add to vector store
-            self.vector_store.add_documents(documents)
+            batch_size = 100
+            i=1
+            while (i-1) * batch_size < len(documents):
+                print(f" ****** \n\n number of chunks is {len(documents)} and we are on batch {i}. \n\n")
+                self.vector_store.add_documents(documents[(i-1)*batch_size:i*batch_size])
+                i+=1
             print(f"Added {len(documents)} chunks to the database")
         else:
             print("No documents found to add")
@@ -268,11 +273,19 @@ if __name__ == "__main__":
     
     # Add documents from a directory
     #controller.add_documents_to_db("./data")
-    
+    controller.add_documents_to_db("../all3gppdocsfromrel17and18/Release 17/batch8-2")
+    """root_folder = "../all3gppdocsfromrel17and18/Release 17"
+
+    for subdir,dirs,files in os.walk(root_folder):
+        print(f"****Adding docs from subdir {subdir} ****\n")
+        controller.add_documents_to_db(subdir)
+        print(f"**** finished adding docs from {subdir} **** \n")
+    """
     # Ask a question
-    answer, docs = controller.runController("What is 5G?")
+    question = "What was the motivation behind introducing the feature or updates reflected in this change history, and how do they improve the overall 3GPP standard?"
+    answer, docs = controller.runController(question,k=5)
     print(f"Answer: {answer}")
-    print(f"\nRetrieved {len(docs)} documents")
+    #print(f"\nRetrieved {docs} documents")
     
     # Example 2: Quick setup and query
     # answer, docs = quick_setup_and_query(

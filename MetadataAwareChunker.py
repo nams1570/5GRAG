@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 import re
 from collections.abc import Callable
 from utils import getFirstPageOfDocxInMarkdown,getMetadataFromLLM, convertAllDocToDocx
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 BASE_SECTION_NAME = "N/A"
 
@@ -66,59 +67,68 @@ def addExtraDocumentWideMetadataForReason(text_chunk:str,filepath:str):
     print(metadata)
     return metadata
 
+def section_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callable[[str,str],dict]):
+    f = open(file,'rb')
+    doc = DocParser(f)
+
+    file_metadata = extract_core_properties(doc)
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200,add_start_index=True)
+
+    current_section_title = BASE_SECTION_NAME
+    current_section_text = ""
+    sections = []
+    #TODO: Switch to collecting a "current section" list of text chunks
+    # currently there's no overlap between paragraphs in the same section which is bad for retrieval
+    # We want to collect (section_text,current_section) where section_text is a combination of paragraphs
+    # Then, we use the text_splitter to split it into split chunks
+    for part in doc.iter_inner_content():
+        #print(f"part is {part}")
+        if isinstance(part,docx.text.paragraph.Paragraph) and part.style and part.style.name.startswith('Heading'):
+            # update current section
+            sections.append((current_section_text,current_section_title))
+            current_section_text = ""
+            current_section_title = part.text
+        elif isinstance(part,docx.table.Table):
+            for table_datum in parse_table(part):
+                current_section_text += table_datum
+        else:
+            # append text to current section
+            current_section_text += part.text
+    
+    #Add last section to sections
+    sections.append((current_section_text,current_section_title))
+
+    chunks_with_metadata = []
+    addMetadata = {}
+
+    for text,section_name in sections:
+        split_chunks = text_splitter.split_text(text)
+        
+        if section_name == BASE_SECTION_NAME and not addMetadata:
+            addMetadata = addExtraDocumentWideMetadata(text,file)
+            print(f"metadata is {addMetadata}")
+
+        for chunk in split_chunks:
+            chunks_with_metadata.append(Document(
+                page_content=chunk,
+                metadata={'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
+            ))
+    return chunks_with_metadata
+
 def getSectionedChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
     """@input: file_list. List of files in relative path that will be chunked.
     @addExtraDocumentWideMetadata: func that returns a dictionary with extra metadata that will be added to all chunks.
     Returns: master list chunks_with_metadata that has chunks of all the files stored as langchain Documents.
     These Documents have section metadata"""
-    chunks_with_metadata= []
-    for file in file_list:
-
-        f = open(file,'rb')
-        doc = DocParser(f)
-
-        file_metadata = extract_core_properties(doc)
-
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200,add_start_index=True)
-
-        current_section_title = BASE_SECTION_NAME
-        current_section_text = ""
-        sections = []
-        #TODO: Switch to collecting a "current section" list of text chunks
-        # currently there's no overlap between paragraphs in the same section which is bad for retrieval
-        # We want to collect (section_text,current_section) where section_text is a combination of paragraphs
-        # Then, we use the text_splitter to split it into split chunks
-        for part in doc.iter_inner_content():
-            #print(f"part is {part}")
-            if isinstance(part,docx.text.paragraph.Paragraph) and part.style and part.style.name.startswith('Heading'):
-                # update current section
-                sections.append((current_section_text,current_section_title))
-                current_section_text = ""
-                current_section_title = part.text
-            elif isinstance(part,docx.table.Table):
-                for table_datum in parse_table(part):
-                    current_section_text += table_datum
-            else:
-                # append text to current section
-                current_section_text += part.text
-        
-        #Add last section to sections
-        sections.append((current_section_text,current_section_title))
-
-        addMetadata = {}
-
-        for text,section_name in sections:
-            split_chunks = text_splitter.split_text(text)
-            
-            if section_name == BASE_SECTION_NAME and not addMetadata:
-                addMetadata = addExtraDocumentWideMetadata(text,file)
-                print(f"metadata is {addMetadata}")
-
-            for chunk in split_chunks:
-                chunks_with_metadata.append(Document(
-                    page_content=chunk,
-                    metadata={'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
-                ))
+    if len(file_list) == 1:
+        return section_chunks_of_file(file_list[0], addExtraDocumentWideMetadata)
+    else:
+        chunks_with_metadata= []
+        with ProcessPoolExecutor() as executor:
+            futures = {executor.submit(section_chunks_of_file,file,addExtraDocumentWideMetadata): file for file in file_list}
+            for future in as_completed(futures):
+                chunks_with_metadata.extend(future.result())
     return chunks_with_metadata
 
 def getFullSectionChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
@@ -192,9 +202,9 @@ if __name__ =="__main__":
         sectioned_things[doc.metadata["section"]] = sectioned_things.get(doc.metadata["section"],[]) + [doc.page_content]
     
     print(sectioned_things['2'])"""
-    convertAllDocToDocx("./reasoning")
-    file_list = ["./reasoning/R4-2503038.docx"]
+    #convertAllDocToDocx("./reasoning")
+    file_list = ["./reasoning/RP-180794.docx","./reasoning/RP-180793.docx"]
     #print(Docx2txtLoader(file_list[0]).load())
-    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)[:50])
+    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)[0])
     
     
