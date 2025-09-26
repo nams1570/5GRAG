@@ -62,14 +62,16 @@ def addExtraDocumentWideMetadataForContext(text_chunk:str,filepath:str):
 def addExtraDocumentWideMetadataForReason(text_chunk:str,filepath:str):
     """Use this for TDocs"""
     mdData = getFirstPageOfDocxInMarkdown(filepath)
-    print(f"\n\n mddata is {mdData} \n\n")
     metadata =getMetadataFromLLM(mdData)
     print(metadata)
     return metadata
 
 def section_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callable[[str,str],dict]):
     f = open(file,'rb')
-    doc = DocParser(f)
+    try:
+        doc = DocParser(f)
+    except:
+        raise Exception(f"for document {file} cannot parse with Docx")
 
     file_metadata = extract_core_properties(doc)
 

@@ -7,6 +7,7 @@ sys.path.append("..")
 
 import os
 from typing import List, Tuple, Optional
+import time
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -177,11 +178,22 @@ Source: {source}
         
         if documents:
             # Add to vector store
-            batch_size = 100
+            batch_size = 1000
             i=1
+            max_retries = 3
+            sleep_time = 30
             while (i-1) * batch_size < len(documents):
                 print(f" ****** \n\n number of chunks is {len(documents)} and we are on batch {i}. \n\n")
-                self.vector_store.add_documents(documents[(i-1)*batch_size:i*batch_size])
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        self.vector_store.add_documents(documents[(i-1)*batch_size:i*batch_size])
+                        print(f"      attempt {attempt}")
+                        break
+                    except Exception as e:
+                        print(f"Error on batch {i}, attempt {attempt} due to {e}")
+                        if attempt == max_retries:
+                            raise e
+                        time.sleep(attempt*sleep_time)
                 i+=1
             print(f"Added {len(documents)} chunks to the database")
         else:
@@ -273,7 +285,7 @@ if __name__ == "__main__":
     
     # Add documents from a directory
     #controller.add_documents_to_db("./data")
-    controller.add_documents_to_db("../all3gppdocsfromrel17and18/Release 17/batch8-2")
+    controller.add_documents_to_db("../all3gppdocsfromrel17and18/Release 18/batch2-2")
     """root_folder = "../all3gppdocsfromrel17and18/Release 17"
 
     for subdir,dirs,files in os.walk(root_folder):
