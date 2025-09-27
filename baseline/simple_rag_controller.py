@@ -19,7 +19,7 @@ from docx import Document as DocxDocument
 
 # Import utilities from existing codebase
 from settings import config
-from utils import convertAllDocToDocx, getAllFilesInDirMatchingFormat
+from utils import convertAllDocToDocx, getAllFilesInDirMatchingFormat, getTokenCount
 from MetadataAwareChunker import getSectionedChunks, addExtraDocumentWideMetadataForReason
 
 
@@ -153,6 +153,29 @@ Source: {source}
                         full_text.append(cell.text)
         
         return '\n'.join(full_text)
+
+    def _safe_add_docs(self,docs,batch_num,attempt=1,max_attempts=3):
+        total_tokens = sum(getTokenCount(d.page_content,model_name="text-embedding-3-large") for d in docs)
+        MAX_TOKENS_ALLOWED = 270000
+
+        if total_tokens > MAX_TOKENS_ALLOWED:
+            print(f"Batch {batch_num} is too large")
+            mid = len(docs) //2
+            self._safe_add_docs(docs[:mid],batch_num=f"{batch_num}a")
+            self._safe_add_docs(docs[mid:],batch_num=f"{batch_num}b")
+            return
+        try:
+            self.vector_store.add_documents(docs)
+            print(f"just added batch {batch_num}")
+        except Exception as e:
+            if attempt < max_attempts:
+                wait = attempt * 30
+                print(f"Error ob batch {batch_num}, attempt {attempt} {e}. Retrying in {wait}s...")
+                time.sleep(wait)
+                self._safe_add_docs(docs,batch_num,attempt=attempt+1,max_attempts=max_attempts)
+            else:
+                print(f"Failed batch {batch_num} after {max_attempts} attempts.")
+                raise e
     
     def add_documents_to_db(self, 
                            doc_dir_path: str,
@@ -180,20 +203,9 @@ Source: {source}
             # Add to vector store
             batch_size = 1000
             i=1
-            max_retries = 3
-            sleep_time = 30
             while (i-1) * batch_size < len(documents):
                 print(f" ****** \n\n number of chunks is {len(documents)} and we are on batch {i}. \n\n")
-                for attempt in range(1, max_retries + 1):
-                    try:
-                        self.vector_store.add_documents(documents[(i-1)*batch_size:i*batch_size])
-                        print(f"      attempt {attempt}")
-                        break
-                    except Exception as e:
-                        print(f"Error on batch {i}, attempt {attempt} due to {e}")
-                        if attempt == max_retries:
-                            raise e
-                        time.sleep(attempt*sleep_time)
+                self._safe_add_docs(documents[(i-1)*batch_size:i*batch_size],batch_num=i,max_attempts=3)
                 i+=1
             print(f"Added {len(documents)} chunks to the database")
         else:
@@ -285,7 +297,7 @@ if __name__ == "__main__":
     
     # Add documents from a directory
     #controller.add_documents_to_db("./data")
-    controller.add_documents_to_db("../all3gppdocsfromrel17and18/Release 18/batch2-2")
+    controller.add_documents_to_db("../all3gppdocsfromrel17and18/Release 18/batch11")
     """root_folder = "../all3gppdocsfromrel17and18/Release 17"
 
     for subdir,dirs,files in os.walk(root_folder):

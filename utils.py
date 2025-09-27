@@ -60,7 +60,10 @@ def convertJsonToCsv(input_filename:str,output_filename:str):
 def getFirstPageOfDocxInMarkdown(filepath:str):
     """filepath must be an absolute path"""
     md = MarkItDown(enable_plugins=False) # Set to True to enable plugins
-    result = md.convert(filepath)
+    try:
+        result = md.convert(filepath)
+    except:
+        print(f"issue in file {filepath} with md conversion")
     return result.text_content[:500]
 
 def getMetadataFromLLM(text_chunk:str)->dict:
@@ -91,7 +94,7 @@ def getMetadataFromLLM(text_chunk:str)->dict:
 
 def getTokenCount(text:str,model_name:str,supressWarning:bool=True):
     """Use this to get a picture of how many tokens the @text contains."""
-    if "gpt" in model_name:
+    if "gpt" in model_name or model_name=="text-embedding-3-large":
         try:
             encoding = tiktoken.encoding_for_model(model_name)
         except Exception as e:
