@@ -3,14 +3,19 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from langchain_core.documents import Document
 
 """Contains implementation of reranker that will be used in our chat3gpp analogue."""
-
+_reranker_model = None
+_tokenizer = None
 
 def load_reranker(model_name="bge-reranker-large", device="cpu"):
+    global _reranker_model, _tokenizer
+    if _reranker_model is not None and _tokenizer is not None:
+        print(f"***********\n\n loading reranker model glob \n\n *********")
+        return _reranker_model, _tokenizer
     model_path = "BAAI/bge-reranker-large"
-    tokenizer = AutoTokenizer.from_pretrained(model_path,trust_remote_code=True)
+    _tokenizer = AutoTokenizer.from_pretrained(model_path,trust_remote_code=True)
     
-    model = AutoModelForSequenceClassification.from_pretrained(model_path, device_map="auto").eval()
-    return model, tokenizer
+    _reranker_model = AutoModelForSequenceClassification.from_pretrained(model_path, device_map=device).eval()
+    return _reranker_model, _tokenizer
 
 def get_rerank_scores(model, tokenizer, query, docs:list[Document]):
     pairs = [[query, doc.page_content] for doc in docs]

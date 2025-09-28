@@ -31,6 +31,9 @@ class Chat3GPPRetriever:
         self.all_documents = None
         self.vector_store = None
 
+        self.reranker_model = None
+        self.tokenizer = None
+
         self._setup_cosine_vector_store()
     
     def _setup_cosine_vector_store(self):
@@ -106,6 +109,7 @@ class Chat3GPPRetriever:
     
     def get_preranked_results(self,query,k1):
         if not self.bm25Retriever:
+            print(f"***********\n\n building bm25 retriever \n\n *********")
             self.bm25Retriever = self._build_bm25_retriever()
         #top k1 of bm25
         self.bm25Retriever.k = k1
@@ -118,9 +122,11 @@ class Chat3GPPRetriever:
         return preranked_results_from_rrf
 
     def rerank(self,preranked_results, query, k2):
-        reranker_model, tokenizer = load_reranker()
+        if not self.reranker_model or not self.tokenizer:
+            print(f"***********\n\n loading reranker model \n\n *********")
+            self.reranker_model, self.tokenizer = load_reranker()
         #must pass langchain Documents as docs to get_rerank_scores
-        reranked_results = get_rerank_scores(model=reranker_model,tokenizer=tokenizer,query=query,docs=preranked_results)
+        reranked_results = get_rerank_scores(model=self.reranker_model,tokenizer=self.tokenizer,query=query,docs=preranked_results)
         return reranked_results[:k2]
 
     def invoke(self,query,k1,k2):
@@ -180,6 +186,8 @@ Source: {source}
 if __name__ == '__main__':
     c = Chat3GPPAnalogue(db_dir_path='./db',collection_name='specs_and_discussions')
     query = "How many maximum 5QI we can create under one PDU Session?"
+    print(c.runController(query,100,5))
+    query = "How many maximum 5QI we can create under two PDU Sessions?"
     print(c.runController(query,100,5))
 
         
