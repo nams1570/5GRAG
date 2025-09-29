@@ -1,4 +1,5 @@
 import sys
+from turtle import st
 sys.path.append("..")
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
@@ -7,6 +8,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
+import time
 import chromadb
 import json
 from settings import config
@@ -35,6 +37,10 @@ class Chat3GPPRetriever:
         self.tokenizer = None
 
         self._setup_cosine_vector_store()
+        print(f"***********\n\n init: building bm25 retriever \n\n *********")
+        self.bm25Retriever = self._build_bm25_retriever()
+        print(f"***********\n\n loading reranker model \n\n *********")
+        self.reranker_model, self.tokenizer = load_reranker()
     
     def _setup_cosine_vector_store(self):
         self.chroma_client = chromadb.PersistentClient(path=self.db_dir_path)
@@ -108,9 +114,6 @@ class Chat3GPPRetriever:
         return results
     
     def get_preranked_results(self,query,k1):
-        if not self.bm25Retriever:
-            print(f"***********\n\n building bm25 retriever \n\n *********")
-            self.bm25Retriever = self._build_bm25_retriever()
         #top k1 of bm25
         self.bm25Retriever.k = k1
         bm25_chunks =self.bm25Retriever.invoke(query)
@@ -122,9 +125,6 @@ class Chat3GPPRetriever:
         return preranked_results_from_rrf
 
     def rerank(self,preranked_results, query, k2):
-        if not self.reranker_model or not self.tokenizer:
-            print(f"***********\n\n loading reranker model \n\n *********")
-            self.reranker_model, self.tokenizer = load_reranker()
         #must pass langchain Documents as docs to get_rerank_scores
         reranked_results = get_rerank_scores(model=self.reranker_model,tokenizer=self.tokenizer,query=query,docs=preranked_results)
         return reranked_results[:k2]
@@ -186,8 +186,14 @@ Source: {source}
 if __name__ == '__main__':
     c = Chat3GPPAnalogue(db_dir_path='./db',collection_name='specs_and_discussions')
     query = "How many maximum 5QI we can create under one PDU Session?"
+    start = time.time()
     print(c.runController(query,100,5))
+    end = time.time()
+    print(f"\n\nTime taken {end-start} seconds\n\n")
     query = "How many maximum 5QI we can create under two PDU Sessions?"
+    start = time.time()
     print(c.runController(query,100,5))
+    end = time.time()
+    print(f"\n\nTime taken {end-start} seconds\n\n")
 
         
