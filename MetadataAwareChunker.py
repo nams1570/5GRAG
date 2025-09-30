@@ -1,10 +1,12 @@
+from importlib import metadata
+from operator import add, ge
 from docx import Document as DocParser
 import docx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 import re
 from collections.abc import Callable
-from utils import getFirstPageOfDocxInMarkdown,getMetadataFromLLM, convertAllDocToDocx
+from utils import getFirstPageOfDocxInMarkdown, getFirstTwoPagesOfDocxInMarkdown, getMetadataFromLLM, getCRContentFromLLM,convertAllDocToDocx 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 BASE_SECTION_NAME = "N/A"
@@ -192,6 +194,43 @@ def getFullFileChunks(file_list):
                 metadata={'source':clean_file_name(file)}
             ))
     return chunks
+
+
+#####################
+#### CR chunking ####
+#####################
+def process_cr_file(file:str):
+    f = open(file,'rb')
+    try:
+        doc = DocParser(f)
+    except:
+        raise Exception(f"for document {file} cannot parse with Docx")
+
+    file_metadata = extract_core_properties(doc)
+    mdContent = getFirstTwoPagesOfDocxInMarkdown(file)
+    metadata_from_llm = getMetadataFromLLM(mdContent)
+
+    all_metadata = {**file_metadata,**metadata_from_llm}
+    change_chunks: list[dict] = getCRContentFromLLM(mdContent)
+    chunks_with_metadata = []
+    for change_chunk in change_chunks:
+        page_content = f"Change Summary: {change_chunk.get('summary','N/A')}\nReason: {change_chunk.get('reason','N/A')}\nConsequence if this change is not accepted: {change_chunk.get('consequence','N/A')}"
+        chunks_with_metadata.append(Document(
+            page_content=page_content,
+            metadata={'source':clean_file_name(file),**all_metadata}
+        ))
+    return chunks_with_metadata
+
+def getCRChunks(file_list:list[str])->list[Document]:
+    if len(file_list) == 1:
+        return process_cr_file(file_list[0])
+    else:
+        chunks = []
+        with ProcessPoolExecutor() as executor:
+            futures = {executor.submit(process_cr_file,file): file for file in file_list}
+            for future in as_completed(futures):
+                chunks.extend(future.result())
+        return chunks
 
 if __name__ =="__main__":
     """file_list = ["./data/38214-hc0.docx","./data/v16diffver.docx"]

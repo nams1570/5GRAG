@@ -1,3 +1,4 @@
+from pydoc import text
 from zipfile import ZipFile
 import os
 import subprocess
@@ -5,7 +6,8 @@ import json
 import pandas as pd
 from markitdown import MarkItDown
 from openai import OpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import List
 from settings import config
 import tiktoken
 from datetime import datetime
@@ -65,6 +67,53 @@ def getFirstPageOfDocxInMarkdown(filepath:str):
     except:
         print(f"issue in file {filepath} with md conversion")
     return result.text_content[:500]
+
+def getFirstTwoPagesOfDocxInMarkdown(filepath:str):
+    """filepath must be an absolute path"""
+    md = MarkItDown(enable_plugins=False) # Set to True to enable plugins
+    try:
+        result = md.convert(filepath)
+    except:
+        print(f"issue in file {filepath} with md conversion")
+    return result.text_content[:9000]
+
+class ChangeChunk(BaseModel):
+    summary: str = Field(..., description="Change summary (bullet or sentence)")
+    reason: str = Field("", description="Why the change was introduced")
+    consequence: str = Field("", description="Impact if the change is not implemented")
+
+class ChangeChunkList(BaseModel):
+    changeChunks: List[ChangeChunk] = Field(..., description="List of change chunks extracted from the CR")
+
+def getCRContentFromLLM(text_chunk:str)->list[ChangeChunk] | list[dict]:
+    """Extract change chunks from a CR markdown text.
+
+    Returns a list of validated ChangeChunk instances on success, otherwise a list containing a raw fallback dict.
+    """
+    client = OpenAI(api_key=config["API_KEY"])
+
+    system_prompt = {
+        "role": "system",
+        "content": (
+            "You are an expert at extracting structured change information from change request (CR) markdown text. "
+            "Given the CR text, focus only on three sections: 'summary of changes', 'reason for change', and 'consequences if not approved'. "
+            "For each change mentioned in the 'summary of changes' section produce one object with keys:\n"
+            "  - summary: the change text (single bullet or sentence)\n"
+            "  - reason: the portion(s) of 'reason for change' that explain why this change was introduced\n"
+            "  - consequence: the portion(s) of 'consequences if not approved' that describe the impact if this change is not implemented\n"
+            "Output ONLY a JSON array (no markdown, no extra commentary). If there are multiple bullets in a section, map them in order; if mapping is ambiguous, include best-effort contextual text."
+        )
+    }
+    user_prompt = {"role": "user", "content": text_chunk}
+
+    response = client.responses.parse(
+        model=config["MODEL_NAME"],
+        input=[system_prompt, user_prompt],
+        text_format=ChangeChunkList
+    )
+
+    return [dict(chunk) for chunk in response.output_parsed.changeChunks]
+    
 
 def getMetadataFromLLM(text_chunk:str)->dict:
     """Passes text to the LLM which then parses it into metadata"""
