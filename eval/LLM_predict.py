@@ -1,3 +1,4 @@
+from ast import arg
 import sys
 sys.path.append("../")
 import time
@@ -36,6 +37,33 @@ def process_item(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)
                     'ground_truth':ground_truth,
                     'predicted_answer':None,
                 }
+            
+def process_item_with_docs(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)->dict:
+    """This function represents the system model processing a single item"""
+    question = item['question']
+    ground_truth = item['ground_truth']
+    for attempt in range(1,max_retries+1):
+        try:
+            resp,docs = system.get_response_with_docs(question)
+            return {
+                'question': question,
+                'ground_truth': ground_truth,
+                'predicted_answer':resp,
+                'retrieved_docs':[f"metadata: {doc.metadata},\n content: {doc.page_content} " for doc in docs],
+                **get_other_keys(item)
+            }
+        except Exception as e:
+            print(f"Attempt {attempt} failed with error: {e}")
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                print(f"Max retries reached, skipping this item.")
+                return {
+                    'question': question,
+                    'ground_truth':ground_truth,
+                    'predicted_answer':None,
+                    'retrieved_docs':None
+                }
 
 def are_passing_multiple_models_in_args(args):
     return (args.use_system and args.use_baseline) or (args.use_system and args.use_3gpp) or (args.use_baseline and args.use_3gpp)
@@ -47,6 +75,7 @@ if __name__ == "__main__":
     argparser.add_argument('--use-system',action='store_true',help="pass this argument to use deepspecs")
     argparser.add_argument('--use-baseline',action='store_true',help='pass this argument to use the baseline')
     argparser.add_argument('--use-3gpp',action='store_true',help='pass this argument to use chat3gpp analogue')
+    argparser.add_argument('--retrieve-docs',action='store_true',help='pass this argument to also retrieve the docs used in generating the answer')
     args = argparser.parse_args()
 
     if are_passing_multiple_models_in_args(args):
@@ -62,6 +91,8 @@ if __name__ == "__main__":
         system = Chat3GPPAnalogueModel("../baseline/db",isEvol=True)
         print("USING Chat3gpp")
     else:
+        if args.retrieve_docs:
+            raise Exception("Error: Must pass one of --use-system, --use-baseline, or --use-3gpp if also passing --retrieve-docs")
         system = GPTSystemModel()
 
     with open(args.input_path,"r") as f:
@@ -72,7 +103,11 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=4) as executor:
         future_to_index = {}
         for i,item in enumerate(input_data):
-            future = executor.submit(process_item,system,item)
+            if args.retrieve_docs:
+                print("Retrieving docs for item ")
+                future = executor.submit(process_item_with_docs,system,item)
+            else:
+                future = executor.submit(process_item,system,item)
             future_to_index[future] = i
         
         n_finished = 0

@@ -209,8 +209,9 @@ def process_cr_file(file:str):
     file_metadata = extract_core_properties(doc)
     mdContent = getFirstTwoPagesOfDocxInMarkdown(file)
     metadata_from_llm = getMetadataFromLLM(mdContent)
-
     all_metadata = {**file_metadata,**metadata_from_llm}
+    print(f"metadata is {all_metadata}")
+
     change_chunks: list[dict] = getCRContentFromLLM(mdContent)
     chunks_with_metadata = []
     for change_chunk in change_chunks:
