@@ -24,11 +24,15 @@ class Controller:
         self.output_parser = StrOutputParser()
         self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
 
-        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in 200 words based only on the provided context:
+        self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with the help of the provided context in about 200 words. 
+
 <context>
 {context}
 </context>
-Question: {input}""")
+
+Question: {input}
+
+Answer:""")
         self.document_prompt = ChatPromptTemplate.from_template("""
         Page content: {page_content} \n
         From clause: {section}

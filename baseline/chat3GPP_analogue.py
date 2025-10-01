@@ -151,8 +151,7 @@ class Chat3GPPAnalogue:
     def _setup_chain(self):
         """Set up the prompt template and document chain."""
         self.prompt_template = ChatPromptTemplate.from_template("""
-Answer the following question based on the provided context in about 200 words. 
-If the answer cannot be found in the context, say so clearly.
+Answer the following question with the help of the provided context in about 200 words. 
 
 <context>
 {context}
