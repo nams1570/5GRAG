@@ -93,7 +93,10 @@ Answer:""")
         """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         if self.isDatabaseTriggered:
-            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with the help of the provided context in about 200 words. 
+            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in about 200 words.
+- Provide a clear, easy-to-understand explanation.
+- Use the context below only if it is relevant; otherwise rely on general knowledge.
+- If you rely on the context or a specific spec, cite references inline.
 
 <context>
 {context}
