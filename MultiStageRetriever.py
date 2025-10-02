@@ -3,6 +3,7 @@ from warnings import filters
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range, getDocIDFromText
 from ReferenceExtractor import ReferenceExtractor
+from HypotheticalDocGenerator import HypotheticalDocGenerator
 import os 
 from settings import config
 
@@ -16,6 +17,8 @@ class MultiStageRetriever:
         self.specDB = specDB
         self.discussionDB = discussionDB
         self.diffDB = diffDB
+
+        self.hdg: HypotheticalDocGenerator = HypotheticalDocGenerator()
 
     def constructRetriever(self,db,selected_docs=None):
         """@selected_docs: list of documents to filter.
@@ -65,7 +68,7 @@ class MultiStageRetriever:
         metadata_filter = {'$or':filters}
         return metadata_filter
 
-    def getAdditionalContext(self,org_docs,db,query):
+    def getAdditionalContext(self,org_docs,db,hyp_doc):
         """@org_docs: list of initially retrieved document chunks from vector db.
         In this method, we parse the org_docs for external references and perform additional retrievals.
         returns: list of document chunks"""
@@ -75,17 +78,17 @@ class MultiStageRetriever:
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
-        additional_docs.extend(db.vector_db.similarity_search(query,NUM_EXTRA_DOCS,filter=metadata_filter))
+        additional_docs.extend(db.vector_db.similarity_search(hyp_doc,NUM_EXTRA_DOCS,filter=metadata_filter))
 
         return additional_docs
     
-    def retrieveFromSpecDB(self,query:str):
+    def retrieveFromSpecDB(self,hyp_doc:str):
         """We retrieve context info from the spec db.
         returns: first order and (possible) second order retrieval results"""
-        org_docs = self.base_retriever.invoke(query)
+        org_docs = self.base_retriever.invoke(hyp_doc)
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"]:
-            additional_docs = self.getAdditionalContext(org_docs,self.specDB,query)
+            additional_docs = self.getAdditionalContext(org_docs,self.specDB,hyp_doc=hyp_doc)
             print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
         else:
             additional_docs = []
@@ -144,15 +147,15 @@ class MultiStageRetriever:
         print(filters_from_diffs)
         return filters_from_diffs
 
-    def retrieveReasoning(self,query):
+    def retrieveReasoning(self,query,hyp_doc):
         """gets the change from diff db, and searches discussion db for relevant information on why the change was made.
         Returns: documents from discussion db"""
         #get diff similar to query
         metadata_filter = self.getFiltersForDiscussionDB(query)
         
-        discussion_docs = self.discussionDB.vector_db.similarity_search(query,config["NUM_REASONING_DOCS_TO_RETRIEVE"],filter=metadata_filter)
+        discussion_docs = self.discussionDB.vector_db.similarity_search(hyp_doc,config["NUM_REASONING_DOCS_TO_RETRIEVE"],filter=metadata_filter)
         if discussion_docs == []:
-            discussion_docs = self.discussionDB.vector_db.similarity_search(query,config["NUM_REASONING_DOCS_TO_RETRIEVE"])
+            discussion_docs = self.discussionDB.vector_db.similarity_search(hyp_doc,config["NUM_REASONING_DOCS_TO_RETRIEVE"])
 
         print(f"\n\n discussion_docs is \n**")
         print(discussion_docs)
@@ -162,9 +165,15 @@ class MultiStageRetriever:
     def invoke(self,query):
         if not self.base_retriever:
             raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
-        org_docs,additional_docs = self.retrieveFromSpecDB(query)
+
+        #invoke HypotheticalDocument here to get gpt response
+        hyp_doc = self.hdg.generateHypotheticalDocument(query)
+        if hyp_doc == None:
+            hyp_doc = query
+
+        org_docs,additional_docs = self.retrieveFromSpecDB(hyp_doc=hyp_doc)
         if self.discussionDB and (config["IS_SMART_RETRIEVAL"] == True):
-            tdocs = self.retrieveReasoning(query)
+            tdocs = self.retrieveReasoning(query,hyp_doc=hyp_doc)
         else:
             tdocs = []
 
