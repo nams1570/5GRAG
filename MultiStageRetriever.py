@@ -1,5 +1,5 @@
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range
+from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range, getDocIDFromText
 from ReferenceExtractor import ReferenceExtractor
 import os 
 from settings import config
@@ -113,6 +113,23 @@ class MultiStageRetriever:
         metadata_filter = {'$or':filters}
 
         return metadata_filter
+    
+    def buildFiltersFromQuery(self,query):
+        """This builds filters if there are docIDs in the query. 
+        If there are no docIDs, returns empty dict."""
+        docIDs = getDocIDFromText(query)
+        if docIDs == []:
+            return {}
+        if len(docIDs) == 1:
+            docID = docIDs[0]
+            filter = {'docID':{"$eq":docID}}
+            return filter
+        #more than one docID
+        individualFilters = []
+        for docID in docIDs:
+            individualFilters.append({'docID':{"$eq":docID}})
+        filter = {'$or':individualFilters}
+        return filter
 
     def retrieveReasoning(self,query):
         """gets the change from diff db, and searches discussion db for relevant information on why the change was made.

@@ -137,6 +137,32 @@ def getMetadataFromLLM(text_chunk:str)->dict:
     )
     return dict(response.output_parsed)
 
+class DocIDFromText(BaseModel):
+    docID: str = Field("", description="The extracted document identifier, or empty string if none found. Each docID must be x.y where x and y are numbers. No extra spaces or anything else")
+
+class DocIDFromTextList(BaseModel):
+    docIDs: List[DocIDFromText] = Field(..., description="List of extracted document identifiers")
+
+def getDocIDFromText(text_chunk:str)->List[str]:
+    """Extracts the docID from a given text chunk using the LLM."""
+    client = OpenAI(api_key=config["API_KEY"])
+
+    response = client.responses.parse(
+        model=config["MODEL_NAME"],
+        input=[
+            {
+                "role":"system","content":"You are an expert at extracting document identifiers from unstructured text. \
+                    A document identifier (docID) typically follows the format 'az x.y' where 'az' represents any two letters and 'x.y' are numbers. It is possible for the az to be omitted \
+                    This identifier is often found in proximity to the phrase '3GPP'. \
+                    Your task is to identify and extract all the docIDs from the provided text. \
+                    If no valid docID is present, return an empty string."
+            },
+            {"role":"user","content":text_chunk},
+        ],
+        text_format=DocIDFromTextList
+    )
+    return [docIDchunk.docID for docIDchunk in response.output_parsed.docIDs]
+
 ######################
 ## Tokenizing Tools ##
 ######################
@@ -204,3 +230,4 @@ class RetrieverResult:
 if __name__ == "__main__":
     #print(getFirstPageOfDocxInMarkdown("./data/R299-041.docx"))
     print(getAllFilesInDirMatchingFormat(".",[".py"]))
+    print(getDocIDFromText("This is a reference to 3GPP TS 29.041 and also to TS 32.299. Another doc is 24.229. Here is a number 4.3.17"))
