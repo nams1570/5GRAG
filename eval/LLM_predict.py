@@ -95,7 +95,7 @@ if __name__ == "__main__":
             raise Exception("Error: Must pass one of --use-system, --use-baseline, or --use-3gpp if also passing --retrieve-docs")
         system = GPTSystemModel()
 
-    with open(args.input_path,"r") as f:
+    with open(args.input_path,"r",encoding="utf-8",errors="replace") as f:
         input_data = json.load(f)
 
     results = [None]*len(input_data)

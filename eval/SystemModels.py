@@ -19,12 +19,21 @@ class GPTSystemModel(BaseSystemModel):
             api_key=config["API_KEY"],
             timeout=60,
             )
-        self.response_template = '''The following is a question about telecommunications and networking. Just give the answer in about 200 words.
-        Question:{question}
-        Answer:'''
+        self.response_template = '''Answer the following question in about 200 words.
+- Provide a clear, easy-to-understand explanation.
+- Use the context below only if it is relevant; otherwise rely on general knowledge.
+- If you rely on the context or a specific spec, cite references inline.
+
+<context>
+{context}
+</context>
+
+Question: {input}
+
+Answer:'''
     
     def get_response(self, question):
-        response_prompt = self.response_template.format(question=question)
+        response_prompt = self.response_template.format(input=question,context="NO CONTEXT")
 
         response = self.client.chat.completions.create(
         model=config["MODEL_NAME"],
@@ -54,8 +63,8 @@ class ControllerSystemModel(BaseSystemModel):
         if not self.isDBInitialized:
             self.c.updateContextDB()
             self.isDBInitialized = True
-        response,_,additional_docs = self.c.runController(prompt=question,history=[],selected_docs=[])
-        return response,additional_docs
+        response,orig_docs,additional_docs = self.c.runController(prompt=question,history=[],selected_docs=[])
+        return response,orig_docs + additional_docs
 
     
 class BaselineSystemModel(BaseSystemModel):
