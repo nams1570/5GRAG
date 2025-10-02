@@ -33,11 +33,7 @@ class Controller:
 Question: {input}
 
 Answer:""")
-        self.document_prompt = ChatPromptTemplate.from_template("""
-        Page content: {page_content} \n
-        From clause: {section}
-        """)
-        self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template, document_prompt=self.document_prompt)
+        self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template)
 
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
         self.contextDB = DBClient(embedding_model=embeddings,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
@@ -97,12 +93,16 @@ Answer:""")
         """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         if self.isDatabaseTriggered:
-            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with reference to the provided context:
+            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question with the help of the provided context in about 200 words. 
+
 <context>
 {context}
 </context>
-Question: {input}""")
-            self.doc_chain = create_stuff_documents_chain(self.llm,self.prompt_template,document_prompt=self.document_prompt)
+
+Question: {input}
+
+Answer:""")
+            self.doc_chain = create_stuff_documents_chain(self.llm,self.prompt_template)
         else:
             self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
         return self.isDatabaseTriggered
