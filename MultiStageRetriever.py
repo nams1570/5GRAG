@@ -99,27 +99,8 @@ class MultiStageRetriever:
         validTimestampRange = get_inclusive_tstmp_range(FILTER_START_TSTMP,toTimestamp)
         timestampFilter = {'timestamp':{'$in':validTimestampRange}}
         return timestampFilter
-    
-    def buildFiltersFromDiffs(self,diffs):
-        filters = []
-        for diff in diffs:
-            toTimestamp = diff.metadata.get("toTimestamp",None)
-            
-            new_filter = self.buildTimestampFilter(toTimestamp)
-            filters.append(new_filter)
-        
-        if filters == []:
-            return {}
-        if len(filters) == 1:
-            return filters[0]
-        metadata_filter = {'$or':filters}
 
-        return metadata_filter
-    
-    def buildFiltersFromQuery(self,query):
-        """This builds filters if there are docIDs in the query. 
-        If there are no docIDs, returns empty dict."""
-        docIDs = getDocIDFromText(query)
+    def buildDocIDFilter(self,docIDs:list[str])->dict:
         if docIDs == []:
             return {}
         if len(docIDs) == 1:
@@ -132,6 +113,16 @@ class MultiStageRetriever:
             individualFilters.append({'docID':{"$eq":docID}})
         filter = {'$or':individualFilters}
         return filter
+    
+    def buildFiltersFromDiffs(self,diffs):
+        docIDs = [diff.get("docID",None) for diff in diffs if diff.get("docID",None) is not None]
+        return self.buildDocIDFilter(docIDs)
+    
+    def buildFiltersFromQuery(self,query):
+        """This builds filters if there are docIDs in the query. 
+        If there are no docIDs, returns empty dict."""
+        docIDs = getDocIDFromText(query)
+        return self.buildDocIDFilter(docIDs)
     
     def getFiltersForDiscussionDB(self,query:str)->dict:
         filters_from_query = self.buildFiltersFromQuery(query)
