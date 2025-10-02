@@ -15,6 +15,7 @@ It should have these vars:
 8. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on.
 9. `ARE_ENDPOINTS_GETTABLE`: (boolean) indicates whether the endpoints you provide to the autofetcher can be immediately queried with a get request to download a file or not.
 10. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval
+11. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from reasoning db
 
 
 # Running the system

@@ -1,3 +1,5 @@
+from importlib import metadata
+from warnings import filters
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range, getDocIDFromText
 from ReferenceExtractor import ReferenceExtractor
@@ -130,28 +132,39 @@ class MultiStageRetriever:
             individualFilters.append({'docID':{"$eq":docID}})
         filter = {'$or':individualFilters}
         return filter
-
-    def retrieveReasoning(self,query):
-        """gets the change from diff db, and searches discussion db for relevant information on why the change was made.
-        Returns: documents from discussion db"""
-        #get diff similar to query
+    
+    def getFiltersForDiscussionDB(self,query:str)->dict:
+        filters_from_query = self.buildFiltersFromQuery(query)
+        if filters_from_query != {}:
+            return filters_from_query
+        
         diffRetriever = self.diffDB.getRetriever()
         diffs = diffRetriever.invoke(query)
-        metadata_filter = self.buildFiltersFromDiffs(diffs)
+
+        filters_from_diffs = self.buildFiltersFromDiffs(diffs)
         print(f"\n\ndiffs\n*****")
         print(diffs)
 
         if diffs == []:
             print("Nothing could be retrieved from diff db")
-            return []
+            return {}
 
         print(f"\n\n filters \n **")
-        print(metadata_filter)
+        print(filters_from_diffs)
+        return filters_from_diffs
 
-        discussion_docs = self.discussionDB.vector_db.similarity_search(query,5,filter=metadata_filter)
+    def retrieveReasoning(self,query):
+        """gets the change from diff db, and searches discussion db for relevant information on why the change was made.
+        Returns: documents from discussion db"""
+        #get diff similar to query
+        metadata_filter = self.getFiltersForDiscussionDB(query)
+        
+        discussion_docs = self.discussionDB.vector_db.similarity_search(query,config["NUM_REASONING_DOCS_TO_RETRIEVE"],filter=metadata_filter)
+        if discussion_docs == []:
+            discussion_docs = self.discussionDB.vector_db.similarity_search(query,config["NUM_REASONING_DOCS_TO_RETRIEVE"])
+
         print(f"\n\n discussion_docs is \n**")
         print(discussion_docs)
-
 
         return discussion_docs
 
