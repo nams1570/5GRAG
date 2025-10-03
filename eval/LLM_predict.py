@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     results = [None]*len(input_data)
     
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         future_to_index = {}
         for i,item in enumerate(input_data):
             if args.retrieve_docs:
