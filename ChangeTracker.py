@@ -94,12 +94,12 @@ class ChangeTracker:
 
         for doc in fromVersionChunks:
             if doc.metadata["section"] in fromSectionMap:
-                raise Exception("Error (fromVersion): must be passed section wide chunks. Cannot have multiple chunks per section")
+                raise Exception(f"Error (fromVersion): must be passed section wide chunks. Cannot have multiple chunks per section. Version is {doc.metadata['version']}, docID is {doc.metadata['docID']}, for section {doc.metadata['section']}")
             fromSectionMap[doc.metadata["section"]] = doc
         
         for doc in toVersionChunks:
             if doc.metadata["section"] in toSectionMap:
-                raise Exception("Error (toVersion): must be passed section wide chunks. Cannot have multiple chunks per section")
+                raise Exception(f"Error (toVersion): must be passed section wide chunks. Cannot have multiple chunks per section. Version is {doc.metadata['version']}, docID is {doc.metadata['docID']}, for section {doc.metadata['section']}")
             toSectionMap[doc.metadata["section"]] = doc
 
         DBDocList = []
