@@ -1,12 +1,14 @@
 from DBClient import DBClient
 from MetadataAwareChunker import getSectionedChunks,addExtraDocumentWideMetadataForReason, getCRChunks
 from controller import DB_DIR
+from graph.GraphNode import RE
 from settings import config
 import os
 from langchain_openai import OpenAIEmbeddings
 from utils import convertAllDocToDocx,getAllFilesInDirMatchingFormat
+from CollectionNames import REASONING_DOCS
 
-COLLECTION_NAME =  "specs_and_discussions"
+COLLECTION_NAME =  REASONING_DOCS
 DB_DIR_PATH = os.path.join("baseline","db")
 DOC_DIR_PATH = os.path.join("./all3gppdocsfromrel17and18","CRs")
 
