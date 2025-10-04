@@ -1,3 +1,4 @@
+from calendar import c
 from importlib import metadata
 from operator import add, ge
 from docx import Document as DocParser
@@ -135,46 +136,61 @@ def getSectionedChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str]
                 chunks_with_metadata.extend(future.result())
     return chunks_with_metadata
 
-def getFullSectionChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
-    chunks_with_metadata = []
-    for file in file_list:
-        f = open(file,'rb')
+def section_entire_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callable[[str,str],dict]):
+    f = open(file,'rb')
+    try:
         doc = DocParser(f)
+    except:
+        raise Exception(f"for document {file} cannot parse with Docx")
 
-        file_metadata = extract_core_properties(doc)
+    file_metadata = extract_core_properties(doc)
 
-        current_section_title = BASE_SECTION_NAME
-        current_section_text = ""
-        sections = []
+    current_section_title = BASE_SECTION_NAME
+    current_section_text = ""
+    sections = []
 
-        for part in doc.iter_inner_content():
-            if isinstance(part,docx.text.paragraph.Paragraph) and part.style and part.style.name.startswith('Heading'):
-                # update current section
-                sections.append((current_section_text,current_section_title))
-                current_section_text = ""
-                current_section_title = part.text
-            elif isinstance(part,docx.table.Table):
-                for table_datum in parse_table(part):
-                    current_section_text += table_datum
-            else:
-                # append text to current section
-                current_section_text += part.text
+    for part in doc.iter_inner_content():
+        if isinstance(part,docx.text.paragraph.Paragraph) and part.style and part.style.name.startswith('Heading'):
+            # update current section
+            sections.append((current_section_text,current_section_title))
+            current_section_text = ""
+            current_section_title = part.text
+        elif isinstance(part,docx.table.Table):
+            for table_datum in parse_table(part):
+                current_section_text += table_datum
+        else:
+            # append text to current section
+            current_section_text += part.text
         
         #Add last section to sections
-        sections.append((current_section_text,current_section_title))
+    sections.append((current_section_text,current_section_title))
 
-        addMetadata = {}
-        for text,section_name in sections:
-            if section_name == BASE_SECTION_NAME and not addMetadata:
-                addMetadata = addExtraDocumentWideMetadata(text,file)
-                print(f"metadata is {addMetadata}")
-            
-            chunks_with_metadata.append(Document(
-                page_content=text,
-                metadata = {'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
-            ))
+    chunks_with_metadata = []
+    addMetadata = {}
+    for text,section_name in sections:
+        if section_name == BASE_SECTION_NAME and not addMetadata:
+            addMetadata = addExtraDocumentWideMetadata(text,file)
+            print(f"metadata is {addMetadata}")
+        
+        chunks_with_metadata.append(Document(
+            page_content=text,
+            metadata = {'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
+        ))
+    return chunks_with_metadata
 
-        return chunks_with_metadata
+def getFullSectionChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
+    """@input: file_list. List of files in relative path that will be chunked.
+    @addExtraDocumentWideMetadata: func that returns a dictionary with extra metadata that will be added to all chunks.
+    this function creates chunks which are the size of an entire section rather than breaking the section up."""
+    if len(file_list) == 1:
+        return section_entire_chunks_of_file(file_list[0], addExtraDocumentWideMetadata)
+    else:
+        chunks_with_metadata= []
+        with ProcessPoolExecutor() as executor:
+            futures = {executor.submit(section_entire_chunks_of_file,file,addExtraDocumentWideMetadata): file for file in file_list}
+            for future in as_completed(futures):
+                chunks_with_metadata.extend(future.result())
+    return chunks_with_metadata
 
 def getFullFileChunks(file_list):
     chunks = []

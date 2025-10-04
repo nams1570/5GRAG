@@ -7,8 +7,11 @@ from settings import config
 import os
 from langchain_openai import OpenAIEmbeddings
 from utils import getAllFilesInDirMatchingFormat,convertAllDocToDocx
+from CollectionNames import DIFFS as DIFF_COLL_NAME
 
-DIFF_DOC_DIR = "testchange"
+DIFF_DOC_DIR = "./all3gppdocsfromrel17and18/docsfordiffs"
+DIFF_DB_DIR_PATH = "baseline/db"
+
 
 def get_sorted_versions(versionMap:dict)->list[str]:
     versions = sorted(versionMap.keys(), key=lambda v: list(map(int, v.split("."))))
@@ -16,9 +19,9 @@ def get_sorted_versions(versionMap:dict)->list[str]:
 
 if __name__ == "__main__":
     embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=config["API_KEY"])
-    db = DBClient(embedding_model=embeddings,collection_name=config["DIFF_COLL_NAME"],db_dir_path=config["CHROMA_DIR"],doc_dir_path=DIFF_DOC_DIR)
+    db = DBClient(embedding_model=embeddings,collection_name=DIFF_COLL_NAME,db_dir_path=DIFF_DB_DIR_PATH,doc_dir_path=DIFF_DOC_DIR)
         
-    convertAllDocToDocx(DIFF_DOC_DIR)
+    #convertAllDocToDocx(DIFF_DOC_DIR)
     file_list = getAllFilesInDirMatchingFormat(DIFF_DOC_DIR)
     print(file_list)
 
