@@ -112,7 +112,7 @@ class MultiStageRetriever:
         org_docs = self.queryDB(hyp_doc=hyp_doc,k=config["NUM_DOCS_INITIAL_RETRIEVAL"],collectionType="spec")
 
         print(f"There are {len(org_docs)}, and they are {org_docs}")
-        if config["IS_SMART_RETRIEVAL"]:
+        if config["IS_SMART_RETRIEVAL"] and config["NUM_EXTRA_DOCS"] > 0:
             additional_docs = self.getAdditionalContext(org_docs,hyp_doc=hyp_doc)
             print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
             if len(additional_docs) == 0:
