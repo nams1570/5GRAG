@@ -152,7 +152,8 @@ def section_entire_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callabl
     for part in doc.iter_inner_content():
         if isinstance(part,docx.text.paragraph.Paragraph) and part.style and part.style.name.startswith('Heading'):
             # update current section
-            sections.append((current_section_text,current_section_title))
+            if current_section_text.strip() != '':
+                sections.append((current_section_text,current_section_title))
             current_section_text = ""
             current_section_title = part.text
         elif isinstance(part,docx.table.Table):
@@ -163,7 +164,8 @@ def section_entire_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callabl
             current_section_text += part.text
         
         #Add last section to sections
-    sections.append((current_section_text,current_section_title))
+    if current_section_text.strip() != '': # avoid adding empty sections
+        sections.append((current_section_text,current_section_title))
 
     chunks_with_metadata = []
     addMetadata = {}
@@ -171,11 +173,11 @@ def section_entire_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callabl
         if section_name == BASE_SECTION_NAME and not addMetadata:
             addMetadata = addExtraDocumentWideMetadata(text,file)
             print(f"metadata is {addMetadata}")
-        
-        chunks_with_metadata.append(Document(
-            page_content=text,
-            metadata = {'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
-        ))
+        if section_name.strip() != '' and section_name.strip() != '–' and section_name.strip() != '-':
+            chunks_with_metadata.append(Document(
+                page_content=text,
+                metadata = {'source':clean_file_name(file),'section':process_section_name(section_name),**addMetadata,**file_metadata}
+            ))
     return chunks_with_metadata
 
 def getFullSectionChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
@@ -261,8 +263,16 @@ if __name__ =="__main__":
     
     print(sectioned_things['2'])"""
     #convertAllDocToDocx("./reasoning")
-    file_list = ["./reasoning/RP-180794.docx","./reasoning/RP-180793.docx"]
+    file_list = ["./all3gppdocsfromrel17and18/docsfordiffs/38331-h30.docx"]
     #print(Docx2txtLoader(file_list[0]).load())
-    print(getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)[0])
+    chunks = getFullSectionChunks(file_list,addExtraDocumentWideMetadataForReason)
+    seen = set()
+    sectionToChunks = {}
+    for chunk in chunks:
+        if chunk.metadata["section"] in seen:
+            print(f"duplicate section {chunk.metadata['section']},")
+        else:
+            seen.add(chunk.metadata["section"])
+        sectionToChunks[chunk.metadata["section"]] = sectionToChunks.get(chunk.metadata["section"],[]) + [chunk.page_content]
     
     

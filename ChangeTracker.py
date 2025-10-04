@@ -66,7 +66,6 @@ class ChangeTracker:
         change_metadata = {'from_version':from_version,'to_version':to_version,'docID':chunk1.metadata["docID"],'section':chunk2.metadata["section"],'fromTimestamp':chunk1.metadata["timestamp"],'toTimestamp':chunk2.metadata["timestamp"]}
 
         change_obj = {'metadata':change_metadata,'changes':{'add':[],'remove':[]}}
-        print(Differ().compare(text1.split(SENTENCE_SEPARATOR),text2.split(SENTENCE_SEPARATOR)))
         for delta in Differ().compare(text1.split(SENTENCE_SEPARATOR),text2.split(SENTENCE_SEPARATOR)):
             if len(delta)>0 and delta[0] == "+":
                 change_obj['changes']['add'].append(delta[1:])
@@ -94,11 +93,13 @@ class ChangeTracker:
 
         for doc in fromVersionChunks:
             if doc.metadata["section"] in fromSectionMap:
+                return []
                 raise Exception(f"Error (fromVersion): must be passed section wide chunks. Cannot have multiple chunks per section. Version is {doc.metadata['version']}, docID is {doc.metadata['docID']}, for section {doc.metadata['section']}")
             fromSectionMap[doc.metadata["section"]] = doc
         
         for doc in toVersionChunks:
             if doc.metadata["section"] in toSectionMap:
+                return []
                 raise Exception(f"Error (toVersion): must be passed section wide chunks. Cannot have multiple chunks per section. Version is {doc.metadata['version']}, docID is {doc.metadata['docID']}, for section {doc.metadata['section']}")
             toSectionMap[doc.metadata["section"]] = doc
 
