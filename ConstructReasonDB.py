@@ -1,7 +1,5 @@
 from DBClient import DBClient
 from MetadataAwareChunker import getSectionedChunks,addExtraDocumentWideMetadataForReason, getCRChunks
-from controller import DB_DIR
-from graph.GraphNode import RE
 from settings import config
 import os
 from langchain_openai import OpenAIEmbeddings
@@ -21,6 +19,7 @@ def parse_nonCR_docs(file_list,db):
 
 def parse_CR_docs(file_list,db):
     docs = getCRChunks([os.path.join(DOC_DIR_PATH,file) for file in file_list])
+    print(f"Number of CR chunks is {len(docs)}, now adding to DB")
     db.vector_db.add_documents(docs)
 
 if __name__ == "__main__":

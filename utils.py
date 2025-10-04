@@ -161,7 +161,7 @@ def getDocIDFromText(text_chunk:str)->List[str]:
         ],
         text_format=DocIDFromTextList
     )
-    return [docIDchunk.docID for docIDchunk in response.output_parsed.docIDs]
+    return [docIDchunk.docID for docIDchunk in response.output_parsed.docIDs if docIDchunk.docID != ""]
 
 ######################
 ## Tokenizing Tools ##

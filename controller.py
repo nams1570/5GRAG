@@ -9,15 +9,13 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from MultiStageRetriever import MultiStageRetriever
+from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME
 from sys import getsizeof
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
 DOC_DIR = config["DOC_DIR"]
 DB_DIR = config["CHROMA_DIR"]
-SPEC_COLL_NAME = config["SPEC_COLL_NAME"]
-TDOC_COLL_NAME = config["TDOC_COLL_NAME"]
-DIFF_COLL_NAME = config["DIFF_COLL_NAME"]
 
 class Controller:
     def __init__(self,doc_dir_path=DOC_DIR,db_dir_path=DB_DIR):
@@ -40,9 +38,8 @@ Answer:""")
         self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template)
 
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
-        self.contextDB = DBClient(embedding_model=embeddings,db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
-        self.reasonDB = DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="reasoning")
-        self.diffDB = DBClient(embedding_model=embeddings,collection_name=DIFF_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="testchange")
+        self.contextDB = DBClient(embedding_model=embeddings,collection_name="specs_and_discussions",db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
+        self.reasonDB = None#DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="reasoning")
 
         #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
@@ -67,7 +64,7 @@ Answer:""")
         otherEndpoints = ["https://www.3gpp.org/ftp/TSG_RAN/WG2_RL2/TSGR2_01/Docs/zips"]
         self.afReason = AutoFetcher(otherEndpoints,unzipFile,doc_dir_path)
 
-        self.retriever = MultiStageRetriever(specDB=self.contextDB,discussionDB=self.reasonDB,diffDB=self.diffDB)
+        self.retriever = MultiStageRetriever(pathToDB=db_dir_path,specCollectionName=SPEC_COLL_NAME,reasonCollectionName=TDOC_COLL_NAME,diffCollectionName=DIFF_COLL_NAME)
 
         self.isDatabaseTriggered = True
 
