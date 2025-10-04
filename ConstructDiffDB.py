@@ -9,7 +9,7 @@ from langchain_openai import OpenAIEmbeddings
 from utils import getAllFilesInDirMatchingFormat,convertAllDocToDocx
 from CollectionNames import DIFFS as DIFF_COLL_NAME
 
-DIFF_DOC_DIR = "./all3gppdocsfromrel17and18/docsfordiffs"
+DIFF_DOC_DIR = "./all3gppdocsfromrel17and18/docsfordiffs/test"
 DIFF_DB_DIR_PATH = "baseline/db"
 
 
@@ -26,20 +26,21 @@ if __name__ == "__main__":
     print(file_list)
 
     docIDToversionToChunks = {}
-    for file in file_list:
-        chunks = getFullSectionChunks([os.path.join(DIFF_DOC_DIR,file)],addExtraDocumentWideMetadataForReason)
 
-        docID = chunks[0].metadata["docID"]
+    all_chunks = getFullSectionChunks([os.path.join(DIFF_DOC_DIR,file) for file in file_list],addExtraDocumentWideMetadataForReason)
+
+    for chunk in all_chunks:
+        docID = chunk.metadata["docID"]
         if docID not in docIDToversionToChunks:
             docIDToversionToChunks[docID] = {}
 
-        fileVersion = chunks[0].metadata["version"]
+        fileVersion = chunk.metadata["version"]
         x,y,z = map(int,fileVersion.split("."))
         releaseNum = x 
         VERSION_PRECEDING_FIRST_IN_RELEASE = get_version_preceding_first_in_release(x)
         if y == 0 and z == 0:
-            docIDToversionToChunks[docID][VERSION_PRECEDING_FIRST_IN_RELEASE] = get_doc_list_for_version_preceding_first(chunks[0].metadata,VERSION_PRECEDING_FIRST_IN_RELEASE)
-        docIDToversionToChunks[docID][chunks[0].metadata["version"]] = chunks
+            docIDToversionToChunks[docID][VERSION_PRECEDING_FIRST_IN_RELEASE] = get_doc_list_for_version_preceding_first(chunk.metadata,VERSION_PRECEDING_FIRST_IN_RELEASE)
+        docIDToversionToChunks[docID][fileVersion] = docIDToversionToChunks[docID].get(fileVersion,[]) + [chunk]
     
     docs = []
 
