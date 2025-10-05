@@ -65,6 +65,13 @@ class ControllerSystemModel(BaseSystemModel):
             self.isDBInitialized = True
         response,orig_docs,additional_docs = self.c.runController(prompt=question,history=[],selected_docs=[])
         return response,orig_docs + additional_docs
+    
+    def get_only_retrieval_results(self,question:str):
+        if not self.isDBInitialized:
+            self.c.updateContextDB()
+            self.isDBInitialized = True
+        _,docs = self.c.getOnlyRetrievalResults(prompt=question,history=[])
+        return "",docs
 
     
 class BaselineSystemModel(BaseSystemModel):
@@ -103,6 +110,10 @@ class Chat3GPPAnalogueModel(BaseSystemModel):
     def get_response_with_docs(self, question:str):
        response,docs = self.c.runController(question=question,k1=100,k2=5)
        return response,docs
+    
+    def get_only_retrieval_results(self,question:str):
+       _,docs = self.c.getOnlyRetrievalResults(question=question,k1=100,k2=5)
+       return "",docs
 
 if __name__ == "__main__":
     gpt = GPTSystemModel()

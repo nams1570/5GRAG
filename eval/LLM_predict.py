@@ -49,7 +49,33 @@ def process_item_with_docs(system:BaseSystemModel,item:dict,max_retries:int=3,de
                 'question': question,
                 'ground_truth': ground_truth,
                 'predicted_answer':resp,
-                'retrieved_docs':[f"metadata: {doc.metadata},\n content: {doc.page_content} " for doc in docs],
+                'retrieved_docs':[f"{{metadata: {doc.metadata},\n content: {doc.page_content} }}" for doc in docs],
+                **get_other_keys(item)
+            }
+        except Exception as e:
+            print(f"Attempt {attempt} failed with error: {e}")
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                print(f"Max retries reached, skipping this item.")
+                return {
+                    'question': question,
+                    'ground_truth':ground_truth,
+                    'predicted_answer':None,
+                    'retrieved_docs':None
+                }
+def process_item_only_retrieval(system:BaseSystemModel,item:dict,max_retries:int=3,delay:int=3)->dict:
+    """Process item to only retrieve documents"""
+    question = item['question']
+    ground_truth = item['ground_truth']
+    for attempt in range(1,max_retries+1):
+        try:
+            _,docs = system.get_only_retrieval_results(question)
+            return {
+                'question': question,
+                'ground_truth': ground_truth,
+                'predicted_answer':"",
+                'retrieved_docs':[f"{{metadata: {doc.metadata},\n content: {doc.page_content} }}" for doc in docs],
                 **get_other_keys(item)
             }
         except Exception as e:
@@ -76,13 +102,14 @@ if __name__ == "__main__":
     argparser.add_argument('--use-baseline',action='store_true',help='pass this argument to use the baseline')
     argparser.add_argument('--use-3gpp',action='store_true',help='pass this argument to use chat3gpp analogue')
     argparser.add_argument('--retrieve-docs',action='store_true',help='pass this argument to also retrieve the docs used in generating the answer')
+    argparser.add_argument('--only-ret',action='store_true',help='pass this argument to only retrieve the docs used in generating the answer')
     args = argparser.parse_args()
 
     if are_passing_multiple_models_in_args(args):
         raise Exception("Error: Can't use multiple models at once")
 
     if args.use_system:
-        system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+        system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../baseline/db")
         print("USING SYSTEM")
     elif args.use_baseline:
         system = BaselineSystemModel("../baseline/db",isEvol=True)
@@ -93,6 +120,8 @@ if __name__ == "__main__":
     else:
         if args.retrieve_docs:
             raise Exception("Error: Must pass one of --use-system, --use-baseline, or --use-3gpp if also passing --retrieve-docs")
+        if args.only_ret:
+            raise Exception("Error: Must pass one of --use-system, --use-baseline, or --use-3gpp if also passing --only-ret")
         system = GPTSystemModel()
 
     with open(args.input_path,"r",encoding="utf-8",errors="replace") as f:
@@ -106,6 +135,9 @@ if __name__ == "__main__":
             if args.retrieve_docs:
                 print("Retrieving docs for item ")
                 future = executor.submit(process_item_with_docs,system,item)
+            elif args.only_ret:
+                print("Only retrieving docs for item ")
+                future = executor.submit(process_item_only_retrieval,system,item)
             else:
                 future = executor.submit(process_item,system,item)
             future_to_index[future] = i

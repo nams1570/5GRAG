@@ -193,6 +193,11 @@ Source: {source}
         })
         
         return answer, retrieved_docs
+    
+    def getOnlyRetrievalResults(self,question,k1,k2):
+        retrieved_docs = self.retriever.invoke(question,k1=k1,k2=k2)
+        answer = ""
+        return answer, retrieved_docs
 
 
 if __name__ == '__main__':

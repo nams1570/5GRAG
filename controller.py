@@ -4,7 +4,7 @@ from AutoFetcher import AutoFetcher
 from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
-from langchain_core.prompts import ChatPromptTemplate 
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -35,6 +35,9 @@ Answer the following question in about 200 words.
 Question: {input}
 
 Answer:""")
+        
+        #self.document_prompt = ChatPromptTemplate.from_template("""metadata:{} content: {page_content}""")
+
         self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template)
 
         embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
@@ -129,6 +132,14 @@ Answer:""")
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
         return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs,retriever_result.retrievedDiscussionDocs
+    
+    def getOnlyRetrievalResults(self,prompt:str,history,selected_docs:list[str]=[])->tuple[str,list]:
+        self.retriever.constructRetriever(db=self.contextDB,selected_docs=selected_docs)
+        retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
+
+        retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
+
+        return "",retrieved_docs
 
     def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
         print('Selected Docs: ', selected_docs)
