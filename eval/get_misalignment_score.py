@@ -50,34 +50,32 @@ def get_chunks_with_refs(docs):
 def get_all_existing_sections(ref_set:set,chunks)->Tuple[set,set]:
     all_refs_in_doc = set()
     for chunk in chunks:
-        all_refs_in_doc.add(chunk.metadata["section"])
+        all_refs_in_doc.add((chunk.metadata["docID"],chunk.metadata["section"]))
     return ref_set.intersection(all_refs_in_doc),all_refs_in_doc
 
-def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemModel)->dict:
+def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemModel,current_file:str)->dict:
     """Calculates precision and recall, based on all of the `sections` retrieved by the retriever. 
     So tp,tn,fp,fn is calculated based on the number of sections not the number of chunks who meet criteria"""
     true_refs = get_refs_without_tables(RE.runREWithDocList([org_chunk]))
-    true_refs = set(RE.extractClauseNumbersOfSrc(true_refs))
+    # todo: rework tre_pairs definition and the function to get_all_existing_sections 
+    true_pairs = set((org_chunk.metadata["docID"],sec)for sec in RE.extractClauseNumbersOfSrc(true_refs))
 
     #ensure that only clauses that can be inthe document are accessed
-    true_refs,all_sections_in_org_file = get_all_existing_sections(true_refs,chunks_in_file)
+    true_pairs,all_sections_in_org_file = get_all_existing_sections(true_pairs,chunks_in_file)
     #print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
 
     _,org_docs = system.get_only_retrieval_results(org_chunk.page_content)
     #check the sections of the org_docs.  
-    retriever_refs = set()
+    retriever_pairs = set()
     for doc in org_docs:
-        retriever_refs.add(doc.metadata["section"])
+        retriever_pairs.add((doc.metadata["docID"],doc.metadata["section"]))
 
-    tp = len(retriever_refs.intersection(true_refs))
-    fp = len(retriever_refs.difference(true_refs))
+    tp = len(retriever_pairs.intersection(true_pairs))
+    fp = len(retriever_pairs.difference(true_pairs))
 
-    fn =len(true_refs.difference(retriever_refs))
+    fn =len(true_pairs.difference(retriever_pairs))
 
-    
-    true_complement = all_sections_in_org_file.difference(true_refs)
-    retrieved_complement  = all_sections_in_org_file.difference(retriever_refs)
-    tn = true_complement.intersection(retrieved_complement)
+    print(f"File: {current_file}, TP: {tp}, FP: {fp}, FN: {fn}")
 
     precision = tp/(tp+fp) if tp+fp !=0 else 0.0
     recall = tp/(tp+fn) if tp+fn !=0 else 0.0
@@ -99,7 +97,7 @@ def process_file(file,chunks,system:BaseSystemModel)->dict:
 
     results = {}
     with ThreadPoolExecutor(max_workers=30) as executor:
-        futures = {executor.submit(count_hit_rate_with_retrieval, chunks, chunk,system): chunk for chunk in chunks_with_refs}
+        futures = {executor.submit(count_hit_rate_with_retrieval, chunks, chunk,system, file): chunk for chunk in chunks_with_refs}
         for future in tqdm(as_completed(futures), total=len(futures), desc=f"Chunks in {file}"):
             res = future.result()
             results.update(res)
@@ -125,14 +123,18 @@ if __name__ == "__main__":
         print("USING Chat3gpp")
 
     ## for each doc, get chunks and see hit rate
-    file_list = ["../data/38211-i70.docx"]
+    file_list = ["../data/38211-i70.docx","../data/38212-i70.docx"]
     all_chunks = getFullSectionChunks(file_list)
 
     # group by file
     chunks_by_file = {}
+    # file to sections will be used to ensure that we only consider sections that exist in the document
+    file_to_sections = {clean_file_name(file):set() for file in file_list}
+
     for chunk in all_chunks:
         src = chunk.metadata["source"]
         chunks_by_file.setdefault(src, []).append(chunk)
+        file_to_sections[clean_file_name(src)].add(chunk.metadata["section"])
 
 
     final_results = {}
