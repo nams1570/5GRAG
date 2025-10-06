@@ -19,7 +19,6 @@ from SystemModels import BaseSystemModel, ControllerSystemModel,Chat3GPPAnalogue
 
 RE = ReferenceExtractor()
 DB_DIR_PATH = "../baseline/db"
-retrieval_cache = dict()
 
 def get_sections_from_docs(docs):
     sections = set()
@@ -87,9 +86,12 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemMod
 
     _,org_docs = system.get_only_retrieval_results(org_chunk.page_content)
 
-    org_key = f"{org_chunk.metadata['docID']}::{org_chunk.metadata['section']}"
+    retrieval_log = []
     for doc in org_docs:
-        retrieval_cache[org_key] = retrieval_cache.get(org_key,[]) + [{"org_doc":process_document_into_dict(org_chunk),"ref_doc":process_document_into_dict(doc)}]
+        retrieval_log.append({
+            "org_doc": process_document_into_dict(org_chunk),
+            "ref_doc": process_document_into_dict(doc)
+        })
 
     #check the sections of the org_docs.  
     retriever_pairs = set()
@@ -107,7 +109,7 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemMod
     recall = tp/(tp+fn) if tp+fn !=0 else 0.0
     f1_score = (2*precision*recall)/(precision+recall) if precision and recall else 0.0
 
-    return {org_chunk.metadata["section"]:{"tp":tp,"fp":fp,"fn":fn}}
+    return {org_chunk.metadata["section"]:{"tp":tp,"fp":fp,"fn":fn}}, {f"{org_chunk.metadata['docID']}::{org_chunk.metadata['section']}": retrieval_log}
 
 def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
     tot_tp,tot_fp,tot_fn = 0,0,0
@@ -122,13 +124,16 @@ def process_file(file,chunks,system:BaseSystemModel,docID_to_file,file_to_sectio
     chunks_with_refs, _ = get_chunks_with_refs(chunks)
 
     results = {}
+    local_cache = {}
     with ThreadPoolExecutor(max_workers=30) as executor:
         futures = {executor.submit(count_hit_rate_with_retrieval, chunks, chunk,system, file,docID_to_file,file_to_sections): chunk for chunk in chunks_with_refs}
         for future in tqdm(as_completed(futures), total=len(futures), desc=f"Chunks in {file}"):
-            res = future.result()
+            res,cache_updates = future.result()
             results.update(res)
+            for k, v in cache_updates.items():
+                local_cache.setdefault(k, []).extend(v)
 
-    return get_avg_scores_for_file(file, results)
+    return get_avg_scores_for_file(file, results),local_cache
 
 if __name__ == "__main__":
     ## Setup classes
@@ -160,6 +165,7 @@ if __name__ == "__main__":
     # file to sections will be used to ensure that we only consider sections that exist in the document
     file_to_sections = {clean_file_name(file):set() for file in file_list}
     docID_to_file = {}
+    retrieval_cache = {}
 
     for chunk in all_chunks:
         src = chunk.metadata["source"]
@@ -172,7 +178,7 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=4) as pool:  # 4 files at once
         futures = [pool.submit(process_file, file, chunks,system,docID_to_file,file_to_sections) for file, chunks in chunks_by_file.items()]
         for fut in  tqdm(as_completed(futures), total=len(futures), desc="Processing files"):
-            res = fut.result()
+            res,local_cache = fut.result()
             # res looks like {"file_name": ..., "avg_precision": ..., "avg_recall": ..., "avg_f1": ...}
             final_results[res["file_name"]] = {
                 "tot_tp": res["tot_tp"],
@@ -180,6 +186,8 @@ if __name__ == "__main__":
                 "tot_fn": res["tot_fn"],
                 "num_chunks_with_refs": res["num_chunks_with_refs"]
             }
+            for k, v in local_cache.items():
+                retrieval_cache.setdefault(k, []).extend(v)
 
     # Output as JSON
     with open(args.output_path, 'w') as f:
