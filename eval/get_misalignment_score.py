@@ -175,9 +175,10 @@ if __name__ == "__main__":
             res = fut.result()
             # res looks like {"file_name": ..., "avg_precision": ..., "avg_recall": ..., "avg_f1": ...}
             final_results[res["file_name"]] = {
-                "precision": res["avg_precision"],
-                "recall": res["avg_recall"],
-                "f1": res["avg_f1"]
+                "tot_tp": res["tot_tp"],
+                "tot_fp": res["tot_fp"],
+                "tot_fn": res["tot_fn"],
+                "num_chunks_with_refs": res["num_chunks_with_refs"]
             }
 
     # Output as JSON
