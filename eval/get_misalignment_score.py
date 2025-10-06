@@ -47,21 +47,40 @@ def get_chunks_with_refs(docs):
             chunks.append(chunk)
     return chunks,chunk_to_refs
 
-def get_all_existing_sections(ref_set:set,chunks)->Tuple[set,set]:
-    all_refs_in_doc = set()
-    for chunk in chunks:
-        all_refs_in_doc.add((chunk.metadata["docID"],chunk.metadata["section"]))
-    return ref_set.intersection(all_refs_in_doc),all_refs_in_doc
+def get_all_existing_sections(ref_set:set,docID_to_file:dict,file_to_sections:dict)->Tuple[set,set]:
+    true_refs = set()
+    for ref in ref_set:
+        file = docID_to_file.get(ref[0],None)
+        if file:
+            if ref[1] in file_to_sections[file]:
+                true_refs.add(ref)
+    return true_refs
 
-def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemModel,current_file:str)->dict:
+def get_docid_and_section_ref_pairs(org_chunk):
+    """Given a chunk, return all (docID,section) pairs that it references."""
+    refs = get_refs_without_tables(RE.runREWithDocList(docs=[org_chunk]))
+    print(refs)
+    ref_pairs = set()
+    for ref in refs:
+        section_name = RE.extractClauseNumbersFromString(ref.reference)[0]
+        if ref.src == RE.getSRCDOC():
+            docId = org_chunk.metadata["docID"]
+        else:
+            docId = ref.src
+        ref_pairs.add((docId,section_name))
+    return ref_pairs
+
+def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemModel,current_file:str,docID_to_file,file_to_sections)->dict:
     """Calculates precision and recall, based on all of the `sections` retrieved by the retriever. 
     So tp,tn,fp,fn is calculated based on the number of sections not the number of chunks who meet criteria"""
     true_refs = get_refs_without_tables(RE.runREWithDocList([org_chunk]))
     # todo: rework tre_pairs definition and the function to get_all_existing_sections 
-    true_pairs = set((org_chunk.metadata["docID"],sec)for sec in RE.extractClauseNumbersOfSrc(true_refs))
+    #true_pairs = set((org_chunk.metadata["docID"],sec)for sec in RE.extractClauseNumbersOfSrc(true_refs))
+    true_pairs = get_docid_and_section_ref_pairs(org_chunk)
+
 
     #ensure that only clauses that can be inthe document are accessed
-    true_pairs,all_sections_in_org_file = get_all_existing_sections(true_pairs,chunks_in_file)
+    true_pairs = get_all_existing_sections(true_pairs,docID_to_file=docID_to_file,file_to_sections=file_to_sections)
     #print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
 
     _,org_docs = system.get_only_retrieval_results(org_chunk.page_content)
@@ -92,12 +111,12 @@ def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
         tot_f1 += results_dict[section]["f1_score"]
     return {"file_name":clean_file_name(file_name),"avg_precision":tot_precision/n,"avg_recall":tot_recall/n,"avg_f1":tot_f1/n}
 
-def process_file(file,chunks,system:BaseSystemModel)->dict:
+def process_file(file,chunks,system:BaseSystemModel,docID_to_file,file_to_sections)->dict:
     chunks_with_refs, _ = get_chunks_with_refs(chunks)
 
     results = {}
     with ThreadPoolExecutor(max_workers=30) as executor:
-        futures = {executor.submit(count_hit_rate_with_retrieval, chunks, chunk,system, file): chunk for chunk in chunks_with_refs}
+        futures = {executor.submit(count_hit_rate_with_retrieval, chunks, chunk,system, file,docID_to_file,file_to_sections): chunk for chunk in chunks_with_refs}
         for future in tqdm(as_completed(futures), total=len(futures), desc=f"Chunks in {file}"):
             res = future.result()
             results.update(res)
@@ -119,27 +138,29 @@ if __name__ == "__main__":
         system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../baseline/db")
         print("USING SYSTEM")
     elif args.use_3gpp:
-        system = Chat3GPPAnalogueModel("../baseline/db",isEvol=True)
+        system = Chat3GPPAnalogueModel("../testdb",isEvol=False)
         print("USING Chat3gpp")
 
     ## for each doc, get chunks and see hit rate
-    file_list = ["../data/38211-i70.docx","../data/38212-i70.docx"]
+    file_list = ["../data/38211-i70.docx"]
     all_chunks = getFullSectionChunks(file_list)
 
     # group by file
     chunks_by_file = {}
     # file to sections will be used to ensure that we only consider sections that exist in the document
     file_to_sections = {clean_file_name(file):set() for file in file_list}
+    docID_to_file = {}
 
     for chunk in all_chunks:
         src = chunk.metadata["source"]
         chunks_by_file.setdefault(src, []).append(chunk)
         file_to_sections[clean_file_name(src)].add(chunk.metadata["section"])
+        docID_to_file[chunk.metadata["docID"]] = clean_file_name(src)
 
 
     final_results = {}
     with ThreadPoolExecutor(max_workers=4) as pool:  # 4 files at once
-        futures = [pool.submit(process_file, file, chunks,system) for file, chunks in chunks_by_file.items()]
+        futures = [pool.submit(process_file, file, chunks,system,docID_to_file,file_to_sections) for file, chunks in chunks_by_file.items()]
         for fut in  tqdm(as_completed(futures), total=len(futures), desc="Processing files"):
             res = fut.result()
             # res looks like {"file_name": ..., "avg_precision": ..., "avg_recall": ..., "avg_f1": ...}
