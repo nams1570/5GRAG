@@ -112,7 +112,7 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemMod
 
 def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
     tot_precision,tot_recall,tot_f1 = 0,0,0
-    n = len(results_dict)
+    n = max(len(results_dict),1)
     for section in results_dict.keys():
         tot_precision += results_dict[section]["precision"]
         tot_recall += results_dict[section]["recall"]
