@@ -15,11 +15,11 @@ from typing import Tuple
 from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME,REASONING_DOCS as TDOC_COLL_NAME,DIFFS as DIFF_COLL_NAME
 import argparse
 from SystemModels import BaseSystemModel, ControllerSystemModel,Chat3GPPAnalogueModel
-
 #get the retriever and client
 
 RE = ReferenceExtractor()
 DB_DIR_PATH = "../baseline/db"
+retrieval_cache = dict()
 
 def get_sections_from_docs(docs):
     sections = set()
@@ -70,6 +70,9 @@ def get_docid_and_section_ref_pairs(org_chunk):
         ref_pairs.add((docId,section_name))
     return ref_pairs
 
+def process_document_into_dict(doc)->dict:
+    return {"metadata":{'section':doc.metadata["section"],"docID":doc.metadata["docID"]},"page_content":doc.page_content}
+
 def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemModel,current_file:str,docID_to_file,file_to_sections)->dict:
     """Calculates precision and recall, based on all of the `sections` retrieved by the retriever. 
     So tp,tn,fp,fn is calculated based on the number of sections not the number of chunks who meet criteria"""
@@ -84,6 +87,11 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemMod
     #print(f"true_refs:{true_refs}, all_refs are {all_sections_in_org_file}")
 
     _,org_docs = system.get_only_retrieval_results(org_chunk.page_content)
+
+    org_key = f"{org_chunk.metadata['docID']}::{org_chunk.metadata['section']}"
+    for doc in org_docs:
+        retrieval_cache[org_key] = retrieval_cache.get(org_key,[]) + [{"org_doc":process_document_into_dict(org_chunk),"ref_doc":process_document_into_dict(doc)}]
+
     #check the sections of the org_docs.  
     retriever_pairs = set()
     for doc in org_docs:
@@ -173,3 +181,6 @@ if __name__ == "__main__":
     # Output as JSON
     with open(args.output_path, 'w') as f:
         json.dump(final_results, f, indent=4)
+    
+    with open("retrieval_cache.json", "w") as f:
+        json.dump(retrieval_cache, f, indent=4)
