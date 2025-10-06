@@ -59,7 +59,6 @@ def get_all_existing_sections(ref_set:set,docID_to_file:dict,file_to_sections:di
 def get_docid_and_section_ref_pairs(org_chunk):
     """Given a chunk, return all (docID,section) pairs that it references."""
     refs = get_refs_without_tables(RE.runREWithDocList(docs=[org_chunk]))
-    print(refs)
     ref_pairs = set()
     for ref in refs:
         section_name = RE.extractClauseNumbersFromString(ref.reference)[0]
@@ -108,16 +107,16 @@ def count_hit_rate_with_retrieval(chunks_in_file,org_chunk, system:BaseSystemMod
     recall = tp/(tp+fn) if tp+fn !=0 else 0.0
     f1_score = (2*precision*recall)/(precision+recall) if precision and recall else 0.0
 
-    return {org_chunk.metadata["section"]:{"precision":precision,"recall":recall,"f1_score":f1_score}}
+    return {org_chunk.metadata["section"]:{"tp":tp,"fp":fp,"fn":fn}}
 
 def get_avg_scores_for_file(file_name:str,results_dict:dict)->dict:
-    tot_precision,tot_recall,tot_f1 = 0,0,0
+    tot_tp,tot_fp,tot_fn = 0,0,0
     n = max(len(results_dict),1)
     for section in results_dict.keys():
-        tot_precision += results_dict[section]["precision"]
-        tot_recall += results_dict[section]["recall"]
-        tot_f1 += results_dict[section]["f1_score"]
-    return {"file_name":clean_file_name(file_name),"avg_precision":tot_precision/n,"avg_recall":tot_recall/n,"avg_f1":tot_f1/n}
+        tot_tp += results_dict[section]["tp"]
+        tot_fp += results_dict[section]["fp"]
+        tot_fn += results_dict[section]["fn"]
+    return {"file_name":clean_file_name(file_name),"tot_tp":tot_tp,"tot_fp":tot_fp,"tot_fn":tot_fn,"num_chunks_with_refs":n}
 
 def process_file(file,chunks,system:BaseSystemModel,docID_to_file,file_to_sections)->dict:
     chunks_with_refs, _ = get_chunks_with_refs(chunks)
@@ -150,7 +149,10 @@ if __name__ == "__main__":
         print("USING Chat3gpp")
 
     ## for each doc, get chunks and see hit rate
-    file_list = ["../data/38211-i70.docx"]
+    file_list = ["../dataformicrobenchmark/38181-i70.docx","../dataformicrobenchmark/38201-i00.docx","../dataformicrobenchmark/38202-i40.docx",\
+                 "../dataformicrobenchmark/38211-i70.docx","../dataformicrobenchmark/38212-i70.docx", "../dataformicrobenchmark/38213-i70.docx",\
+                    "../dataformicrobenchmark/38214-i70.docx", "../dataformicrobenchmark/38215-i40.docx","../dataformicrobenchmark/38300-i70.docx",\
+                    "../dataformicrobenchmark/38304-i40.docx"    ]
     all_chunks = getFullSectionChunks(file_list)
 
     # group by file
