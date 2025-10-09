@@ -81,7 +81,7 @@ class MultiStageRetriever:
             ext_src:list[RefObj] = RExt.runREWithDocList(docs=[doc])
             for ref in ext_src:
                 new_filter = self.buildDocIdandSectionFilter(ref,org_docid)
-                if new_filter != {}:
+                if new_filter and new_filter not in filters:  # dedupe manually
                     filters.append(new_filter)
         if filters == []:
             return {}
@@ -101,7 +101,11 @@ class MultiStageRetriever:
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
-        additional_docs.extend(self.queryDB(hyp_doc,NUM_EXTRA_DOCS,filter=metadata_filter,collectionType="spec"))
+        try:
+            additional_docs.extend(self.queryDB(hyp_doc,NUM_EXTRA_DOCS,filter=metadata_filter,collectionType="spec"))
+        except Exception as e:
+            print(f"error due to filter {metadata_filter}")
+            raise e
 
         return additional_docs
     
