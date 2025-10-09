@@ -80,26 +80,31 @@ def process_item_into_prompt(client,item):
     org_doc,ref_doc = item['org_doc'],item['ref_doc']
     resp = get_injected_prompt(org_chunk=org_doc,ref_chunk=ref_doc)
     return {
-        'prompt':resp
+        'prompt':resp,
+        'org_doc':org_doc,
+        'ref_doc': ref_doc,
     }
 
 
 if __name__ == "__main__":
-    file_path = "./retrieval_cache.json"
+    file_path = "./all_chunk_ref_pairs.json"
     PROMPT_ONLY = True
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     i = 0
     formatted_data = []
     other_data = []
-    for k in data:
-        for org_to_ref_map in filter_bad_mappings(data[k]):
+    """for k in data:
+        #for org_to_ref_map in filter_bad_mappings(data[k]):
             formatted_data.append(org_to_ref_map)
         for mmap in data[k]:
             other_data.append(mmap)
-        i+=1
+        i+=1"""
+    for item in data:
+        formatted_data.append(item)
     print(len(formatted_data))
     print(len(other_data))
+    
 
     client = OpenAI(
         api_key=config["API_KEY"],
