@@ -90,19 +90,19 @@ class MultiStageRetriever:
         metadata_filter = {'$or':filters}
         return metadata_filter
 
-    def getAdditionalContext(self,org_docs,hyp_doc):
+    def getAdditionalContext(self,org_docs,hyp_doc,num_docs_to_retrieve):
         """@org_docs: list of initially retrieved document chunks from vector db.
         In this method, we parse the org_docs for external references and perform additional retrievals.
         returns: list of document chunks"""
         metadata_filter = self.buildFiltersFromRefs(docs=org_docs)
         if metadata_filter == {}:
             return []
-        print(f"\n\n secondary retrieval filter is \n**")
+        print(f"\n\n secondary retrieval filter is \n** {metadata_filter}")
         
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
         try:
-            additional_docs.extend(self.queryDB(hyp_doc,NUM_EXTRA_DOCS,filter=metadata_filter,collectionType="spec"))
+            additional_docs.extend(self.queryDB(hyp_doc,k=num_docs_to_retrieve,filter=metadata_filter,collectionType="spec"))
         except Exception as e:
             print(f"error due to filter {metadata_filter}")
             raise e
@@ -117,15 +117,50 @@ class MultiStageRetriever:
 
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"] and config["NUM_EXTRA_DOCS"] > 0:
-            additional_docs = self.getAdditionalContext(org_docs,hyp_doc=hyp_doc)
-            print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
-            if len(additional_docs) == 0:
-                print("No additional docs could be retrieved based on references, getting some more based on similarity")
-                org_docs = self.queryDB(hyp_doc=hyp_doc,k=(config["NUM_DOCS_INITIAL_RETRIEVAL"]+NUM_EXTRA_DOCS),collectionType="spec")
-        else:
-            additional_docs = []
+            secondary_retrieval_docs = []
+            docs_to_build_filters_from = org_docs[:]
+            #TODO: Revisit the recursion logic. what do we build filters from?
+            #TODO: Revisit this logic. What to do if a call to additional context falls short of its budget?
+            num_recursions = max(config["DEPTH"], 1)
+            if NUM_EXTRA_DOCS < num_recursions:
+                budget_per_recursion = 1
+                num_recursions = NUM_EXTRA_DOCS
+            else:
+                budget_per_recursion = NUM_EXTRA_DOCS // num_recursions
 
-        return org_docs,additional_docs
+            def _key(d):
+                return (d.metadata.get("docID"), d.metadata.get("section"), d.page_content[:200])
+            seen = set(_key(d) for d in org_docs)
+
+            cumulative_extra_retrieval = (num_recursions * budget_per_recursion) - NUM_EXTRA_DOCS # If we do more retrievals than needed, we need to adjust
+            for i in range(1,num_recursions+1,1):
+                additional_docs = self.getAdditionalContext(docs_to_build_filters_from,hyp_doc=hyp_doc,num_docs_to_retrieve=budget_per_recursion)
+                if len(additional_docs) < budget_per_recursion:
+                    # If we didn't get enough docs, we need to adjust our budget
+                    cumulative_extra_retrieval += (budget_per_recursion - len(additional_docs))
+
+                # Dedupe additional docs
+                for d in additional_docs:
+                    k = _key(d)
+                    if k not in seen:
+                        seen.add(k)
+                        secondary_retrieval_docs.append(d)
+
+                docs_to_build_filters_from = additional_docs[:]
+                
+            print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
+            desired_total = config["NUM_DOCS_INITIAL_RETRIEVAL"] + NUM_EXTRA_DOCS
+            current_total = len(org_docs) + len(secondary_retrieval_docs)
+
+
+            if desired_total > current_total:
+                deficit = desired_total - current_total
+                print("No additional docs could be retrieved based on references, getting some more based on similarity")
+                org_docs = self.queryDB(hyp_doc=hyp_doc,k=(config["NUM_DOCS_INITIAL_RETRIEVAL"]+deficit),collectionType="spec")
+        else:
+           secondary_retrieval_docs = []
+
+        return org_docs,secondary_retrieval_docs
     
     def buildTimestampFilter(self,toTimestamp):
         if toTimestamp == None:
