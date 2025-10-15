@@ -21,9 +21,22 @@ class DBClient:
         return docs
     
     def _add_doc_list_to_db(self,docs:list[Document]):
-        pass
+        """Adds the given list of documents to the collection"""
+        document_texts = []
+        metadatas = []
+        for doc in docs:
+            if not doc.page_content or not doc.metadata:
+                print(f"Skipping doc with empty content or metadata: {doc}")
+                continue
+            document_texts.append(doc.page_content)
+            metadatas.append(doc.metadata)
+
+        if len(document_texts) != len(metadatas):
+            raise ValueError("DBClient: documents and metadatas length mismatch before add")
+        
+        self.collection.add(documents=document_texts,metadatas=metadatas)
     
-    def _safe_add_docs(self,docs,batch_num,attempt=1,max_attempts=3):
+    def _safe_add_docs(self,docs:list[Document],batch_num:int|str,attempt:int=1,max_attempts:int=3):
         total_tokens = sum(getTokenCount(d.page_content,model_name=self.embedding_model_name) for d in docs)
         MAX_TOKENS_ALLOWED = 270000
 
@@ -72,13 +85,10 @@ class DBClient:
         new_docs = self.getDocsFromFilePath(new_file_list,metadata_func=metadata_func,doc_dir=doc_dir,useFullSectionChunks=useFullSectionChunks)
         self.add_docs_to_db(new_docs)
 
-    def delFromDB(self):
-        """This is a placeholder function. 
-        Whilst doing this definitely prevents the retriever from fetching things with these docs as source,
-        It still seems able to answer questions based on it."""
-        self.vector_db.delete(where={'source':{'$eq':'data/38214-hc0.docx'}})
-        self.vector_db.delete(where={'source':{'$eq':'data/38176-2-gc0.docx'}})
-        self.vector_db.delete(where={'source':{'$eq':'data/38741-i31.docx'}})
+    def delFromDB(self,filter):
+        """Delete all documents from the DB that match the given filter.
+        @filter: metadata filter to apply to the deletion. Follow chroma syntax for filtering at https://docs.trychroma.com/docs/querying-collections/metadata-filtering"""
+        self.collection.delete(where=filter)
 
     def queryDB(self,query_text:str,k:int,filter:dict={})->list[Document]:
         """k is how many docs to retrieve, query_text is what we query with.
