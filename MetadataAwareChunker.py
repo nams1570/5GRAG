@@ -4,10 +4,9 @@ from operator import add, ge
 from docx import Document as DocParser
 import docx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
 import re
 from collections.abc import Callable
-from utils import getFirstPageOfDocxInMarkdown, getFirstTwoPagesOfDocxInMarkdown, getMetadataFromLLM, getCRContentFromLLM,convertAllDocToDocx 
+from utils import getFirstPageOfDocxInMarkdown, getFirstTwoPagesOfDocxInMarkdown, getMetadataFromLLM, getCRContentFromLLM,Document
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 BASE_SECTION_NAME = "N/A"
@@ -124,7 +123,7 @@ def section_chunks_of_file(file:str, addExtraDocumentWideMetadata:Callable[[str,
 def getSectionedChunks(file_list,addExtraDocumentWideMetadata:Callable[[str,str],dict]=addExtraDocumentWideMetadataForContext):
     """@input: file_list. List of files in relative path that will be chunked.
     @addExtraDocumentWideMetadata: func that returns a dictionary with extra metadata that will be added to all chunks.
-    Returns: master list chunks_with_metadata that has chunks of all the files stored as langchain Documents.
+    Returns: master list chunks_with_metadata that has chunks of all the files stored as Documents.
     These Documents have section metadata"""
     if len(file_list) == 1:
         return section_chunks_of_file(file_list[0], addExtraDocumentWideMetadata)
@@ -266,6 +265,7 @@ if __name__ =="__main__":
     file_list = ["./all3gppdocsfromrel17and18/docsfordiffs/38331-h30.docx"]
     #print(Docx2txtLoader(file_list[0]).load())
     chunks = getFullSectionChunks(file_list,addExtraDocumentWideMetadataForReason)
+    print(chunks[:100])
     seen = set()
     sectionToChunks = {}
     for chunk in chunks:
