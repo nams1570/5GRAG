@@ -1,6 +1,3 @@
-from calendar import c
-from importlib import metadata
-from operator import add, ge
 from docx import Document as DocParser
 import docx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
