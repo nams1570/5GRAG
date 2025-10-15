@@ -213,6 +213,14 @@ class RefObj:
     
     def __repr__(self):
         return f'Reference: {self.reference}, Source Document: {self.src}'
+
+class Document:
+    def __init__(self, page_content:str, metadata:dict):
+        self.page_content = page_content
+        self.metadata = metadata
+    
+    def __repr__(self):
+        return f'metadata={self.metadata}, page_content="{self.page_content}"'
     
 
 class DocumentWideMetadata(BaseModel):
