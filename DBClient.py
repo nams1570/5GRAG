@@ -1,11 +1,12 @@
 from typing import Callable
-from utils import Document, getTokenCount
+from utils import Document, getTokenCount, deterministic_id
 from MetadataAwareChunker import getSectionedChunks,addExtraDocumentWideMetadataForReason, getFullSectionChunks
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from settings import config
 import os 
 import time
+import uuid
 class DBClient:
     def getDocsFromFilePath(self,file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],useFullSectionChunks:bool=False)->list[Document]:
         """@file_list: list(str) of file names. Not absolute/relative paths
@@ -19,26 +20,32 @@ class DBClient:
         else:
             docs = getSectionedChunks(file_list,addExtraDocumentWideMetadata=metadata_func)
         return docs
-    
+
     def _add_doc_list_to_db(self,docs:list[Document]):
         """Adds the given list of documents to the collection"""
+        if len(docs) ==0:
+            print("No documents to add to DB")
+            return
         document_texts = []
+        uuids = []
         metadatas = []
         for doc in docs:
             if not doc.page_content or not doc.metadata:
                 print(f"Skipping doc with empty content or metadata: {doc}")
                 continue
+            uuids.append(deterministic_id(doc.page_content, doc.metadata))
             document_texts.append(doc.page_content)
             metadatas.append(doc.metadata)
 
-        if len(document_texts) != len(metadatas):
+        if len(document_texts) != len(metadatas)  or len(uuids) != len(metadatas) or len(uuids) != len(document_texts):
             raise ValueError("DBClient: documents and metadatas length mismatch before add")
+
+        self.collection.add(documents=document_texts,metadatas=metadatas,ids=uuids)
         
-        self.collection.add(documents=document_texts,metadatas=metadatas)
-    
+
     def _safe_add_docs(self,docs:list[Document],batch_num:int|str,attempt:int=1,max_attempts:int=3):
         total_tokens = sum(getTokenCount(d.page_content,model_name=self.embedding_model_name) for d in docs)
-        MAX_TOKENS_ALLOWED = 270000
+        MAX_TOKENS_ALLOWED = 8191
 
         if total_tokens > MAX_TOKENS_ALLOWED:
             print(f"Batch {batch_num} is too large")
@@ -66,10 +73,11 @@ class DBClient:
             print(f" ****** \n\n number of chunks is {len(docs)} and we are on batch {i}. \n\n")
             self._safe_add_docs(docs[(i-1)*batch_size:i*batch_size],batch_num=i,max_attempts=3)
             i+=1
-    
+        print(f"added {len(docs)} documents to the database")
+
     def _get_embedding_model_function(self,embedding_model_name:str):
         """Returns the embedding function for the given model name. Currently only supports OpenAI models."""
-        return OpenAIEmbeddingFunction(model_name=embedding_model_name)
+        return OpenAIEmbeddingFunction(model_name=embedding_model_name,api_key=config["API_KEY"])
     
     def __init__(self,embedding_model_name:str="text-embedding-3-large",collection_name:str=config["SPEC_COLL_NAME"],db_dir_path:str=config["CHROMA_DIR"]):
         #construct chroma base db     
