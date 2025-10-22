@@ -44,14 +44,21 @@ class DBClient:
         
 
     def _safe_add_docs(self,docs:list[Document],batch_num:int|str,attempt:int=1,max_attempts:int=3):
+        if not docs or len(docs) == 0:
+            print(f"Batch {batch_num} is empty — skipping.")
+            return
+
         total_tokens = sum(getTokenCount(d.page_content,model_name=self.embedding_model_name) for d in docs)
         MAX_TOKENS_ALLOWED = 8191
 
-        if total_tokens > MAX_TOKENS_ALLOWED:
+        if total_tokens > MAX_TOKENS_ALLOWED and len(docs) > 1:
             print(f"Batch {batch_num} is too large")
             mid = len(docs) //2
             self._safe_add_docs(docs[:mid],batch_num=f"{batch_num}a")
             self._safe_add_docs(docs[mid:],batch_num=f"{batch_num}b")
+            return
+        elif total_tokens > MAX_TOKENS_ALLOWED:
+            print(f"\n\n **Batch {batch_num} has a single document that is too large to add to the DB. Skipping document.")
             return
         try:
             self._add_doc_list_to_db(docs)
