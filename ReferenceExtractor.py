@@ -1,6 +1,5 @@
 import re
-from utils import RefObj
-from langchain_core.documents import Document
+from utils import RefObj, Document
 
 SRC_DOC = "Current_Doc"
 

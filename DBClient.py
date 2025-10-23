@@ -1,24 +1,30 @@
 from typing import Callable
-from utils import Document, getTokenCount, deterministic_id
-from MetadataAwareChunker import getSectionedChunks,addExtraDocumentWideMetadataForReason, getFullSectionChunks
+import uuid
+from utils import Document, getTokenCount, deterministic_id, RequestedChunkingType
+from MetadataAwareChunker import getSectionedChunks,addExtraDocumentWideMetadataForReason, getFullSectionChunks, getCRChunks
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from settings import config
 import os 
 import time
-import uuid
+
 class DBClient:
-    def getDocsFromFilePath(self,file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],useFullSectionChunks:bool=False)->list[Document]:
+    def getDocsFromFilePath(self,file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],requested_chunking_type: RequestedChunkingType=RequestedChunkingType.SECTION)->list[Document]:
         """@file_list: list(str) of file names. Not absolute/relative paths
         @metadata_func: function that will be used to extract the document wide metadata
         @doc_dir: directory where the documents are located
         """
         docs = []
         file_list = [os.path.join(doc_dir,file) for file in file_list]
-        if useFullSectionChunks:
-            docs = getFullSectionChunks(file_list,addExtraDocumentWideMetadata=metadata_func)
-        else:
-            docs = getSectionedChunks(file_list,addExtraDocumentWideMetadata=metadata_func)
+        match requested_chunking_type:
+            case RequestedChunkingType.FULL_SECTION:
+                docs = getFullSectionChunks(file_list,addExtraDocumentWideMetadata=metadata_func)
+            case RequestedChunkingType.SECTION:
+                docs = getSectionedChunks(file_list,addExtraDocumentWideMetadata=metadata_func)
+            case RequestedChunkingType.CR:
+                docs = getCRChunks(file_list)
+            case _:
+                raise ValueError(f"Unknown requested_chunking_type: {requested_chunking_type}")
         return docs
 
     def _add_doc_list_to_db(self,docs:list[Document]):
@@ -30,7 +36,7 @@ class DBClient:
         uuids = []
         metadatas = []
         for doc in docs:
-            if not doc.page_content or not doc.metadata:
+            if not doc.page_content or not doc.metadata or doc.page_content.strip() == "" or doc.metadata =={}:
                 print(f"Skipping doc with empty content or metadata: {doc}")
                 continue
             uuids.append(deterministic_id(doc.page_content, doc.metadata))
@@ -40,8 +46,12 @@ class DBClient:
         if len(document_texts) != len(metadatas)  or len(uuids) != len(metadatas) or len(uuids) != len(document_texts):
             raise ValueError("DBClient: documents and metadatas length mismatch before add")
 
-        self.collection.add(documents=document_texts,metadatas=metadatas,ids=uuids)
-        
+        try:
+            self.collection.add(documents=document_texts,metadatas=metadatas,ids=uuids)
+        except Exception as e:
+            print(f"Error adding documents to DB: {e}")
+            uuids = [str(uuid.uuid4()) for _ in range(len(document_texts))]
+            self.collection.add(documents=document_texts,metadatas=metadatas,ids=uuids)
 
     def _safe_add_docs(self,docs:list[Document],batch_num:int|str,attempt:int=1,max_attempts:int=3):
         if not docs or len(docs) == 0:
@@ -93,11 +103,11 @@ class DBClient:
         embeddings = self._get_embedding_model_function(embedding_model_name)
         self.collection = self.chroma_client.get_or_create_collection(name=collection_name, embedding_function=embeddings)
 
-    def updateDBFromFileList(self,new_file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],useFullSectionChunks:bool=False):
+    def updateDBFromFileList(self,new_file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],requested_chunking_type: RequestedChunkingType=RequestedChunkingType.SECTION):
         """@new_file_list: list(str) list of file names (not abs paths)
         Turn the new files in DOC_DIR into a list of documents and add them
         to the vector store."""
-        new_docs = self.getDocsFromFilePath(new_file_list,metadata_func=metadata_func,doc_dir=doc_dir,useFullSectionChunks=useFullSectionChunks)
+        new_docs = self.getDocsFromFilePath(new_file_list,metadata_func=metadata_func,doc_dir=doc_dir,requested_chunking_type=requested_chunking_type)
         self.add_docs_to_db(new_docs)
 
     def delFromDB(self,filter):

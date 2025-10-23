@@ -1,9 +1,12 @@
+import enum
 from pydoc import text
 from zipfile import ZipFile
 import os
 import subprocess
 import json
 import pandas as pd
+import hashlib
+import uuid
 from markitdown import MarkItDown
 from openai import OpenAI
 from pydantic import BaseModel, Field
@@ -163,15 +166,25 @@ def getDocIDFromText(text_chunk:str)->List[str]:
     )
     return [docIDchunk.docID for docIDchunk in response.output_parsed.docIDs if docIDchunk.docID != ""]
 
+def deterministic_id(text: str, metadata: dict) -> str:
+    mjson = json.dumps(metadata, sort_keys=True, ensure_ascii=False)
+    h = hashlib.sha256()
+    h.update(text.encode("utf-8"))
+    h.update(mjson.encode("utf-8"))
+    # use uuid5 over the hex to produce compact stable uuid
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, h.hexdigest()))
+
 ######################
 ## Tokenizing Tools ##
 ######################
 
 def getTokenCount(text:str,model_name:str,supressWarning:bool=True):
     """Use this to get a picture of how many tokens the @text contains."""
+    print(f"Getting token count for model {model_name}\n\n")
     if "gpt" in model_name or model_name=="text-embedding-3-large":
         try:
             encoding = tiktoken.encoding_for_model(model_name)
+            print(f'used models own ecoding {encoding}')
         except Exception as e:
             if not supressWarning:
                 print(f"ran into exception {e} when tokenizing, defaulting to 4o mini's tokenizer")
@@ -205,6 +218,11 @@ def get_inclusive_tstmp_range(fromTimestamp:str,toTimestamp:str)->list[str]:
 ####################
 ## Object Classes ##
 ####################
+
+class RequestedChunkingType(enum.Enum):
+    FULL_SECTION: str = "FULL_SECTION"
+    SECTION: str = "SECTION"
+    CR: str = "CR"
 
 class RefObj:
     def __init__(self,reference:str,src:str):

@@ -1,6 +1,6 @@
 from difflib import Differ
 from MetadataAwareChunker import getFullSectionChunks,addExtraDocumentWideMetadataForReason
-from langchain_core.documents import Document
+from utils import Document
 
 SENTENCE_SEPARATOR = ". "
 
