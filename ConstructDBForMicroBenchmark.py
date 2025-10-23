@@ -1,6 +1,5 @@
-from settings import config
 from DBClient import DBClient
-from utils import convertAllDocToDocx,getAllFilesInDirMatchingFormat, getTokenCount
+from utils import RequestedChunkingType,getAllFilesInDirMatchingFormat, getTokenCount
 from MetadataAwareChunker import addExtraDocumentWideMetadataForReason
 from CollectionNames import CROSS_CONTEXT_BENCHMARK_COLL_NAME
 
@@ -9,7 +8,7 @@ DB_DIR_PATH = "fakedb"
 DOC_DIR_PATH = "dataformicrobenchmark"
 
 def parse_docs(file_list,db:DBClient):
-    db.updateDBFromFileList(file_list,metadata_func=addExtraDocumentWideMetadataForReason,doc_dir=DOC_DIR_PATH,useFullSectionChunks=True)
+    db.updateDBFromFileList(file_list,metadata_func=addExtraDocumentWideMetadataForReason,doc_dir=DOC_DIR_PATH,requested_chunking_type=RequestedChunkingType.FULL_SECTION)
 
 if __name__ == "__main__":
     db = DBClient(embedding_model_name='text-embedding-3-large',collection_name=COLLECTION_NAME,db_dir_path=DB_DIR_PATH)
