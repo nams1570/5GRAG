@@ -1,11 +1,8 @@
 from utils import RefObj,RetrieverResult, get_inclusive_tstmp_range, getDocIDFromText
 from ReferenceExtractor import ReferenceExtractor
 from HypotheticalDocGenerator import HypotheticalDocGenerator
-import os 
+from DBClient import DBClient
 from settings import config
-import chromadb
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-from langchain_core.documents import Document
 
 RExt = ReferenceExtractor()
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
@@ -16,44 +13,12 @@ class MultiStageRetriever:
         self.selected_docs = None
 
         self.hdg: HypotheticalDocGenerator = HypotheticalDocGenerator()
-        self.chroma_client = chromadb.PersistentClient(path=pathToDB)
 
-        embeddings = OpenAIEmbeddingFunction(model_name='text-embedding-3-large',api_key=config["API_KEY"]) #Since we're using openAI's llm, we have to use its embedding model
-
+        self.collections: dict[str, DBClient] = {}
+        self.collections["spec"] = DBClient(collection_name=specCollectionName,db_dir_path=pathToDB)
+        self.collections["reasoning"] = DBClient(collection_name=reasonCollectionName,db_dir_path=pathToDB)
+        self.collections["diff"] = DBClient(collection_name=diffCollectionName,db_dir_path=pathToDB)
         
-        # Initialize vector store
-        self.collections = {}
-        self.collections["spec"] = self.chroma_client.get_collection(name=specCollectionName, embedding_function=embeddings)
-        self.collections["reasoning"] = self.chroma_client.get_collection(name=reasonCollectionName, embedding_function=embeddings)
-        self.collections["diff"] = self.chroma_client.get_collection(name=diffCollectionName, embedding_function=embeddings)
-
-    def constructRetriever(self,db,selected_docs=None):
-        """@selected_docs: list of documents to filter.
-        @db: DBClient instance.
-        returns: Nothing"""
-        if selected_docs is None or len(selected_docs) == 0:
-            self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"]})
-            self.selected_docs = None
-        else:
-            # If we have selected one or more docs, then apply filtering
-            name_list = selected_docs
-            print("name_list: ", name_list)
-            name_filter = {"source": {"$in": name_list}}
-            self.selected_docs = name_list
-            self.base_retriever = db.getRetriever(search_kwargs={"k":config["NUM_DOCS_INITIAL_RETRIEVAL"],'filter': name_filter})
-        
-    def queryDB(self,hyp_doc:str,k:int,filter:dict={},collectionType:str="spec")->list[Document]:
-        """k is how many docs to retrieve, hyp_doc is what we query with"""
-        if filter == {}:
-            db_resp = self.collections[collectionType].query(query_texts=[hyp_doc],n_results=k)
-        else:
-            db_resp = self.collections[collectionType].query(query_texts=[hyp_doc],n_results=k,where=filter)
-
-        docs = []
-        for doc,meta in zip(db_resp['documents'][0],db_resp['metadatas'][0]):
-            docs.append(Document(page_content=doc,metadata=meta))
-        return docs
-
     def buildDocIdandSectionFilter(self,ref:RefObj,org_docid:str)->dict:
         section_names = RExt.extractClauseNumbersFromString(ref.reference)
         if ref.src == RExt.getSRCDOC():
@@ -99,7 +64,7 @@ class MultiStageRetriever:
         #metadataOnlyRetriever = db.getRetriever(search_kwargs={'filter':metadata_filter,'k':1000})
         additional_docs = []
         try:
-            additional_docs.extend(self.queryDB(hyp_doc,k=num_docs_to_retrieve,filter=metadata_filter,collectionType="spec"))
+            additional_docs.extend(self.collections["spec"].queryDB(query_text=hyp_doc,k=num_docs_to_retrieve,filter=metadata_filter))
         except Exception as e:
             print(f"error due to filter {metadata_filter}")
             raise e
@@ -109,8 +74,7 @@ class MultiStageRetriever:
     def retrieveFromSpecDB(self,hyp_doc:str):
         """We retrieve context info from the spec db.
         returns: first order and (possible) second order retrieval results"""
-        #org_docs = self.base_retriever.invoke(hyp_doc)
-        org_docs = self.queryDB(hyp_doc=hyp_doc,k=config["NUM_DOCS_INITIAL_RETRIEVAL"],collectionType="spec")
+        org_docs = self.collections["spec"].queryDB(query_text=hyp_doc,k=config["NUM_DOCS_INITIAL_RETRIEVAL"])
 
         print(f"There are {len(org_docs)}, and they are {org_docs}")
         if config["IS_SMART_RETRIEVAL"] and config["NUM_EXTRA_DOCS"] > 0:
@@ -144,8 +108,8 @@ class MultiStageRetriever:
                         secondary_retrieval_docs.append(d)
 
                 docs_to_build_filters_from = additional_docs[:]
-                
-            print(f"\n\n additional docs are {additional_docs}, and there are {len(additional_docs)} \n\n")
+
+            print(f"\n\n secondary retrieval docs are {secondary_retrieval_docs}, and there are {len(secondary_retrieval_docs)} \n\n")
             desired_total = config["NUM_DOCS_INITIAL_RETRIEVAL"] + NUM_EXTRA_DOCS
             current_total = len(org_docs) + len(secondary_retrieval_docs)
 
@@ -153,7 +117,7 @@ class MultiStageRetriever:
             if desired_total > current_total:
                 deficit = desired_total - current_total
                 print("No additional docs could be retrieved based on references, getting some more based on similarity")
-                org_docs = self.queryDB(hyp_doc=hyp_doc,k=(config["NUM_DOCS_INITIAL_RETRIEVAL"]+deficit),collectionType="spec")
+                org_docs = self.collections["spec"].queryDB(query_text=hyp_doc,k=(config["NUM_DOCS_INITIAL_RETRIEVAL"]+deficit))
         else:
            secondary_retrieval_docs = []
 
@@ -201,8 +165,8 @@ class MultiStageRetriever:
         print(filters_from_query)
         if filters_from_query != {}:
             return filters_from_query
-        
-        diffs = self.queryDB(hyp_doc=query,k=4,collectionType="diff")
+
+        diffs = self.collections["diff"].queryDB(query_text=query,k=4)
 
         filters_from_diffs = self.buildFiltersFromDiffs(diffs)
         print(f"\n\ndiffs\n*****")
@@ -221,11 +185,11 @@ class MultiStageRetriever:
         Returns: documents from discussion db"""
         #get diff similar to query
         metadata_filter = self.getFiltersForDiscussionDB(query)
-        
-        reasoning_docs = self.queryDB(hyp_doc,config["NUM_REASONING_DOCS_TO_RETRIEVE"],filter=metadata_filter,collectionType="reasoning")
+
+        reasoning_docs = self.collections["reasoning"].queryDB(query_text=hyp_doc,k=config["NUM_REASONING_DOCS_TO_RETRIEVE"],filter=metadata_filter)
         if reasoning_docs == []:
             print("No reasoning docs could be retrieved based on diff/docID filtering, getting some more based on similarity")
-            reasoning_docs = self.queryDB(hyp_doc,config["NUM_REASONING_DOCS_TO_RETRIEVE"],collectionType="reasoning")
+            reasoning_docs = self.collections["reasoning"].queryDB(query_text=hyp_doc,k=config["NUM_REASONING_DOCS_TO_RETRIEVE"])
 
         print(f"\n\n reasoning_docs is \n**")
         print(reasoning_docs)
@@ -233,9 +197,6 @@ class MultiStageRetriever:
         return reasoning_docs
 
     def invoke(self,query):
-        if not self.base_retriever:
-            raise Exception("Error: No base retriever initialized. Has constructRetriever been run?")
-
         #invoke HypotheticalDocument here to get gpt response
         hyp_doc = self.hdg.generate_hypothetical_document(query)
         if hyp_doc == None:

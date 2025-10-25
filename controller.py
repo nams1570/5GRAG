@@ -1,15 +1,14 @@
 from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
-from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult
+from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult, RequestedChunkingType
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser #converts output into string
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_openai import OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from MultiStageRetriever import MultiStageRetriever
-from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME
+from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
 from sys import getsizeof
 
 API_KEY = config["API_KEY"]
@@ -40,9 +39,8 @@ Answer:""")
 
         self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template)
 
-        embeddings = OpenAIEmbeddings(model='text-embedding-3-large',api_key=API_KEY) #Since we're using openAI's llm, we have to use its embedding model
-        self.contextDB = DBClient(embedding_model=embeddings,collection_name="specs_and_discussions",db_dir_path=db_dir_path,doc_dir_path=doc_dir_path)
-        self.reasonDB = None#DBClient(embedding_model=embeddings,collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path,doc_dir_path="reasoning")
+        self.contextDB = DBClient(collection_name=SPEC_COLL_NAME,db_dir_path=db_dir_path)
+        self.reasonDB = DBClient(collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path)
 
         #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
         #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
@@ -80,7 +78,7 @@ Answer:""")
         #split & break down new docs
 
         #update chroma
-        self.contextDB.updateDB(file_list)
+        self.contextDB.updateDBFromFileList(file_list,doc_dir=DOC_DIR,requested_chunking_type=RequestedChunkingType.SECTION)
         print(f"done resyncing")
     
     def updateReasonDB(self):
@@ -90,7 +88,7 @@ Answer:""")
         convertAllDocToDocx(DOC_DIR)
         file_list = [file[:-4] + ".docx" for file in file_list]
         
-        self.reasonDB.updateDB(file_list)
+        self.reasonDB.updateDBFromFileList(file_list,doc_dir=DOC_DIR,requested_chunking_type=RequestedChunkingType.SECTION)
         print("updated collection!")
 
     def toggleDatabase(self):
@@ -121,7 +119,6 @@ Answer:""")
             message_objects.append(HumanMessage(content=turn[0]))
             message_objects.append(AIMessage(content=turn[1]))
         return message_objects
-    
 
     def getResponseWithRetrieval(self,prompt,history):
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
@@ -133,8 +130,7 @@ Answer:""")
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
         return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs,retriever_result.retrievedDiscussionDocs
     
-    def getOnlyRetrievalResults(self,prompt:str,history,selected_docs:list[str]=[])->tuple[str,list]:
-        self.retriever.constructRetriever(db=self.contextDB,selected_docs=selected_docs)
+    def getOnlyRetrievalResults(self,prompt:str,history)->tuple[str,list]:
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
 
         retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
@@ -143,7 +139,6 @@ Answer:""")
 
     def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
         print('Selected Docs: ', selected_docs)
-        self.retriever.constructRetriever(db=self.contextDB,selected_docs=selected_docs)
 
         if prompt:
             print(f"Ctrl + C to exit...")
