@@ -2,7 +2,6 @@ from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
 from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult, RequestedChunkingType
-from langchain_core.messages import HumanMessage, AIMessage
 from MultiStageRetriever import MultiStageRetriever
 from RAGQAEngine import RAGQAEngine
 from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
@@ -74,39 +73,30 @@ class Controller:
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         return self.isDatabaseTriggered
 
-    def convert_history(self, history):
-        """This turns the 'history' of the frontend into a particular format, separating the human and ai messages."""
-        message_objects = []
-        for turn in history:
-            message_objects.append(HumanMessage(content=turn[0]))
-            message_objects.append(AIMessage(content=turn[1]))
-        return message_objects
-
-    def getResponseWithRetrieval(self,prompt,history):
+    def getResponseWithRetrieval(self,prompt):
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
 
         retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
 
         resp_answer = self.qa_engine.get_answer_from_context(prompt, retrieved_docs)
-        resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
+        resp = {"input":prompt,"context":retrieved_docs,"answer":resp_answer}
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
         return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs,retriever_result.retrievedDiscussionDocs
     
-    def getOnlyRetrievalResults(self,prompt:str,history)->tuple[str,list]:
+    def getOnlyRetrievalResults(self,prompt:str)->tuple[str,list]:
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
 
         retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
 
         return "",retrieved_docs
 
-    def runController(self, prompt:str, history:list[list[str]], selected_docs:list[str]):
+    def runController(self, prompt:str, selected_docs:list[str]):
         print('Selected Docs: ', selected_docs)
 
         if prompt:
             print(f"Ctrl + C to exit...")
-            history = self.convert_history(history)
             if self.isDatabaseTriggered:
-                resp,orig_docs,additional_docs,discussion_docs = self.getResponseWithRetrieval(prompt,history)
+                resp,orig_docs,additional_docs,discussion_docs = self.getResponseWithRetrieval(prompt)
                 print(f"resp is {resp}")
                 response = resp['answer']
                 additional_docs += discussion_docs

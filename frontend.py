@@ -10,7 +10,7 @@ def respond(prompt,history,selected_docs):
     """@prompt: question to the model
     @history: the history of the conversation, stored in "turns" of HumanMessage,AIMessage
     @selected_docs: a list of documents that were selected from the dropdown."""
-    resp,orig_docs,additional_docs = langchain_controller.runController(prompt,history,selected_docs)
+    resp,orig_docs,additional_docs = langchain_controller.runController(prompt,selected_docs)
     history.append((prompt,resp))
     return history,orig_docs,additional_docs
 

@@ -56,21 +56,21 @@ class ControllerSystemModel(BaseSystemModel):
         if not self.isDBInitialized:
             self.c.updateContextDB()
             self.isDBInitialized = True
-        response,_,_ = self.c.runController(prompt=question,history=[],selected_docs=[])
+        response,_,_ = self.c.runController(prompt=question,selected_docs=[])
         return response
     
     def get_response_with_docs(self,question:str):
         if not self.isDBInitialized:
             self.c.updateContextDB()
             self.isDBInitialized = True
-        response,orig_docs,additional_docs = self.c.runController(prompt=question,history=[],selected_docs=[])
+        response,orig_docs,additional_docs = self.c.runController(prompt=question,selected_docs=[])
         return response,orig_docs + additional_docs
     
     def get_only_retrieval_results(self,question:str):
         if not self.isDBInitialized:
             self.c.updateContextDB()
             self.isDBInitialized = True
-        _,docs = self.c.getOnlyRetrievalResults(prompt=question,history=[])
+        _,docs = self.c.getOnlyRetrievalResults(prompt=question)
         return "",docs
 
     
