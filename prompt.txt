@@ -1,0 +1,11 @@
+Answer the following question in about 200 words. 
+
+- Explain the reasoning behind your answer. 
+- If possible, provide context, background information, or insights that may enhance understanding. 
+- Use the context below if it is relevant; otherwise rely on general knowledge.
+
+<context> {context} </context>
+
+Question: {input}
+
+Answer:
