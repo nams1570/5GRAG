@@ -1,16 +1,12 @@
 import sys
-from turtle import st
 sys.path.append("..")
-from langchain_community.retrievers import BM25Retriever
-from langchain.retrievers import EnsembleRetriever
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_core.documents import Document
+from BM25Retriever import BM25Retriever
+from langchain_openai import ChatOpenAI
+from utils import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 import time
-import chromadb
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from DBClient import DBClient
 import json
 from settings import config
 from baseline.reranker import get_rerank_scores, load_reranker
@@ -24,57 +20,36 @@ class Chat3GPPRetriever:
     def __init__(self,db_dir_path,collection_name,api_key=config["API_KEY"]):
         self.db_dir_path = db_dir_path
         self.api_key = api_key
-        self.embeddings = OpenAIEmbeddings(
-            model='text-embedding-3-large',
-            api_key=self.api_key
-        )
         self.collection_name = collection_name
 
-        self.bm25Retriever = None
+        self.bm25Retriever = BM25Retriever()
         self.all_documents = None
         
-        self.chroma_client = chromadb.PersistentClient(path=self.db_dir_path)
-        self.embeddings = OpenAIEmbeddingFunction(model_name='text-embedding-3-large',api_key=api_key) #Since we're using openAI's llm, we have to use its embedding model
-
-        
-        # Initialize vector store
-        self.collection = None
+        self.dbclient = DBClient(embedding_model_name='text-embedding-3-large',collection_name=collection_name,db_dir_path=db_dir_path)
 
         self.reranker_model = None
         self.tokenizer = None
 
-        self._setup_cosine_vector_store()
         print(f"***********\n\n init: building bm25 retriever \n\n *********")
-        self.bm25Retriever = self._build_bm25_retriever()
+        self._build_bm25_retriever()
         print(f"***********\n\n loading reranker model \n\n *********")
         self.reranker_model, self.tokenizer = load_reranker()
     
-    def _setup_cosine_vector_store(self):
-        # Initialize vector store
-        self.collection = self.chroma_client.get_collection(name=self.collection_name, embedding_function=self.embeddings)
-    
     def _get_all_documents_in_db(self):
-        if not self.collection:
+        if not self.dbclient:
             raise Exception("Vector store not initialized! Cannot get all documents")
 
         if self.all_documents:
             return self.all_documents
     
-        results = self.collection.get(include=["documents", "metadatas"])
-        documents = []
-        for text, meta in zip(results.get("documents", []), results.get("metadatas", [])):
-            documents.append(
-                Document(
-                    page_content=text,
-                    metadata=meta if meta else {}
-                )
-            )
+        documents = self.dbclient.getAllDocsFromDB()
         self.all_documents = documents
         return self.all_documents
     
     def _build_bm25_retriever(self):
-        bm25Retriever = BM25Retriever.from_documents(self._get_all_documents_in_db())
-        return bm25Retriever
+        if not self.bm25Retriever:
+            raise Exception("BM25 Retriever not initialized! Cannot build BM25 retriever")
+        self.bm25Retriever.from_documents(self._get_all_documents_in_db())
     
     def _compute_rrf_with_scores(self,bm25_results,cos_results,num_to_return):
         all_docs = {}
@@ -114,7 +89,7 @@ class Chat3GPPRetriever:
         return results
 
     def _compute_cosine_sim_scores(self,query,k1):
-        cos_sim_chunks_with_Scores = self.collection.query(query_texts=[query],n_results=k1,include=["documents", "metadatas", "distances"])
+        cos_sim_chunks_with_Scores = self.dbclient.queryDBWithScores(query_text=query,k=k1)
         results = []
         for doc,meta,dist in zip(cos_sim_chunks_with_Scores['documents'][0],cos_sim_chunks_with_Scores['metadatas'][0],cos_sim_chunks_with_Scores['distances'][0]):
             results.append((Document(page_content=doc,metadata=meta), 1 - dist)) #cosine similarity = 1 - cosine distance
@@ -123,8 +98,7 @@ class Chat3GPPRetriever:
     
     def get_preranked_results(self,query,k1):
         #top k1 of bm25
-        self.bm25Retriever.k = k1
-        bm25_chunks =self.bm25Retriever.invoke(query)
+        bm25_chunks =self.bm25Retriever.invoke(query,k=k1)
         print(len(bm25_chunks))
         print("\n\n bm25 above^")
 
