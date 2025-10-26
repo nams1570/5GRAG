@@ -1,8 +1,7 @@
 import sys
 sys.path.append("../")
 from ReferenceExtractor import ReferenceExtractor
-from utils import RefObj
-from langchain_core.documents import Document
+from utils import RefObj, Document
 from MetadataAwareChunker import getFullSectionChunks
 from AutoFetcher import AutoFetcher
 from utils import unzipFile,getAllFilesInDirMatchingFormat
