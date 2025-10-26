@@ -1,7 +1,8 @@
+import sys
+sys.path.append("..")
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from langchain_core.documents import Document
-
+from utils import Document
 """Contains implementation of reranker that will be used in our chat3gpp analogue."""
 _reranker_model = None
 _tokenizer = None
