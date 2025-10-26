@@ -2,12 +2,9 @@ from settings import config
 from DBClient import DBClient
 from AutoFetcher import AutoFetcher
 from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult, RequestedChunkingType
-from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser #converts output into string
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from MultiStageRetriever import MultiStageRetriever
+from RAGQAEngine import RAGQAEngine
 from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
 from sys import getsizeof
 
@@ -18,26 +15,7 @@ DB_DIR = config["CHROMA_DIR"]
 
 class Controller:
     def __init__(self,doc_dir_path=DOC_DIR,db_dir_path=DB_DIR):
-        self.output_parser = StrOutputParser()
-        self.llm = ChatOpenAI(api_key = API_KEY, model=M_NAME)
-
-        self.prompt_template = ChatPromptTemplate.from_template("""
-Answer the following question in about 200 words.
-- Provide a clear, easy-to-understand explanation.
-- Use the context below only if it is relevant; otherwise rely on general knowledge.
-- If you rely on the context or a specific spec, cite references inline.
-
-<context>
-{context}
-</context>
-
-Question: {input}
-
-Answer:""")
-        
-        #self.document_prompt = ChatPromptTemplate.from_template("""metadata:{} content: {page_content}""")
-
-        self.doc_chain = create_stuff_documents_chain(self.llm, self.prompt_template)
+        self.qa_engine = RAGQAEngine(prompt_template_file_path="prompt.txt",model_name=M_NAME,api_key=API_KEY)
 
         self.contextDB = DBClient(collection_name=SPEC_COLL_NAME,db_dir_path=db_dir_path)
         self.reasonDB = DBClient(collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path)
@@ -94,22 +72,6 @@ Answer:""")
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""
         self.isDatabaseTriggered = not self.isDatabaseTriggered
-        if self.isDatabaseTriggered:
-            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question in about 200 words.
-- Provide a clear, easy-to-understand explanation.
-- Use the context below only if it is relevant; otherwise rely on general knowledge.
-- If you rely on the context or a specific spec, cite references inline.
-
-<context>
-{context}
-</context>
-
-Question: {input}
-
-Answer:""")
-            self.doc_chain = create_stuff_documents_chain(self.llm,self.prompt_template)
-        else:
-            self.prompt_template = ChatPromptTemplate.from_template("""Answer the following question as best you can Question: {input}""")
         return self.isDatabaseTriggered
 
     def convert_history(self, history):
@@ -125,7 +87,7 @@ Answer:""")
 
         retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs
 
-        resp_answer = self.doc_chain.invoke({"context":retrieved_docs,"input":prompt,"history":history})
+        resp_answer = self.qa_engine.get_answer_from_context(prompt, retrieved_docs)
         resp = {"input":prompt,"history":history,"context":retrieved_docs,"answer":resp_answer}
         print(f"size of answer is {getsizeof(resp_answer)} and token count is {getTokenCount(resp_answer,M_NAME)}")
         return resp,retriever_result.firstOrderSpecDocs,retriever_result.secondOrderSpecDocs,retriever_result.retrievedDiscussionDocs
@@ -142,8 +104,6 @@ Answer:""")
 
         if prompt:
             print(f"Ctrl + C to exit...")
-            #doc_chain is a chain that lets you pass a document to the llm and it uses that to answer
-            # retrieval chain passed the load of deciding what document to use to answer to the retriever.
             history = self.convert_history(history)
             if self.isDatabaseTriggered:
                 resp,orig_docs,additional_docs,discussion_docs = self.getResponseWithRetrieval(prompt,history)
@@ -151,9 +111,7 @@ Answer:""")
                 response = resp['answer']
                 additional_docs += discussion_docs
             else:
-                chain = self.prompt_template | self.llm
-                resp = chain.invoke({"input":prompt,"history": history})
-                response = resp.content
+                response = self.qa_engine.get_raw_answer(prompt)
                 orig_docs,additional_docs = [],[]
             return response,orig_docs,additional_docs
     

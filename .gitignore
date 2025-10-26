@@ -8,3 +8,5 @@ old_eval/*
 baseline/data/*
 baseline/db/*
 all3gppdocsfromrel17and18/*
+reasoning/*
+testchange/*
