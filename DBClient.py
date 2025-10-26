@@ -128,6 +128,24 @@ class DBClient:
             docs.append(Document(page_content=doc,metadata=meta))
         return docs
 
+    def queryDBWithScores(self,query_text:str,k:int,filter:dict={}) -> dict:
+        """Queries the DB with the given list of query_texts and returns the results along with their scores.
+        @filter: metadata filter to apply to the query. Follow chroma syntax for filtering at https://docs.trychroma.com/docs/querying-collections/metadata-filtering"""
+        if filter == {}:
+            db_resp = self.collection.query(query_texts=[query_text],n_results=k,include=["documents", "metadatas", "distances"])
+        else:
+            db_resp = self.collection.query(query_texts=[query_text],n_results=k,where=filter,include=["documents", "metadatas", "distances"])
+        return db_resp
+    
+    def getAllDocsFromDB(self)->list[Document]:
+        """Returns all documents in the DB as a list of Document objects."""
+        db_resp = self.collection.get(include=["documents", "metadatas"])
+        docs = []
+
+        for doc,meta in zip(db_resp['documents'],db_resp['metadatas']):
+            docs.append(Document(page_content=doc,metadata=meta))
+        return docs
+
     
     
 if __name__ == "__main__":
