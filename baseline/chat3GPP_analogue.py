@@ -1,10 +1,8 @@
 import sys
 sys.path.append("..")
 from BM25Retriever import BM25Retriever
-from langchain_openai import ChatOpenAI
 from utils import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from RAGQAEngine import RAGQAEngine
 import time
 from DBClient import DBClient
 import json
@@ -126,45 +124,12 @@ class Chat3GPPRetriever:
 class Chat3GPPAnalogue:
     def __init__(self,db_dir_path,collection_name,api_key=config["API_KEY"], model_name=config["MODEL_NAME"]):
         self.retriever =  Chat3GPPRetriever(db_dir_path=db_dir_path,collection_name=collection_name,api_key=api_key)
-        self.llm = ChatOpenAI(
-            api_key=api_key,
-            model=model_name
-        )
-        self._setup_chain()
-
-    def _setup_chain(self):
-        """Set up the prompt template and document chain."""
-        self.prompt_template = ChatPromptTemplate.from_template("""
-Answer the following question in about 200 words.
-- Provide a clear, easy-to-understand explanation.
-- Use the context below only if it is relevant; otherwise rely on general knowledge.
-- If you rely on the context or a specific spec, cite references inline.
-
-<context>
-{context}
-</context>
-
-Question: {input}
-
-Answer:""")
         
-        self.document_prompt = ChatPromptTemplate.from_template("""
-Content: {page_content}
-Source: {source}
-""")
-        
-        self.doc_chain = create_stuff_documents_chain(
-            self.llm, 
-            self.prompt_template,
-            document_prompt=self.document_prompt
-        )
+        self.qa_engine = RAGQAEngine(prompt_template_file_path="../prompt.txt",model_name=model_name,api_key=api_key)
     
     def runController(self,question,k1,k2):
         retrieved_docs = self.retriever.invoke(question,k1=k1,k2=k2)
-        answer = self.doc_chain.invoke({
-            "context": retrieved_docs,
-            "input": question
-        })
+        answer = self.qa_engine.get_answer_from_context(question,retrieved_docs)
         
         return answer, retrieved_docs
     
