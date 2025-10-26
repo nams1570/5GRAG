@@ -17,15 +17,32 @@ class RAGQAEngine:
         formatted_docs = self.build_context(docs)
         return self.prompt_template.format(input=query,context=formatted_docs)
     
-    def get_answer(self,query:str, docs:list[Document]) -> str:
-        prompt = self.build_prompt(query,docs)
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response.choices[0].message.content
+    def get_answer_from_context(self,query:str, docs:list[Document]) -> str:
+        try:
+            prompt = self.build_prompt(query,docs)
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"Error getting answer from context: {e}")
+            return ""
+
+    def get_raw_answer(self,query:str) -> str:
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "user", "content": query}
+                ]
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"Error getting raw answer: {e}")
+            return ""
     
 if __name__ == "__main__":
     e = RAGQAEngine(prompt_template_file_path="prompt.txt")
