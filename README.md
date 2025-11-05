@@ -6,9 +6,9 @@ This is a 5G expert system. It uses retrieval augmented generation to augment th
 Make sure you have a `settings.yml` file in the same directory as `settings.py`.
 It should have these vars:
 1. `API_KEY` (str): Your openai api key.
-2. `DOC_DIR` (str): The name of the directory where the files fetched by the AutoFetcher will be deposited.
+2. `DOC_DIR` (str): The default directory that any DBClient instance is going to try to read from when adding files to a collection. 
 3. `MODEL_NAME` (str). The openai model that will be used as the core of the retrieval chain. By default, try "gpt-5-mini"
-4. `NUM_EXTRA_DOCS` -> the number of additional docs to retrieve per run. NOT depth, closer to top k
+4. `NUM_EXTRA_DOCS` -> the number of additional docs to retrieve per run. NOT depth, closer to top k. This is the total number of additional docs to retrieve from specDB summed across all depth levels.
 5. `CHROMA_DIR` -> The directory the chromadb sqlite db will be stored
 6. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on. By default, this should be "true"
 7. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval from the specDB
