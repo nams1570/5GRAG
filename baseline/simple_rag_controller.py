@@ -3,24 +3,18 @@ Simple RAG (Retrieval Augmented Generation) Controller
 A simplified version of the RAG system for easy use and integration
 """
 import sys
+
+from DBClient import DBClient
 sys.path.append("..")
 
 import os
 from typing import List, Tuple, Optional
-import time
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
-import chromadb
+from RAGQAEngine import RAGQAEngine
 from docx import Document as DocxDocument
 
 # Import utilities from existing codebase
 from settings import config
-from utils import convertAllDocToDocx, getAllFilesInDirMatchingFormat, getTokenCount
-from MetadataAwareChunker import getSectionedChunks, addExtraDocumentWideMetadataForReason
+from utils import convertAllDocToDocx, getAllFilesInDirMatchingFormat, getTokenCount, Document
 
 
 CROSS_CONTEXT_BENCHMARK_COLL_NAME = "pure_specs"
@@ -51,136 +45,23 @@ class SimpleRAGController:
         self.api_key = api_key or config.get("API_KEY")
         self.model_name = model_name
         
-        # Initialize embeddings and LLM
-        self.embeddings = OpenAIEmbeddings(
-            model='text-embedding-3-large',
-            api_key=self.api_key
-        )
-        self.llm = ChatOpenAI(
-            api_key=self.api_key,
-            model=self.model_name
-        )
         
+        self.qa_engine = RAGQAEngine(prompt_template_file_path="../prompt.txt",
+                                     model_name=self.model_name, api_key=self.api_key)
+
         # Initialize vector store
         self._init_vector_store()
-        
-        # Set up prompts and chains
-        self._setup_chain()
-    
+            
     def _init_vector_store(self):
         """Initialize or connect to the Chroma vector store."""
         # Create directory if it doesn't exist
         os.makedirs(self.db_dir_path, exist_ok=True)
         
         # Initialize persistent client
-        self.chroma_client = chromadb.PersistentClient(path=self.db_dir_path)
-        
-        # Initialize vector store
-        self.vector_store = Chroma(
-            client=self.chroma_client,
-            collection_name=self.collection_name,
-            embedding_function=self.embeddings
-        )
-    
-    def _setup_chain(self):
-        """Set up the prompt template and document chain."""
-        self.prompt_template = ChatPromptTemplate.from_template("""
-Answer the following question based on the provided context in about 200 words. 
-If the answer cannot be found in the context, say so clearly.
-
-<context>
-{context}
-</context>
-
-Question: {input}
-
-Answer:""")
-        
-        self.document_prompt = ChatPromptTemplate.from_template("""
-Content: {page_content}
-Source: {source}
-""")
-        
-        self.doc_chain = create_stuff_documents_chain(
-            self.llm, 
-            self.prompt_template,
-            document_prompt=self.document_prompt
-        )
-    
-    def load_and_chunk_documents(self, 
-                                doc_dir_path: str,
-                                chunk_size: int = 1000,
-                                chunk_overlap: int = 200,
-                                file_extensions: List[str] = [".docx", ".txt"]) -> List[Document]:
-        """
-        Load documents from a directory, chunk them, and return Document objects.
-        
-        Args:
-            doc_dir_path: Path to directory containing documents
-            chunk_size: Size of text chunks
-            chunk_overlap: Overlap between chunks
-            file_extensions: List of file extensions to process
-            
-        Returns:
-            List of Document objects
-        """
-        # Convert any .doc files to .docx
-        convertAllDocToDocx(doc_dir_path)
-        
-        # Get all files matching extensions
-        file_list = getAllFilesInDirMatchingFormat(doc_dir_path, file_extensions)
-        file_list = [os.path.join(doc_dir_path,file) for file in file_list]
-        print(file_list)
-        
-        all_chunks = getSectionedChunks(file_list,addExtraDocumentWideMetadataForReason)
-        
-        return all_chunks
-    
-    def _extract_text_from_docx(self, filepath: str) -> str:
-        """Extract text from a docx file."""
-        doc = DocxDocument(filepath)
-        full_text = []
-        
-        for paragraph in doc.paragraphs:
-            if paragraph.text.strip():
-                full_text.append(paragraph.text)
-        
-        # Also extract text from tables
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    if cell.text.strip():
-                        full_text.append(cell.text)
-        
-        return '\n'.join(full_text)
-
-    def _safe_add_docs(self,docs,batch_num,attempt=1,max_attempts=3):
-        total_tokens = sum(getTokenCount(d.page_content,model_name="text-embedding-3-large") for d in docs)
-        MAX_TOKENS_ALLOWED = 270000
-
-        if total_tokens > MAX_TOKENS_ALLOWED:
-            print(f"Batch {batch_num} is too large")
-            mid = len(docs) //2
-            self._safe_add_docs(docs[:mid],batch_num=f"{batch_num}a")
-            self._safe_add_docs(docs[mid:],batch_num=f"{batch_num}b")
-            return
-        try:
-            self.vector_store.add_documents(docs)
-            print(f"just added batch {batch_num}")
-        except Exception as e:
-            if attempt < max_attempts:
-                wait = attempt * 30
-                print(f"Error ob batch {batch_num}, attempt {attempt} {e}. Retrying in {wait}s...")
-                time.sleep(wait)
-                self._safe_add_docs(docs,batch_num,attempt=attempt+1,max_attempts=max_attempts)
-            else:
-                print(f"Failed batch {batch_num} after {max_attempts} attempts.")
-                raise e
+        self.db_client = DBClient(collection_name=self.collection_name, db_dir_path=self.db_dir_path)
     
     def add_documents_to_db(self, 
-                           doc_dir_path: str,
-                           chunk_size: int = 1000,
-                           chunk_overlap: int = 200) -> int:
+                           doc_dir_path: str) -> int:
         """
         Load documents from a directory and add them to the vector database.
         
@@ -193,30 +74,19 @@ Source: {source}
             Number of documents added
         """
         # Load and chunk documents
-        documents = self.load_and_chunk_documents(
-            doc_dir_path,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
-        )
+        convertAllDocToDocx(doc_dir_path)
         
-        if documents:
-            # Add to vector store
-            batch_size = 1000
-            i=1
-            while (i-1) * batch_size < len(documents):
-                print(f" ****** \n\n number of chunks is {len(documents)} and we are on batch {i}. \n\n")
-                self._safe_add_docs(documents[(i-1)*batch_size:i*batch_size],batch_num=i,max_attempts=3)
-                i+=1
-            print(f"Added {len(documents)} chunks to the database")
-        else:
-            print("No documents found to add")
-        
-        return len(documents)
-    
+        # Get all files matching extensions
+        file_list = getAllFilesInDirMatchingFormat(doc_dir_path, file_extensions=[".docx"])
+        file_list = [os.path.join(doc_dir_path,file) for file in file_list]
+        self.db_client.updateDBFromFileList(file_list,doc_dir=doc_dir_path)
+
+        return len(file_list)
+
     def clear_database(self):
         """Clear all documents from the database."""
         # Delete the collection
-        self.chroma_client.delete_collection(self.collection_name)
+        self.db_client.delFromDB(filter={})
         # Reinitialize
         self._init_vector_store()
         print("Database cleared")
@@ -235,22 +105,12 @@ Source: {source}
             Tuple of (answer, retrieved_documents)
         """
         # Retrieve relevant documents
-        retriever = self.vector_store.as_retriever(search_kwargs={"k": k})
-        retrieved_docs = retriever.invoke(question)
-        
+        retrieved_docs = self.db_client.queryDB(query_text=question, k=k)
+
         # Generate answer using the chain
-        answer = self.doc_chain.invoke({
-            "context": retrieved_docs,
-            "input": question
-        })
+        answer = self.qa_engine.get_answer_from_context(question, retrieved_docs)
         
         return answer, retrieved_docs
-    
-    def get_document_count(self) -> int:
-        """Get the number of documents in the database."""
-        # This is an approximation based on collection stats
-        collection = self.chroma_client.get_collection(self.collection_name)
-        return collection.count()
 
 
 # Convenience functions for quick usage
