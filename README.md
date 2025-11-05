@@ -10,16 +10,13 @@ It should have these vars:
 3. `MODEL_NAME` (str). The openai model that will be used as the core of the retrieval chain. By default, try "gpt-5-mini"
 4. `NUM_EXTRA_DOCS` -> the number of additional docs to retrieve per run. NOT depth, closer to top k
 5. `CHROMA_DIR` -> The directory the chromadb sqlite db will be stored
-6. `SPEC_COLL_NAME`: "context" 
-7. `TDOC_COLL_NAME`: "reason"
-8. `DIFF_COLL_NAME`: "diff"
-9. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on. By default, this should be "true"
-10. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval from the specDB
-11. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
-12. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
+6. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on. By default, this should be "true"
+7. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval from the specDB
+8. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
+9. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
 
 # Databases and some elaboration
-The context is stored in 3 chromadb collections: `specDB` -which holds the technical spec chunks, `changeDB` - which holds the diffs between adjacent versions of the same spec, and `TdocDB` - which holds context from change requests.  These three collections must be stored in the same chromadb sqlite database. The `x_COLL_NAME` fields in the settings.yml file represent the names of the aforementioned collections. Note that if you want to reuse the same collections and have them findable by the system, **you must keep the collection names consistent between runs**.
+The context is stored in 3 chromadb collections: `specDB` -which holds the technical spec chunks, `changeDB` - which holds the diffs between adjacent versions of the same spec, and `TdocDB` - which holds context from change requests.  These three collections must be stored in the same chromadb sqlite database. The `x_COLL_NAME` fields mentioned in other files represent the names of the aforementioned collections. Note that if you want to reuse the same collections and have them findable by the system, **you must keep the collection names consistent between runs**.
 
 # How to set up the dbs/ collections
 There are three scripts that should be run to initialize your databases/collections:
