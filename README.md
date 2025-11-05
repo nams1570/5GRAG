@@ -29,6 +29,11 @@ The `DB_DIR_PATH` refers to the folder where the chromadb sqlite instance will b
 
 The `DOC_DIR_PATH` is where the documents to be parsed will be read from. Note that the folders are not parsed recursively: they should just contain the docx files. For `TdocDB`, make sure that the folder contains only change requests. For `specDB` and `changeDB`, make sure that the folder contains technical specifications of 3gpp.
 
+# If you don't want to set up your own databases
+[Here](https://ucla.box.com/s/q9wxe7r06wq7uecr12c7g0lrbrnzn3p3) is a link to a zip of a chromadb database, with collections representing `specDB`, `changeDB`, and `tdocDB`. It contains around 1000 CRs, over 2200 Technical Specifications, and about 50 documents worth of diffs. The Technical Specifications are from release 17 and 18 ranging from docIDs 21.101 to 55.919.  The CRs correspond to the technical specs with docIDs ranging from 37.213 to 38.901
+
+To use this db for a simple plug and play, copy the `db` file into the `baseline` directory. That is, there should be a `baseline/db/` subdir inside of which the collections and sqlite instance should appear. The collection names should be the same as in the `CollectionNames.py` file, so you will probably not have to make any changes there.
+
 # Running the system
 Do `python frontend.py`. In your terminal, an ip address will be exposed.
 Navigate to this ip address and you should see the gradio interface. If your chroma databases are all set up, you should just be able to type your questions into the chat and see the retrieved context and the answer.
