@@ -3,13 +3,14 @@ from ReferenceExtractor import ReferenceExtractor
 from HypotheticalDocGenerator import HypotheticalDocGenerator
 from DBClient import DBClient
 from settings import config
+from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME
 
 RExt = ReferenceExtractor()
 NUM_EXTRA_DOCS = config["NUM_EXTRA_DOCS"]
 FILTER_START_TSTMP = '2000-01'
 
 class MultiStageRetriever:
-    def __init__(self,pathToDB="../baseline/db",specCollectionName="specs_and_discussions",reasonCollectionName="reasoning_docs",diffCollectionName="diffs"):
+    def __init__(self,pathToDB="../baseline/db",specCollectionName=SPEC_COLL_NAME,reasonCollectionName=TDOC_COLL_NAME,diffCollectionName=DIFF_COLL_NAME):
         self.selected_docs = None
 
         self.hdg: HypotheticalDocGenerator = HypotheticalDocGenerator()

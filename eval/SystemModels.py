@@ -48,28 +48,25 @@ Answer:'''
         return response.choices[0].message.content
     
 class ControllerSystemModel(BaseSystemModel):
-    def __init__(self,doc_dir_path:str,db_dir_path:str,isDBInitialized:bool=False):
-        self.c = Controller(doc_dir_path=doc_dir_path,db_dir_path=db_dir_path)
+    def __init__(self,db_dir_path:str,isDBInitialized:bool=False):
+        self.c = Controller(db_dir_path=db_dir_path)
         self.isDBInitialized = isDBInitialized
 
     def get_response(self, question:str):
         if not self.isDBInitialized:
-            self.c.updateContextDB()
-            self.isDBInitialized = True
-        response,_,_ = self.c.runController(prompt=question,selected_docs=[])
+            raise Exception("Database not initialized")
+        response,_,_ = self.c.runController(prompt=question)
         return response
     
     def get_response_with_docs(self,question:str):
         if not self.isDBInitialized:
-            self.c.updateContextDB()
-            self.isDBInitialized = True
-        response,orig_docs,additional_docs = self.c.runController(prompt=question,selected_docs=[])
+            raise Exception("Database not initialized")
+        response,orig_docs,additional_docs = self.c.runController(prompt=question)
         return response,orig_docs + additional_docs
     
     def get_only_retrieval_results(self,question:str):
         if not self.isDBInitialized:
-            self.c.updateContextDB()
-            self.isDBInitialized = True
+            raise Exception("Database not initialized")
         _,docs = self.c.getOnlyRetrievalResults(prompt=question)
         return "",docs
 
@@ -117,7 +114,7 @@ class Chat3GPPAnalogueModel(BaseSystemModel):
 
 if __name__ == "__main__":
     gpt = GPTSystemModel()
-    c = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+    c = ControllerSystemModel(isDBInitialized=True,db_dir_path="../pickles")
     baseline = BaselineSystemModel("../baseline/db",True)
     chat3gpp = Chat3GPPAnalogueModel("../baseline/db",True)
 
