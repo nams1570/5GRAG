@@ -7,7 +7,6 @@ from sys import getsizeof
 
 API_KEY = config["API_KEY"]
 M_NAME = config["MODEL_NAME"]
-DOC_DIR = config["DOC_DIR"]
 DB_DIR = config["CHROMA_DIR"]
 
 class Controller:
@@ -40,9 +39,7 @@ class Controller:
 
         return "",retrieved_docs
 
-    def runController(self, prompt:str, selected_docs:list[str]):
-        print('Selected Docs: ', selected_docs)
-
+    def runController(self, prompt:str):
         if prompt:
             print(f"Ctrl + C to exit...")
             if self.isDatabaseTriggered:
