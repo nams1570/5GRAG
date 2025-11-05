@@ -29,7 +29,7 @@ if __name__ == "__main__":
         input_data = json.load(f)
 
     #setup models
-    deepspecs_model = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../pickles")
+    deepspecs_model = ControllerSystemModel(isDBInitialized=True,db_dir_path="../pickles")
     baseline_model = BaselineSystemModel("../baseline/db",isEvol=True)
 
     deepspecs_hits,baseline_hits = 0,0 #number of times model retrieves correct chunk

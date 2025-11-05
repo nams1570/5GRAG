@@ -1,7 +1,5 @@
 from settings import config
-from DBClient import DBClient
-from AutoFetcher import AutoFetcher
-from utils import unzipFile,convertAllDocToDocx, getTokenCount,RetrieverResult, RequestedChunkingType
+from utils import getTokenCount,RetrieverResult
 from MultiStageRetriever import MultiStageRetriever
 from RAGQAEngine import RAGQAEngine
 from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
@@ -13,60 +11,12 @@ DOC_DIR = config["DOC_DIR"]
 DB_DIR = config["CHROMA_DIR"]
 
 class Controller:
-    def __init__(self,doc_dir_path=DOC_DIR,db_dir_path=DB_DIR):
+    def __init__(self,db_dir_path=DB_DIR):
         self.qa_engine = RAGQAEngine(prompt_template_file_path="prompt.txt",model_name=M_NAME,api_key=API_KEY)
-
-        self.contextDB = DBClient(collection_name=SPEC_COLL_NAME,db_dir_path=db_dir_path)
-        self.reasonDB = DBClient(collection_name=TDOC_COLL_NAME,db_dir_path=db_dir_path)
-
-        #endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-16/38_series","https://www.3gpp.org/ftp/Specs/latest/Rel-17/38_series"]
-        #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series"]
-        endpoints = ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38211-i70.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38212-i70.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38213-i70.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38214-i70.zip"]
-        #endpoints += ["https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38331-i51.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38181-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38133-i90.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38321-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38174-i70.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38300-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38104-i90.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38175-i10.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38113-i40.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38355-i50.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38108-i60.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38106-i80.zip","https://www.3gpp.org/ftp/Specs/latest/Rel-18/38_series/38114-i40.zip"]
-        #ORAN Docs
-        """print("38 series")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.300","https://www.3gpp.org/ftp/Specs/archive/38_series/38.401","https://www.3gpp.org/ftp/Specs/archive/38_series/38.321","https://www.3gpp.org/ftp/Specs/archive/38_series/38.322","https://www.3gpp.org/ftp/Specs/archive/38_series/38.323","https://www.3gpp.org/ftp/Specs/archive/38_series/38.331",]
-        print("23 series")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/23_series/23.501","https://www.3gpp.org/ftp/Specs/archive/23_series/23.502"]
-        print("f1 interface")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.470","https://www.3gpp.org/ftp/Specs/archive/38_series/38.473"]
-        print("e1 interface")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.460","https://www.3gpp.org/ftp/Specs/archive/38_series/38.463"]
-        print("xn interface")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.420","https://www.3gpp.org/ftp/Specs/archive/38_series/38.423"]
-        print("ng interface")
-        endpoints += ["https://www.3gpp.org/ftp/Specs/archive/38_series/38.410","https://www.3gpp.org/ftp/Specs/archive/38_series/38.413"]"""
-        self.params = params = {"sortby":"date"}
-        self.af = AutoFetcher(endpoints,unzipFile,doc_dir_path)
-
-        otherEndpoints = ["https://www.3gpp.org/ftp/TSG_RAN/WG2_RL2/TSGR2_01/Docs/zips"]
-        self.afReason = AutoFetcher(otherEndpoints,unzipFile,doc_dir_path)
 
         self.retriever = MultiStageRetriever(pathToDB=db_dir_path,specCollectionName=SPEC_COLL_NAME,reasonCollectionName=TDOC_COLL_NAME,diffCollectionName=DIFF_COLL_NAME)
 
         self.isDatabaseTriggered = True
-
-    def updateContextDB(self):
-        """Scan dir for new docs and add them"""
-        #Fetch new docs
-        print(f"resyncing on controller end")
-        file_list = self.af.run(self.params,areEndpointsGettable=config["ARE_ENDPOINTS_GETTABLE"])
-        file_list = [file[:-4] + ".docx" for file in file_list]
-        #split & break down new docs
-
-        #update chroma
-        self.contextDB.updateDBFromFileList(file_list,doc_dir=DOC_DIR,requested_chunking_type=RequestedChunkingType.SECTION)
-        print(f"done resyncing")
-    
-    def updateReasonDB(self):
-        """Fetches latest tdocs and reads into the reason collection"""
-        print(f"Hit the update reason!")
-        file_list = self.afReason.run()
-        convertAllDocToDocx(DOC_DIR)
-        file_list = [file[:-4] + ".docx" for file in file_list]
-        
-        self.reasonDB.updateDBFromFileList(file_list,doc_dir=DOC_DIR,requested_chunking_type=RequestedChunkingType.SECTION)
-        print("updated collection!")
 
     def toggleDatabase(self):
         """Switches from RAG mode to non-RAG mode"""

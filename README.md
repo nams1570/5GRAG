@@ -14,10 +14,9 @@ It should have these vars:
 7. `TDOC_COLL_NAME`: "reason"
 8. `DIFF_COLL_NAME`: "diff"
 9. `IS_SMART_RETRIEVAL`: (boolean) indicates whether or not smart retrieval/ deep context is turned on. By default, this should be "true"
-10. `ARE_ENDPOINTS_GETTABLE`: (boolean) indicates whether the endpoints you provide to the autofetcher can be immediately queried with a get request to download a file or not. 
-11. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval from the specDB
-12. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
-13. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
+10. `NUM_DOCS_INITIAL_RETRIEVAL`: (int) the number of documents retrieved by the first round (non deep context) of retrieval from the specDB
+11. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
+12. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
 
 # Databases and some elaboration
 The context is stored in 3 chromadb collections: `specDB` -which holds the technical spec chunks, `changeDB` - which holds the diffs between adjacent versions of the same spec, and `TdocDB` - which holds context from change requests.  These three collections must be stored in the same chromadb sqlite database. The `x_COLL_NAME` fields in the settings.yml file represent the names of the aforementioned collections. Note that if you want to reuse the same collections and have them findable by the system, **you must keep the collection names consistent between runs**.

@@ -109,7 +109,7 @@ if __name__ == "__main__":
         raise Exception("Error: Can't use multiple models at once")
 
     if args.use_system:
-        system = ControllerSystemModel(isDBInitialized=True,doc_dir_path="../data",db_dir_path="../baseline/db")
+        system = ControllerSystemModel(isDBInitialized=True,db_dir_path="../baseline/db")
         print("USING SYSTEM")
     elif args.use_baseline:
         system = BaselineSystemModel("../baseline/db",isEvol=True)
