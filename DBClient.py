@@ -7,6 +7,7 @@ from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from settings import config
 import os 
 import time
+from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, DIFFS as DIFF_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME
 
 class DBClient:
     def getDocsFromFilePath(self,file_list:list[str],metadata_func:Callable[[str,str],dict]=addExtraDocumentWideMetadataForReason,doc_dir:str=config["DOC_DIR"],requested_chunking_type: RequestedChunkingType=RequestedChunkingType.SECTION)->list[Document]:
@@ -96,7 +97,7 @@ class DBClient:
         """Returns the embedding function for the given model name. Currently only supports OpenAI models."""
         return OpenAIEmbeddingFunction(model_name=embedding_model_name,api_key=config["API_KEY"])
     
-    def __init__(self,embedding_model_name:str="text-embedding-3-large",collection_name:str=config["SPEC_COLL_NAME"],db_dir_path:str=config["CHROMA_DIR"]):
+    def __init__(self,embedding_model_name:str="text-embedding-3-large",collection_name:str=SPEC_COLL_NAME,db_dir_path:str=config["CHROMA_DIR"]):
         #construct chroma base db     
         self.chroma_client = chromadb.PersistentClient(path=db_dir_path)
         self.embedding_model_name = embedding_model_name
