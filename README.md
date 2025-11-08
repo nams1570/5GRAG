@@ -1,5 +1,5 @@
 # Overview
-This is a 5G expert system. It uses retrieval augmented generation to augment the Q&A capabilities of an LLM. 
+This is a 5G expert system. It uses retrieval augmented generation to augment the Q&A capabilities of an LLM. It is not conversational. Each question is independent of the previous one, and we do not maintain history.
 
 
 # Before you begin
