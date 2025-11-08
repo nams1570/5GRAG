@@ -6,7 +6,7 @@ MAX_RETRIES = 3
 DELAY = 2
 
 class HypotheticalDocGenerator:
-    def __init__(self, api_key=config["API_KEY"], model_name=config["MODEL_NAME"]):
+    def __init__(self, api_key=config["API_KEY"], model_name=config["HYDE_MODEL_NAME"]):
         self.client = OpenAI(api_key=api_key)
         self.model_name = model_name
     
