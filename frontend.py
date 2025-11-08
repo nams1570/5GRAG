@@ -9,7 +9,9 @@ def respond(prompt,history):
     @history: the history of the conversation, stored in "turns" of HumanMessage,AIMessage"""
     resp,orig_docs,additional_docs = ds_controller.runController(prompt)
     history.append((prompt,resp))
-    return history,orig_docs,additional_docs
+
+    latest = [(prompt, resp)]
+    return latest,orig_docs,additional_docs
 
 
 def adjustToggle():
