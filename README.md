@@ -51,8 +51,8 @@ We have a Dockerfile that will transport the relevant deepspecs files to the con
 
 Use `docker build -t myimage .` while in the directory with the Dockerfile to build an image called myimage. This may take a while, but only needs to be done once.
 
-Use `docker run -v /baseline/db:/baseline/db -d --name mycontainer -p 80:80 myimage` to run the container in detached mode. 
-This command maps the chroma db on your local machine to the chroma db in the container, so replace `/baseline/db` with the correct path to the db. 
+Use `docker run --rm -v "<absolute_path_to_db>:/baseline/db" -d --name mycontainer -p 80:80 myimage` to run the container in detached mode. 
+This command maps the chroma db on your local machine to the chroma db in the container, so replace `/baseline/db` with the correct path to the db as per your settings. 
 80:80 maps the port 80 of the container to the port 80 of your machine. Port 80 is usually used for the browser. If you would like to map more ports, like 8000:8000, feel free to do so in the command.
 
 
