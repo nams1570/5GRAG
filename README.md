@@ -35,8 +35,25 @@ The `DOC_DIR_PATH` is where the documents to be parsed will be read from. Note t
 To use this db for a simple plug and play, copy the `db` file into the `baseline` directory. That is, there should be a `baseline/db/` subdir inside of which the collections and sqlite instance should appear. The collection names should be the same as in the `CollectionNames.py` file, so you will probably not have to make any changes there.
 
 # Running the system
+
+## Running the composite system
 Do `python frontend.py`. In your terminal, an ip address will be exposed.
 Navigate to this ip address and you should see the gradio interface. If your chroma databases are all set up, you should just be able to type your questions into the chat and see the retrieved context and the answer.
+
+## Strictly setting up the deepspecs server
+You can also just set up the deepspecs controller as a server with FastAPI waiting for responses.
+This way you can query it with any client.
+Run `fastapi dev ./ds_server.py` to get it going.
+Then, query the API with the post requests to either directly access the diff db or to post your question and get an answer.
+
+## Running it in a container
+We have a Dockerfile that will transport the relevant deepspecs files to the container, and set it up to run the client in production.
+
+Use `docker build -t myimage .` while in the directory with the Dockerfile to build an image called myimage. This may take a while, but only needs to be done once.
+
+Use `docker run -v /baseline/db:/baseline/db -d --name mycontainer -p 80:80 myimage` to run the container in detached mode. 
+This command maps the chroma db on your local machine to the chroma db in the container, so replace `/baseline/db` with the correct path to the db. 
+80:80 maps the port 80 of the container to the port 80 of your machine. Port 80 is usually used for the browser. If you would like to map more ports, like 8000:8000, feel free to do so in the command.
 
 
 # Dependencies
