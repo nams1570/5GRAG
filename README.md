@@ -15,6 +15,13 @@ It should have these vars:
 8. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
 9. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
 
+(Optional)
+If you want to use our frontend client and query deepspecs as a client server architecture, it is a good idea to have a `.env` file in the repo. This will take the following form:
+```
+USE_REMOTE_DS=True
+DS_SERVER_URL=http://localhost:8000/qa
+```
+
 # Databases and some elaboration
 The context is stored in 3 chromadb collections: `specDB` -which holds the technical spec chunks, `changeDB` - which holds the diffs between adjacent versions of the same spec, and `TdocDB` - which holds context from change requests.  These three collections must be stored in the same chromadb sqlite database. The `x_COLL_NAME` fields mentioned in other files represent the names of the aforementioned collections. Note that if you want to reuse the same collections and have them findable by the system, **you must keep the collection names consistent between runs**.
 
@@ -39,12 +46,15 @@ To use this db for a simple plug and play, copy the `db` file into the `baseline
 ## Running the composite system
 Do `python frontend.py`. In your terminal, an ip address will be exposed.
 Navigate to this ip address and you should see the gradio interface. If your chroma databases are all set up, you should just be able to type your questions into the chat and see the retrieved context and the answer.
+Make sure `USE_REMOTE_DS` is set to false in your .env file.
 
 ## Strictly setting up the deepspecs server
 You can also just set up the deepspecs controller as a server with FastAPI waiting for responses.
 This way you can query it with any client.
 Run `fastapi dev ./ds_server.py` to get it going.
 Then, query the API with the post requests to either directly access the diff db or to post your question and get an answer.
+
+To use our frontend client, please set the right values for `USE_REMOTE_DS` and `DS_SERVER_URL`.
 
 ## Running it in a container
 We have a Dockerfile that will transport the relevant deepspecs files to the container, and set it up to run the client in production.
