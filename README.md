@@ -51,10 +51,22 @@ We have a Dockerfile that will transport the relevant deepspecs files to the con
 
 Use `docker build -t myimage .` while in the directory with the Dockerfile to build an image called myimage. This may take a while, but only needs to be done once.
 
-Use `docker run --rm -v "<absolute_path_to_db>:/baseline/db" -d --name mycontainer -p 80:80 myimage` to run the container in detached mode. 
+Use `docker run --rm --memory="12g" --memory-swap="16g" -v "<absolute_path_to_db>:/baseline/db" -d --name mycontainer -p 8000:8000 myimage` to run the container in detached mode. 
 This command maps the chroma db on your local machine to the chroma db in the container, so replace `/baseline/db` with the correct path to the db as per your settings. 
-80:80 maps the port 80 of the container to the port 80 of your machine. Port 80 is usually used for the browser. If you would like to map more ports, like 8000:8000, feel free to do so in the command.
+8000:8000 maps the port 8000 of the container to the port 8000 of your machine. Note that the dockerfile command exposes port 8000 as the port of the server where the requests are served.
 
+## Potential Docker memory concerns
+Due to the large size of the db, we set the memory limit to 12 GiB with a memory swap even larger. The first request that is served will be slow as the db is being pulled into memory via a volume mont. Subsequent requests will be faster. Note that if you are plugging in a larger chroma db, you may need more memory.
+
+If you are using wsl on Windows, unless specified otherwise in your Docker desktop settings, your max memory remit is set by the `.wslconfig` file in your `C:\%user%` directory. Here is a template you can follow in your .wslconfig file: 
+```
+[wsl2]
+memory=16GB        # limit WSL2 VM to 16 GB
+processors=4
+swap=8GB
+localhostForwarding=true
+```
+Change as needed. You can debug the memory usage of your container while it is running using `docker stats --no-stream`.
 
 # Dependencies
 Please see the requirements.txt!

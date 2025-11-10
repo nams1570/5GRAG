@@ -22,4 +22,4 @@ COPY ./ChangeTracker.py ./ChangeTracker.py
 COPY ./settings.yml ./settings.yml
 
 
-CMD ["fastapi", "run", "ds_server.py", "--port", "80"]
+CMD ["fastapi", "run", "ds_server.py", "--port", "8000"]
