@@ -17,13 +17,17 @@ if not USE_REMOTE_DS:
 def respond_via_remote(prompt,history):
     try:
         payload = {"question": prompt}
-        resp = requests.post(DS_SERVER_URL+"/qa", json=payload)
+        resp = requests.post(DS_SERVER_URL + "/qa", json=payload, timeout=180)
         resp.raise_for_status()
         data = resp.json()
         answer,orig_docs,additional_docs = data.get("answer"),data.get("original_documents",[]),data.get("additional_documents",[])
         history.append((prompt,answer))
         latest = [(prompt, answer)]
         return latest, orig_docs, additional_docs
+    except requests.Timeout:
+        err = "Remote DS timeout (try again later)"
+        history.append((prompt, err))
+        return [(prompt, err)], [], []
     except requests.RequestException as e:
         raise ValueError(f"Error communicating with remote DS: {e}")
 
