@@ -1,5 +1,4 @@
 import gradio as gr
-from controller import Controller
 import os
 from dotenv import load_dotenv
 import requests
@@ -11,7 +10,9 @@ DS_SERVER_URL = os.getenv("DS_SERVER_URL", "http://localhost:8000")
 
 
 print(f"use remote ds is {USE_REMOTE_DS}, and {DS_SERVER_URL}")
-ds_controller = Controller()
+if not USE_REMOTE_DS:
+    from controller import Controller
+    ds_controller = Controller()
 
 def respond_via_remote(prompt,history):
     try:
