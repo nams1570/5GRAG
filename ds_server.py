@@ -69,8 +69,6 @@ def read_root():
 
 @app.post("/diffs")
 def read_diffs(clause_history_request: ClauseHistoryRequest, request: Request):
-    if not is_under_rate_limit(request):
-        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Try again in a day"})
     filter = {'section':{"$eq":clause_history_request.clause_id}}
     try:
         docs = db_client.queryDB(query_text="*",k=10,filter=filter)
