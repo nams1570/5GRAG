@@ -1,5 +1,5 @@
 from settings import config
-from utils import getTokenCount,RetrieverResult
+from utils import Document, getTokenCount,RetrieverResult
 from MultiStageRetriever import MultiStageRetriever
 from RAGQAEngine import RAGQAEngine
 from CollectionNames import SPECS_AND_DISCUSSIONS as SPEC_COLL_NAME, REASONING_DOCS as TDOC_COLL_NAME, DIFFS as DIFF_COLL_NAME, CROSS_CONTEXT_BENCHMARK_COLL_NAME
@@ -22,7 +22,7 @@ class Controller:
         self.isDatabaseTriggered = not self.isDatabaseTriggered
         return self.isDatabaseTriggered
 
-    def getResponseWithRetrieval(self,prompt):
+    def getResponseWithRetrieval(self,prompt)->tuple[str, list[Document], list[Document], list[Document]]:
         retriever_result:RetrieverResult = self.retriever.invoke(query=prompt)
 
         retrieved_docs = retriever_result.firstOrderSpecDocs + retriever_result.secondOrderSpecDocs + retriever_result.retrievedDiscussionDocs

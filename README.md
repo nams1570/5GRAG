@@ -15,6 +15,13 @@ It should have these vars:
 8. `NUM_REASONING_DOCS_TO_RETRIEVE`: (int) max number of documents retrieved from TdocDB
 9. `DEPTH`: (int) How many iterations of the secondary context retrieval you want to go to. By default, this should be 1.
 
+(Optional)
+If you want to use our frontend client and query deepspecs as a client server architecture, it is a good idea to have a `.env` file in the repo. This will take the following form:
+```
+USE_REMOTE_DS=True
+DS_SERVER_URL=http://localhost:8000/qa
+```
+
 # Databases and some elaboration
 The context is stored in 3 chromadb collections: `specDB` -which holds the technical spec chunks, `changeDB` - which holds the diffs between adjacent versions of the same spec, and `TdocDB` - which holds context from change requests.  These three collections must be stored in the same chromadb sqlite database. The `x_COLL_NAME` fields mentioned in other files represent the names of the aforementioned collections. Note that if you want to reuse the same collections and have them findable by the system, **you must keep the collection names consistent between runs**.
 
@@ -35,9 +42,41 @@ The `DOC_DIR_PATH` is where the documents to be parsed will be read from. Note t
 To use this db for a simple plug and play, copy the `db` file into the `baseline` directory. That is, there should be a `baseline/db/` subdir inside of which the collections and sqlite instance should appear. The collection names should be the same as in the `CollectionNames.py` file, so you will probably not have to make any changes there.
 
 # Running the system
+
+## Running the composite system
 Do `python frontend.py`. In your terminal, an ip address will be exposed.
 Navigate to this ip address and you should see the gradio interface. If your chroma databases are all set up, you should just be able to type your questions into the chat and see the retrieved context and the answer.
+Make sure `USE_REMOTE_DS` is set to false in your .env file.
 
+## Strictly setting up the deepspecs server
+You can also just set up the deepspecs controller as a server with FastAPI waiting for responses.
+This way you can query it with any client.
+Run `fastapi dev ./ds_server.py` to get it going.
+Then, query the API with the post requests to either directly access the diff db or to post your question and get an answer.
+
+To use our frontend client, please set the right values for `USE_REMOTE_DS` and `DS_SERVER_URL`.
+
+## Running it in a container
+We have a Dockerfile that will transport the relevant deepspecs files to the container, and set it up to run the client in production.
+
+Use `docker build -t myimage .` while in the directory with the Dockerfile to build an image called myimage. This may take a while, but only needs to be done once.
+
+Use `docker run --rm --memory="12g" --memory-swap="16g" -v "<absolute_path_to_db>:/baseline/db" -d --name mycontainer -p 8000:8000 myimage` to run the container in detached mode. 
+This command maps the chroma db on your local machine to the chroma db in the container, so replace `/baseline/db` with the correct path to the db as per your settings. 
+8000:8000 maps the port 8000 of the container to the port 8000 of your machine. Note that the dockerfile command exposes port 8000 as the port of the server where the requests are served.
+
+## Potential Docker memory concerns
+Due to the large size of the db, we set the memory limit to 12 GiB with a memory swap even larger. The first request that is served will be slow as the db is being pulled into memory via a volume mont. Subsequent requests will be faster. Note that if you are plugging in a larger chroma db, you may need more memory.
+
+If you are using wsl on Windows, unless specified otherwise in your Docker desktop settings, your max memory remit is set by the `.wslconfig` file in your `C:\%user%` directory. Here is a template you can follow in your .wslconfig file: 
+```
+[wsl2]
+memory=16GB        # limit WSL2 VM to 16 GB
+processors=4
+swap=8GB
+localhostForwarding=true
+```
+Change as needed. You can debug the memory usage of your container while it is running using `docker stats --no-stream`.
 
 # Dependencies
 Please see the requirements.txt!
